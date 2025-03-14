@@ -1,0 +1,13 @@
+{
+    "domain": "solis_cloud_control",
+    "name": "Solis Cloud Control",
+    "version": "0.0.1",
+    "documentation": "https://github.com/mkuthan/solis-cloud-control",
+    "requirements": [
+        "homeassistant==2025.3.3"
+    ],
+    "dependencies": [],
+    "codeowners": [
+        "@mkuthan"
+    ]
+}

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+if [[ ! -d "${PWD}/config" ]]; then
+    mkdir -p "${PWD}/config"
+    uv run hass --config "${PWD}/config" --script ensure_config
+fi
+
+export PYTHONPATH="${PYTHONPATH}:${PWD}/custom_components"
+
+uv run hass --config "${PWD}/config" --debug
