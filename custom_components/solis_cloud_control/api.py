@@ -2,72 +2,78 @@ import base64
 import hashlib
 from datetime import datetime
 
-# ...existing code...
-
+BASE_URL = "https://www.soliscloud.com:13333"
 VERB = "POST"
 LOGIN_URL = "/v2/api/login"
 CONTROL_URL = "/v2/api/control"
 INVERTER_ID = "12345678"
-# ...existing code...
 
 
-class SolisCloudControlClient:
-    def __init__(self, api_key: str, username: str, password: str):
+class SolisCloudControlApiClientError(Exception):
+    """Exception to indicate a general API error."""
+
+
+class SolisCloudControlApiClientCommunicationError(
+    SolisCloudControlApiClientError,
+):
+    """Exception to indicate a communication error."""
+
+
+class SolisCloudControlApiClientAuthenticationError(
+    SolisCloudControlApiClientError,
+):
+    """Exception to indicate an authentication error."""
+
+
+class SolisCloudControlApiClient:
+    def __init__(self, api_key: str, api_token: str, session):
         self.api_key = api_key
-        self.username = username
-        self.password = password
-        self.base_url = "https://www.soliscloud.com:13333"
+        self.api_token = api_token
+        self.session = session
+
+    async def validate(self):
+        pass
+
+    async def async_get_data(self):
+        pass
+
+    async def set_charge_discharge_schedule(self, call):
+        pass
 
 
 def digest(body: str) -> str:
-    # ...existing code...
     return base64.b64encode(hashlib.md5(body.encode("utf-8")).digest()).decode("utf-8")
 
 
 def passwordEncode(password: str) -> str:
-    # ...existing code...
     return hashlib.md5(password.encode("utf-8")).hexdigest()
 
 
 def prepare_header(
     config: dict[str, str], body: str, canonicalized_resource: str
 ) -> dict[str, str]:
-    # ...existing code...
-    # Uses digest, hmac, etc.
-    # Return a dictionary of headers
-    # ...existing code...
-    return {
-        # ...existing code...
-    }
+    return {}
 
 
 async def login(config):
-    # ...existing code...
-    # 1) build body, 2) prepare header, 3) do POST, 4) return csrfToken
-    # ...existing code...
     return "token"
 
 
 async def solis_control(config=None, days=None):
-    # ...existing code...
     pass
 
 
 def control_body(inverterId, chargeSettings) -> str:
-    # ...existing code...
     return "{}"
 
 
 def control_time_body(inverterId: str, currentTime: datetime) -> str:
-    # ...existing code...
     return "{}"
 
 
 async def set_control_times(token, inverterId: str, config, times):
-    # ...existing code...
     pass
 
 
 async def set_updated_time(token, inverterId: str, config, currentTime: datetime):
-    # ...existing code...
     pass
