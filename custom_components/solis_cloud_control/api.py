@@ -1,9 +1,5 @@
 import asyncio
-import base64
-import hashlib
-import hmac
 import json
-from datetime import UTC, datetime
 
 import aiohttp
 
