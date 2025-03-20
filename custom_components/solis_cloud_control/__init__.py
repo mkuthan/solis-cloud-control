@@ -1,62 +1,44 @@
-from datetime import timedelta
+from homeassistant.const import CONF_API_KEY, CONF_TOKEN
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse
+from homeassistant.helpers import aiohttp_client
 
-from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN, Platform
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.loader import async_get_loaded_integration
-from homeassistant.core import HomeAssistant
-
-
-from .api import SolisCloudControlApiClient
+from .api import SolisCloudControlApiClient, SolisCloudControlApiError
 from .const import DOMAIN, LOGGER
-from .coordinator import SolisCloudControlDataUpdateCoordinator
-from .data import SolisCloudControlData, SolisCloudControlConfigEntry
 
 
-PLATFORMS: list[Platform] = [
-    Platform.SENSOR,
-    Platform.BINARY_SENSOR,
-    Platform.SWITCH,
-]
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    conf = config.get(DOMAIN, {})
 
+    api_key = conf.get(CONF_API_KEY)
+    api_token = conf.get(CONF_TOKEN)
+    inverter_sn = conf.get("inverter_sn")
 
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: SolisCloudControlConfigEntry,
-) -> bool:
-    coordinator = SolisCloudControlDataUpdateCoordinator(
-        hass=hass,
-        logger=LOGGER,
-        name=DOMAIN,
-        update_interval=timedelta(hours=1),
-    )
-    entry.runtime_data = SolisCloudControlData(
-        client=SolisCloudControlApiClient(
-            api_key=entry.data[CONF_API_KEY],
-            api_token=entry.data[CONF_API_TOKEN],
-            session=async_get_clientsession(hass),
-        ),
-        integration=async_get_loaded_integration(hass, entry.domain),
-        coordinator=coordinator,
-    )
+    session = aiohttp_client.async_get_clientsession(hass)
 
-    await coordinator.async_config_entry_first_refresh()
+    client = SolisCloudControlApiClient(api_key, api_token, inverter_sn, session)
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    async def async_service_read(call: ServiceCall) -> ServiceResponse:
+        cid = call.data.get("cid")
+        try:
+            result = await client.read(cid)
+            LOGGER.info("Read result: %s", result)
+            return {"success": True, "result": result}
+        except SolisCloudControlApiError as err:
+            LOGGER.error("Read action failed: %s", err)
+            return {"success": False, "error": str(err)}
+
+    async def async_service_control(call: ServiceCall) -> ServiceResponse:
+        cid = call.data.get("cid")
+        value = call.data.get("value")
+        try:
+            result = await client.control(cid, value)
+            LOGGER.info("Control result: %s", result)
+            return {"success": True, "result": result}
+        except SolisCloudControlApiError as err:
+            LOGGER.error("Control action failed: %s", err)
+            return {"success": False, "error": str(err)}
+
+    hass.services.async_register(DOMAIN, "read", async_service_read)
+    hass.services.async_register(DOMAIN, "control", async_service_control)
 
     return True
-
-
-async def async_unload_entry(
-    hass: HomeAssistant,
-    entry: SolisCloudControlConfigEntry,
-) -> bool:
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-
-
-async def async_reload_entry(
-    hass: HomeAssistant,
-    entry: SolisCloudControlConfigEntry,
-) -> None:
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)

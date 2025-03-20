@@ -1,0 +1,36 @@
+read:
+  description: "Read data from the SolisCloud API for a specific CID."
+  fields:
+    cid:
+      description: "The CID to read data for."
+      example: 12345
+  response:
+    - field: success
+      description: "Indicates if the operation was successful."
+      example: true
+    - field: result
+      description: "The value returned from the inverter when successful."
+      example: "17"
+    - field: error
+      description: "Error message if the operation failed."
+      example: "API operation failed: Invalid CID"
+
+control:
+  description: "Send a control command to the SolisCloud API for a specific CID."
+  fields:
+    cid:
+      description: "The CID to control."
+      example: 12345
+    value:
+      description: "The value to send as the control command."
+      example: "ON"
+  response:
+    - field: success
+      description: "Indicates if the operation was successful."
+      example: true
+    - field: result
+      description: "The response from the inverter when successful."
+      example: "Command accepted"
+    - field: error
+      description: "Error message if the operation failed."
+      example: "API operation failed: Invalid value"

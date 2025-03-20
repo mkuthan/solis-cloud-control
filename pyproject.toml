@@ -9,6 +9,7 @@ dependencies = ["homeassistant==2025.3.3"]
 dev-dependencies = [
     "pytest==8.3.3",
     "pytest-asyncio==0.25.3",
+    "pytest-cov==6.0.0",
     "ruff==0.7.4",
     "uv==0.6.1",
 ]
@@ -37,4 +38,8 @@ select = [
     "UP",  # pyupgrade
     "N",   # pep8-naming
 ]
-per-file-ignores = { "tests/*.py" = ["ANN001", "ANN201", "ANN202", "ANN203"] }
+per-file-ignores = { "custom_components/**/*.py" = [
+    "ANN101",
+], "tests/*.py" = [
+    "ANN101",
+] }

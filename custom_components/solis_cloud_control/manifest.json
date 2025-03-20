@@ -5,7 +5,5 @@
     "documentation": "https://github.com/mkuthan/solis-cloud-control",
     "codeowners": [
         "@mkuthan"
-    ],
-    "config_flow": true,
-    "iot_class": "cloud_polling"
+    ]
 }
