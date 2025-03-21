@@ -2,6 +2,7 @@ from homeassistant.const import CONF_API_KEY, CONF_TOKEN
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import aiohttp_client
+from homeassistant.helpers.discovery import async_load_platform
 
 from .api import SolisCloudControlApiClient, SolisCloudControlApiError
 from .const import (
@@ -54,6 +55,16 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     session = aiohttp_client.async_get_clientsession(hass)
 
     client = SolisCloudControlApiClient(api_key, api_token, inverter_sn, session)
+
+    hass.async_create_task(
+        async_load_platform(
+            hass,
+            "select",
+            DOMAIN,
+            {"client": client, "inverter_sn": inverter_sn},
+            config,
+        )
+    )
 
     async def async_service_read(call: ServiceCall) -> ServiceResponse:
         cid = call.data.get("cid")
