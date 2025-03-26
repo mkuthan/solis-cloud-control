@@ -1,20 +1,6 @@
-# Loads default set of integrations. Do not remove.
 default_config:
-
-# Load frontend themes from the themes folder
-frontend:
-  themes: !include_dir_merge_named themes
-
-automation: !include automations.yaml
-script: !include scripts.yaml
-scene: !include scenes.yaml
 
 logger:
   default: error
   logs:
     custom_components.solis_cloud_control: debug
-
-solis_cloud_control:
-  api_key: !secret solis_api_key
-  token: !secret solis_token
-  inverter_sn: !secret solis_inverter_sn
