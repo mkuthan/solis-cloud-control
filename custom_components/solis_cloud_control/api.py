@@ -129,7 +129,7 @@ class SolisCloudControlApiClient:
         interval=API_RETRY_DELAY_SECONDS,
         logger=_LOGGER,
     )
-    async def at_read_batch(self, cids: list[int]) -> dict[int, str]:
+    async def read_batch(self, cids: list[int]) -> dict[int, str]:
         date = current_date()
         payload = {"inverterSn": self._inverter_sn, "cids": ",".join(map(str, cids))}
 

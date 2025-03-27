@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from datetime import timedelta
 
@@ -54,7 +53,7 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
 
     async def _async_update_data(self) -> SolisCloudControlData:
         try:
-            result = await self.api_client.at_read_batch(_ALL_CIDS)
+            result = await self.api_client.read_batch(_ALL_CIDS)
             data = SolisCloudControlData({cid: result.get(cid) for cid in _ALL_CIDS})
             _LOGGER.debug("Data read from API: %s", data)
             return data
