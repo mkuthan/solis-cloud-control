@@ -44,7 +44,7 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception(error)
                 errors["base"] = "unknown_error"
             else:
-                await self.async_set_unique_id(unique_id=user_input[CONF_API_KEY])
+                await self.async_set_unique_id(unique_id=user_input[CONF_INVERTER_SN])
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
                     title=user_input[CONF_API_KEY],
@@ -59,5 +59,5 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
 
     async def _test_credentials(self, api_key: str, api_token: str, inverter_sn: str) -> None:
         session = aiohttp_client.async_get_clientsession(self.hass)
-        api_client = SolisCloudControlApiClient(api_key, api_token, inverter_sn, session)
-        await api_client.read(CID_STORAGE_MODE)
+        api_client = SolisCloudControlApiClient(api_key, api_token, session)
+        await api_client.read(inverter_sn, CID_STORAGE_MODE)

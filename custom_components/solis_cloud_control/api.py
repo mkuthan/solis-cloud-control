@@ -45,12 +45,10 @@ class SolisCloudControlApiClient:
         self,
         api_key: str,
         api_token: str,
-        inverter_sn: str,
         session: aiohttp.ClientSession,
     ) -> None:
         self._api_key = api_key
         self._api_secret = api_token
-        self._inverter_sn = inverter_sn
         self._session = session
         self._request_semaphore = asyncio.Semaphore(API_CONCURRENT_REQUESTS)
 
@@ -108,9 +106,9 @@ class SolisCloudControlApiClient:
         interval=API_RETRY_DELAY_SECONDS,
         logger=_LOGGER,
     )
-    async def read(self, cid: int) -> str:
+    async def read(self, inverter_sn: str, cid: int) -> str:
         date = current_date()
-        payload = {"inverterSn": self._inverter_sn, "cid": cid}
+        payload = {"inverterSn": inverter_sn, "cid": cid}
 
         data = await self._request(date, API_READ_ENDPOINT, payload)
 
@@ -129,9 +127,9 @@ class SolisCloudControlApiClient:
         interval=API_RETRY_DELAY_SECONDS,
         logger=_LOGGER,
     )
-    async def read_batch(self, cids: list[int]) -> dict[int, str]:
+    async def read_batch(self, inverter_sn: str, cids: list[int]) -> dict[int, str]:
         date = current_date()
-        payload = {"inverterSn": self._inverter_sn, "cids": ",".join(map(str, cids))}
+        payload = {"inverterSn": inverter_sn, "cids": ",".join(map(str, cids))}
 
         data = await self._request(date, API_READ_BATCH_ENDPOINT, payload)
 
@@ -166,9 +164,9 @@ class SolisCloudControlApiClient:
         interval=API_RETRY_DELAY_SECONDS,
         logger=_LOGGER,
     )
-    async def control(self, cid: int, value: str) -> None:
+    async def control(self, inverter_sn: str, cid: int, value: str) -> None:
         date = current_date()
-        payload = {"inverterSn": self._inverter_sn, "cid": cid, "value": value}
+        payload = {"inverterSn": inverter_sn, "cid": cid, "value": value}
 
         data_array = await self._request(date, API_CONTROL_ENDPOINT, payload)
 

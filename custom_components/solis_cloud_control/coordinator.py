@@ -14,9 +14,14 @@ from custom_components.solis_cloud_control.const import (
     CID_DISCHARGE_SLOT1_SOC,
     CID_DISCHARGE_SLOT1_TIME,
     CID_STORAGE_MODE,
+    CONF_INVERTER_SN,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+_NAME = "Coordinator"
+
+_UPDATE_INTERVAL = timedelta(minutes=5)
 
 _ALL_CIDS = [
     CID_STORAGE_MODE,
@@ -33,27 +38,26 @@ class SolisCloudControlData(dict[int, str | None]):
     pass
 
 
-type SolisCloudControlConfigEntry = ConfigEntry[SolisCloudControlData]
-
-
 class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData]):
-    config_entry: SolisCloudControlConfigEntry
-
     def __init__(
-        self, hass: HomeAssistant, config_entry: SolisCloudControlConfigEntry, api_client: SolisCloudControlApiClient
+        self,
+        hass: HomeAssistant,
+        config_entry: ConfigEntry,
+        api_client: SolisCloudControlApiClient,
     ) -> None:
         super().__init__(
             hass,
             _LOGGER,
-            name="Solis Cloud Control Coordinator",
+            name=_NAME,
             config_entry=config_entry,
-            update_interval=timedelta(minutes=5),
+            update_interval=_UPDATE_INTERVAL,
         )
         self.api_client = api_client
+        self.inverter_sn = config_entry.data[CONF_INVERTER_SN]
 
     async def _async_update_data(self) -> SolisCloudControlData:
         try:
-            result = await self.api_client.read_batch(_ALL_CIDS)
+            result = await self.api_client.read_batch(self.inverter_sn, _ALL_CIDS)
             data = SolisCloudControlData({cid: result.get(cid) for cid in _ALL_CIDS})
             _LOGGER.debug("Data read from API: %s", data)
             return data

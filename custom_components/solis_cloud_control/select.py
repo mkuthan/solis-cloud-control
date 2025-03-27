@@ -1,11 +1,12 @@
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.const import (
     CID_STORAGE_MODE,
 )
-from custom_components.solis_cloud_control.coordinator import SolisCloudControlConfigEntry, SolisCloudControlCoordinator
+from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
 from custom_components.solis_cloud_control.entity import SolisCloudControlEntity
 
 _ENTITY_DESCRIPTIONS = (
@@ -27,7 +28,7 @@ _BIT_FEED_IN_PRIORITY = 6
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
-    entry: SolisCloudControlConfigEntry,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data
@@ -96,5 +97,5 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         elif option == _MODE_FEED_IN_PRIORITY:
             value_int |= 1 << _BIT_FEED_IN_PRIORITY
 
-        await self.coordinator.api_client.control(CID_STORAGE_MODE, str(value_int))
+        await self.coordinator.api_client.control(self.coordinator.inverter_sn, CID_STORAGE_MODE, str(value_int))
         await self.coordinator.async_request_refresh()
