@@ -4,6 +4,7 @@ CONF_INVERTER_SN = "inverter_sn"
 
 API_BASE_URL = "https://www.soliscloud.com:13333"
 API_READ_ENDPOINT = "/v2/api/atRead"
+API_READ_BATCH_ENDPOINT = "/v2/api/atReadBatch"
 API_CONTROL_ENDPOINT = "/v2/api/control"
 API_TIMEOUT_SECONDS = 10
 API_RETRY_COUNT = 3  # initial attempt + 2 retries

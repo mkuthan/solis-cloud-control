@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from custom_components.solis_cloud_control.api import SolisCloudControlApiClient, SolisCloudControlApiError
 from custom_components.solis_cloud_control.const import (
@@ -53,20 +53,10 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
         self.api_client = api_client
 
     async def _async_update_data(self) -> SolisCloudControlData:
-        data = SolisCloudControlData()
-
-        async def fetch_cid_value(cid: int) -> tuple[int, str | None]:
-            try:
-                value = await self.api_client.read(cid)
-                return cid, value
-            except SolisCloudControlApiError as error:
-                _LOGGER.error("Failed to read CID %s: %s", cid, error)
-                return cid, None
-
-        tasks = [fetch_cid_value(cid) for cid in _ALL_CIDS]
-        results = await asyncio.gather(*tasks)
-
-        for cid, value in results:
-            data[cid] = value
-
-        return data
+        try:
+            result = await self.api_client.at_read_batch(_ALL_CIDS)
+            data = SolisCloudControlData({cid: result.get(cid) for cid in _ALL_CIDS})
+            _LOGGER.debug("Data read from API: %s", data)
+            return data
+        except SolisCloudControlApiError as error:
+            raise UpdateFailed(error) from error

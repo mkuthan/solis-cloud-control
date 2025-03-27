@@ -44,7 +44,7 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception(error)
                 errors["base"] = "unknown_error"
             else:
-                await self.async_set_unique_id(unique_id=user_input[CONF_INVERTER_SN])
+                await self.async_set_unique_id(unique_id=user_input[CONF_API_KEY])
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
                     title=user_input[CONF_API_KEY],

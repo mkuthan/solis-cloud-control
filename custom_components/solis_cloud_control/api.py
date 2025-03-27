@@ -12,6 +12,7 @@ from .const import (
     API_BASE_URL,
     API_CONCURRENT_REQUESTS,
     API_CONTROL_ENDPOINT,
+    API_READ_BATCH_ENDPOINT,
     API_READ_ENDPOINT,
     API_RETRY_COUNT,
     API_RETRY_DELAY_SECONDS,
@@ -120,6 +121,43 @@ class SolisCloudControlApiClient:
             raise SolisCloudControlApiError("Read failed: 'msg' field is missing in response")
 
         return data["msg"]
+
+    @backoff.on_exception(
+        backoff.constant,
+        SolisCloudControlApiError,
+        max_tries=API_RETRY_COUNT,
+        interval=API_RETRY_DELAY_SECONDS,
+        logger=_LOGGER,
+    )
+    async def at_read_batch(self, cids: list[int]) -> dict[int, str]:
+        date = current_date()
+        payload = {"inverterSn": self._inverter_sn, "cids": ",".join(map(str, cids))}
+
+        data = await self._request(date, API_READ_BATCH_ENDPOINT, payload)
+
+        if data is None:
+            raise SolisCloudControlApiError("ReadBatch failed: 'data' field is missing in response")
+
+        if not isinstance(data, list):
+            raise SolisCloudControlApiError("ReadBatch failed: response data is not an array")
+
+        result = {}
+        for outer_item in data:
+            if not isinstance(outer_item, list):
+                continue
+
+            for item in outer_item:
+                if not isinstance(item, dict):
+                    continue
+
+                if "msg" not in item:
+                    raise SolisCloudControlApiError("ReadBatch failed: 'msg' field is missing in response item")
+                if "cid" not in item:
+                    raise SolisCloudControlApiError("ReadBatch failed: 'cid' field is missing in response item")
+
+                result[int(item["cid"])] = item["msg"]
+
+        return result
 
     @backoff.on_exception(
         backoff.constant,
