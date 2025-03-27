@@ -2,7 +2,10 @@
 name = "solis-cloud-control"
 version = "0.0.1"
 requires-python = "~=3.13"
-dependencies = ["homeassistant==2025.3.3"]
+dependencies = [
+    "homeassistant==2025.3.3", 
+    "backoff==2.2.1"
+]
 
 
 [tool.uv]

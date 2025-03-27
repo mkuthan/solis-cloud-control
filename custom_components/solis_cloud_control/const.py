@@ -1,78 +1,23 @@
-from logging import Logger, getLogger
-
-import voluptuous as vol
-from homeassistant.helpers import config_validation as cv
-
-LOGGER: Logger = getLogger(__package__)
-
 DOMAIN = "solis_cloud_control"
 
 CONF_INVERTER_SN = "inverter_sn"
 
-READ_SERVICE_NAME = "read"
-READ_SERVICE_SCHEMA = vol.Schema(
-    {
-        vol.Required("cid"): cv.positive_int,
-    }
-)
-
-CONTROL_SERVICE_NAME = "control"
-CONTROL_SERVICE_SCHEMA = vol.Schema(
-    {
-        vol.Required("cid"): cv.positive_int,
-        vol.Required("value"): cv.string,
-    }
-)
-
-SET_STORAGE_MODE_SERVICE_NAME = "set_storage_mode"
-SET_STORAGE_MODE_SERVICE_SCHEMA = vol.Schema(
-    {
-        vol.Required("storage_mode"): vol.In(["Self Use", "Feed In Priority"]),
-        vol.Optional("battery_reserve", default="ON"): vol.In(["ON", "OFF"]),
-        vol.Optional("allow_grid_charging", default="OFF"): vol.In(["ON", "OFF"]),
-    }
-)
-
-SET_CHARGE_SLOT1_SERVICE_NAME = "set_charge_slot1"
-SET_CHARGE_SLOT1_SERVICE_SCHEMA = vol.Schema(
-    {
-        vol.Required("from_time"): cv.time,
-        vol.Required("to_time"): cv.time,
-        vol.Optional("current"): vol.All(vol.Coerce(int), vol.Range(min=0, max=200)),
-        vol.Optional("soc"): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
-    }
-)
-
-SET_DISCHARGE_SLOT1_SERVICE_NAME = "set_discharge_slot1"
-SET_DISCHARGE_SLOT1_SERVICE_SCHEMA = vol.Schema(
-    {
-        vol.Required("from_time"): cv.time,
-        vol.Required("to_time"): cv.time,
-        vol.Optional("current"): vol.Coerce(int),
-        vol.Optional("soc"): vol.Coerce(int),
-    }
-)
-
-DISABLE_CHARGE_SLOT1_SERVICE_NAME = "disable_charge_slot1"
-DISABLE_DISCHARGE_SLOT1_SERVICE_NAME = "disable_discharge_slot1"
-
 API_BASE_URL = "https://www.soliscloud.com:13333"
-READ_ENDPOINT = "/v2/api/atRead"
-CONTROL_ENDPOINT = "/v2/api/control"
+API_READ_ENDPOINT = "/v2/api/atRead"
+API_READ_BATCH_ENDPOINT = "/v2/api/atReadBatch"
+API_CONTROL_ENDPOINT = "/v2/api/control"
 API_TIMEOUT_SECONDS = 10
-API_RETRY_COUNT = 3  # Initial attempt + 2 retries
-API_RETRY_DELAY_SECONDS = 5  # Delay between retries
+API_RETRY_COUNT = 3  # initial attempt + 2 retries
+API_RETRY_DELAY_SECONDS = 5
+API_CONCURRENT_REQUESTS = 2
 
-STORAGE_MODE_CID = 636
-STORAGE_MODE_BIT_SELF_USE = 0
-STORAGE_MODE_BIT_BACKUP_MODE = 4
-STORAGE_MODE_BIT_GRID_CHARGING = 5
-STORAGE_MODE_BIT_FEED_IN_PRIORITY = 6
-
-CHARGE_SLOT1_TIME_CID = 5946
-CHARGE_SLOT1_CURRENT_CID = 5948
-CHARGE_SLOT1_SOC_CID = 5928
-
-DISCHARGE_SLOT1_TIME_CID = 5964
-DISCHARGE_SLOT1_CURRENT_CID = 5967
-DISCHARGE_SLOT1_SOC_CID = 5965
+CID_BATTERY_RESERVE_SOC = 157
+CID_BATTERY_OVER_DISCHARGE_SOC = 158
+CID_BATTERY_FORCE_CHARGE_SOC = 160
+CID_STORAGE_MODE = 636
+CID_CHARGE_SLOT1_TIME = 5946
+CID_CHARGE_SLOT1_CURRENT = 5948
+CID_CHARGE_SLOT1_SOC = 5928
+CID_DISCHARGE_SLOT1_TIME = 5964
+CID_DISCHARGE_SLOT1_CURRENT = 5967
+CID_DISCHARGE_SLOT1_SOC = 5965

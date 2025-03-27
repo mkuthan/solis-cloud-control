@@ -1,0 +1,23 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configure Cloud Control API",
+                "data": {
+                    "api_key": "API key",
+                    "token": "API token",
+                    "inverter_sn": "Inverter serial number"
+                }
+            }
+        },
+        "error": {
+            "invalid_auth": "Invalid API key or token",
+            "invalid_inverter_sn": "Invalid inverter serial number",
+            "connection_error": "Connection error",
+            "unknown_error": "Unknown error"
+        },
+        "abort": {
+            "already_configured": "This entry is already configured."
+        }
+    }
+}
