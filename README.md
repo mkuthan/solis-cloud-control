@@ -36,14 +36,16 @@ Configure Solis Cloud Control integration with:
 
 ## Features
 
-![Inverter Controls](inverter-controls.png)
+![Inverter Controls](inverter_controls.png)
 
-### Functional
+Functional:
 
 * ⚡ Storage Modes: "Self-Use", "Feed-In Priority"
 * 🛠️ "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes
 * ⏱️ Charge/Discharge Slots
 * 🔋 Battery Reserve SOC, Over Discharge SOC and Force Charge SOC
+
+Non-functional:
 
 * 📦 Batch reading of all inverter settings in a single request to fit within the API limits
 * 🔄 Retry logic for API requests to mitigate API stability issues
