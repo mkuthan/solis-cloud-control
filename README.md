@@ -2,19 +2,54 @@
 
 This is very initial version of the Solis Cloud Control API integration for Home Assistant.
 It allows you to read and control various settings of your Solis inverter.
-Doesn't support sensors, switches, or other entities yet - only basic read and control actions crafted for automations.
 
 See [issue tracker](https://github.com/mkuthan/solis-cloud-control/issues) for further plans.
 
-## Local run
+## Installation
 
-Configure Solis Cloud Control API credentials in `secrets.yaml`:
+The integration is not currently available in [HACS](https://www.hacs.xyz/). However, you can install it manually by following these steps:
 
-```yaml
-solis_api_key: "YOUR_API_KEY_HERE"
-solis_token: "YOUR_TOKEN_HERE"
-solis_inverter_sn: "YOUR_INVERTER_SN_HERE"
+Clone the repository into your Home Assistant filesystem:
+
+```bash
+git clone https://github.com/mkuthan/solis-cloud-control.git
 ```
+
+Create a symlink to the `custom_components` directory:
+
+```bash
+ln -s solis-cloud-control/custom_components custom_components/solis_cloud_control
+```
+
+Restart Home Assistant and search for "Solis Cloud Control" in the integrations page.
+
+> [!TIP]
+> For updates on HACS availability, see [issue #7](https://github.com/mkuthan/solis-cloud-control/issues/7).
+
+## Configuration
+
+Configure Solis Cloud Control integration with:
+
+* Solis API key
+* Solis Token
+* Solis Inverter Serial Number
+
+## Features
+
+![Inverter Controls](inverter-controls.png)
+
+### Functional
+
+* ⚡ Storage Modes: "Self-Use", "Feed-In Priority"
+* 🛠️ "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes
+* ⏱️ Charge/Discharge Slots
+* 🔋 Battery Reserve SOC, Over Discharge SOC and Force Charge SOC
+
+* 📦 Batch reading of all inverter settings in a single request to fit within the API limits
+* 🔄 Retry logic for API requests to mitigate API stability issues
+* 🏡 Best Home Assistant practices for integration development 😜
+
+## Local Development
 
 Install dependencies (once):
 
@@ -26,186 +61,4 @@ Run the integration locally:
 
 ```bash
 ./scripts/run
-```
-
-## Read inverter settings
-
-Storage Mode
-
-```yaml
-action: solis_cloud_control.read
-data:
-  cid: 636
-```
-
-Charge Time Slot 1
-
-```yaml
-action: solis_cloud_control.read
-data:
-  cid: 5946
-```
-
-Charge Time Slot 1 Current
-
-```yaml
-action: solis_cloud_control.read
-data:
-  cid: 5948
-```
-
-Charge Time Slot 1 Battery SOC
-
-```yaml
-action: solis_cloud_control.read
-data:
-  cid: 5928
-```
-
-Discharge Time Slot 1
-
-```yaml
-action: solis_cloud_control.read
-data:
-  cid: 5964
-```
-
-Discharge Time Slot 1 Current
-
-```yaml
-action: solis_cloud_control.read
-data:
-  cid: 5967
-```
-
-Discharge Time Slot 1 Battery SOC
-
-```yaml
-action: solis_cloud_control.read
-data:
-  cid: 5965
-```
-
-## High-level inverter control
-
-Set Self-Use Mode - Battery Reserve On, Grid Charging Off:
-
-```yaml
-action: solis_cloud_control.set_storage_mode
-data:
-  storage_mode: Self Use
-  battery_reserve: "ON"
-  allow_grid_charging: "OFF"
-```
-
-Set charge time slot:
-
-```yaml
-action: solis_cloud_control.set_charge_time_slot
-data:
-  time_slot: "11:00-13:00"
-  current: "90"
-  battery_soc: "80"
-```
-
-Set discharge time slot:
-
-```yaml
-action: solis_cloud_control.set_discharge_time_slot
-data:
-  time_slot: "11:00-13:00"
-  current: "90"
-  battery_soc: "80"
-```
-
-Disable charge time slot:
-
-```yaml
-action: solis_cloud_control.disable_charge_time_slot
-```
-
-Disable discharge time slot:
-
-```yaml
-action: solis_cloud_control.disable_discharge_time_slot
-```
-
-## Low-level inverter control
-
-### Control storage mode
-
-Self-Use Mode - Battery Reserve On, Grid Charging Off:
-
-```yaml
-action: solis_cloud_control.control
-data:
-  cid: 636
-  value: "17"
-```
-
-Feed-In Priority Mode - Battery Reserve On, Grid Charging Off:
-
-```yaml
-action: solis_cloud_control.control
-data:
-  cid: 636
-  value: "80"
-```
-
-### Control charge time slot
-
-Set Charge Time Slot 1:
-
-```yaml
-action: solis_cloud_control.control
-data:
-  cid: 5946
-  value: "11:00-13:00"
-```
-
-Set Charge Time Slot 1 Current:
-
-```yaml
-action: solis_cloud_control.control
-data:
-  cid: 5948
-  value: "90"
-```
-
-Set Charge Time Slot 1 Battery SOC:
-
-```yaml
-action: solis_cloud_control.control
-data:
-  cid: 5928
-  value: "80"
-```
-
-### Control discharge time slot
-
-Set Discharge Time Slot 1:
-
-```yaml
-action: solis_cloud_control.control
-data:
-  cid: 5964
-  value: "11:00-13:00"
-```
-
-Set Discharge Time Slot 1 Current:
-
-```yaml
-action: solis_cloud_control.control
-data:
-  cid: 5967
-  value: "90"
-```
-
-Set Discharge Time Slot 1 Battery SOC:
-
-```yaml
-action: solis_cloud_control.control
-data:
-  cid: 5965
-  value: "80"
 ```

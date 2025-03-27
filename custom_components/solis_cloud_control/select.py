@@ -3,19 +3,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.solis_cloud_control.const import (
-    CID_STORAGE_MODE,
-)
-from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
-from custom_components.solis_cloud_control.entity import SolisCloudControlEntity
-
-_ENTITY_DESCRIPTIONS = (
-    SelectEntityDescription(
-        key="storage_mode",
-        name="Storage Mode",
-        icon="mdi:solar-power",
-    ),
-)
+from .const import CID_STORAGE_MODE
+from .coordinator import SolisCloudControlCoordinator
+from .entity import SolisCloudControlEntity
 
 _MODE_SELF_USE = "Self-Use"
 _MODE_FEED_IN_PRIORITY = "Feed-In Priority"
@@ -33,14 +23,25 @@ async def async_setup_entry(
 ) -> None:
     coordinator = entry.runtime_data
     async_add_entities(
-        StorageModeSelect(coordinator=coordinator, entity_description=entity_description)
-        for entity_description in _ENTITY_DESCRIPTIONS
+        [
+            StorageModeSelect(
+                coordinator=coordinator,
+                cid=CID_STORAGE_MODE,
+                entity_description=SelectEntityDescription(
+                    key="storage_mode",
+                    name="Storage Mode",
+                    icon="mdi:solar-power",
+                ),
+            ),
+        ]
     )
 
 
 class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
-    def __init__(self, coordinator: SolisCloudControlCoordinator, entity_description: SelectEntityDescription) -> None:
-        super().__init__(coordinator)
+    def __init__(
+        self, coordinator: SolisCloudControlCoordinator, cid: int, entity_description: SelectEntityDescription
+    ) -> None:
+        super().__init__(coordinator, cid)
         self.entity_description = entity_description
         self._attr_options = [_MODE_SELF_USE, _MODE_FEED_IN_PRIORITY]
 
@@ -49,7 +50,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         if not self.coordinator.data:
             return None
 
-        storage_mode_value = self.coordinator.data.get(CID_STORAGE_MODE)
+        storage_mode_value = self.coordinator.data.get(self.cid)
         if storage_mode_value is None:
             return None
 
@@ -67,7 +68,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         attributes = {}
 
         if self.coordinator.data:
-            storage_mode_value = self.coordinator.data.get(CID_STORAGE_MODE)
+            storage_mode_value = self.coordinator.data.get(self.cid)
             if storage_mode_value is not None:
                 value_int = int(storage_mode_value)
 
@@ -83,7 +84,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         if not self.coordinator.data:
             return
 
-        current_value = self.coordinator.data.get(CID_STORAGE_MODE)
+        current_value = self.coordinator.data.get(self.cid)
         if current_value is None:
             return
 
@@ -97,5 +98,5 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         elif option == _MODE_FEED_IN_PRIORITY:
             value_int |= 1 << _BIT_FEED_IN_PRIORITY
 
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, CID_STORAGE_MODE, str(value_int))
+        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, str(value_int))
         await self.coordinator.async_request_refresh()
