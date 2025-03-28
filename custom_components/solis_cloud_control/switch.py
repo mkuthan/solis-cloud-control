@@ -21,7 +21,7 @@ async def async_setup_entry(
                 entity_description=SwitchEntityDescription(
                     key="slot1_charge_switch",
                     name="Slot1 Charge",
-                    icon="mdi:battery-charging",
+                    icon="mdi:battery-plus-outline",
                 ),
                 cid=CID_CHARGE_SLOT1_SWITCH,
             ),
@@ -30,7 +30,7 @@ async def async_setup_entry(
                 entity_description=SwitchEntityDescription(
                     key="slot1_discharge_switch",
                     name="Slot1 Discharge",
-                    icon="mdi:battery-minus",
+                    icon="mdi:battery-minus-outline",
                 ),
                 cid=CID_DISCHARGE_SLOT1_SWITCH,
             ),
