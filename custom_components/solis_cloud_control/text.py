@@ -21,21 +21,21 @@ async def async_setup_entry(
         [
             TimeSlotText(
                 coordinator=coordinator,
-                cid=CID_CHARGE_SLOT1_TIME,
                 entity_description=TextEntityDescription(
                     key="slot1_charge_time",
                     name="Slot1 Charge Time",
                     icon="mdi:timer-plus-outline",
                 ),
+                cid=CID_CHARGE_SLOT1_TIME,
             ),
             TimeSlotText(
                 coordinator=coordinator,
-                cid=CID_DISCHARGE_SLOT1_TIME,
                 entity_description=TextEntityDescription(
                     key="slot1_discharge_time",
                     name="Slot1 Discharge Time",
                     icon="mdi:timer-minus-outline",
                 ),
+                cid=CID_DISCHARGE_SLOT1_TIME,
             ),
         ]
     )
@@ -43,10 +43,9 @@ async def async_setup_entry(
 
 class TimeSlotText(SolisCloudControlEntity, TextEntity):
     def __init__(
-        self, coordinator: SolisCloudControlCoordinator, cid: int, entity_description: TextEntityDescription
+        self, coordinator: SolisCloudControlCoordinator, entity_description: TextEntityDescription, cid: int
     ) -> None:
-        super().__init__(coordinator, cid)
-        self.entity_description = entity_description
+        super().__init__(coordinator, entity_description, cid)
         self._attr_native_min = _TEXT_LEGHT
         self._attr_native_max = _TEXT_LEGHT
         self._attr_pattern = _TEXT_PATTERN

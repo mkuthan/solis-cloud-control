@@ -27,66 +27,66 @@ async def async_setup_entry(
         [
             BatteryCurrent(
                 coordinator=coordinator,
-                cid=CID_CHARGE_SLOT1_CURRENT,
                 entity_description=NumberEntityDescription(
                     key="slot1_charge_current",
                     name="Slot1 Charge Current",
                     icon="mdi:battery-plus-outline",
                 ),
+                cid=CID_CHARGE_SLOT1_CURRENT,
             ),
             BatteryCurrent(
                 coordinator=coordinator,
-                cid=CID_DISCHARGE_SLOT1_CURRENT,
                 entity_description=NumberEntityDescription(
                     key="slot1_discharge_current",
                     name="Slot1 Discharge Current",
                     icon="mdi:battery-minus-outline",
                 ),
+                cid=CID_DISCHARGE_SLOT1_CURRENT,
             ),
             BatterySoc(
                 coordinator=coordinator,
-                cid=CID_CHARGE_SLOT1_SOC,
                 entity_description=NumberEntityDescription(
                     key="slot1_charge_soc",
                     name="Slot1 Charge SOC",
                     icon="mdi:battery-plus-outline",
                 ),
+                cid=CID_CHARGE_SLOT1_SOC,
             ),
             BatterySoc(
                 coordinator=coordinator,
-                cid=CID_DISCHARGE_SLOT1_SOC,
                 entity_description=NumberEntityDescription(
                     key="slot1_discharge_soc",
                     name="Slot1 Discharge SOC",
                     icon="mdi:battery-minus-outline",
                 ),
+                cid=CID_DISCHARGE_SLOT1_SOC,
             ),
             BatterySoc(
                 coordinator=coordinator,
-                cid=CID_BATTERY_RESERVE_SOC,
                 entity_description=NumberEntityDescription(
                     key="battery_reserve_soc",
                     name="Battery Reserve SOC",
                     icon="mdi:battery-30",
                 ),
+                cid=CID_BATTERY_RESERVE_SOC,
             ),
             BatterySoc(
                 coordinator=coordinator,
-                cid=CID_BATTERY_OVER_DISCHARGE_SOC,
                 entity_description=NumberEntityDescription(
                     key="battery_over_discharge_soc",
                     name="Battery Over Discharge SOC",
                     icon="mdi:battery-10",
                 ),
+                cid=CID_BATTERY_OVER_DISCHARGE_SOC,
             ),
             BatterySoc(
                 coordinator=coordinator,
-                cid=CID_BATTERY_FORCE_CHARGE_SOC,
                 entity_description=NumberEntityDescription(
                     key="battery_force_charge_soc",
                     name="Battery Force Charge SOC",
                     icon="mdi:battery-alert-variant-outline",
                 ),
+                cid=CID_BATTERY_FORCE_CHARGE_SOC,
             ),
         ]
     )
@@ -94,10 +94,9 @@ async def async_setup_entry(
 
 class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
     def __init__(
-        self, coordinator: SolisCloudControlCoordinator, cid: int, entity_description: NumberEntityDescription
+        self, coordinator: SolisCloudControlCoordinator, entity_description: NumberEntityDescription, cid: int
     ) -> None:
-        super().__init__(coordinator, cid)
-        self.entity_description = entity_description
+        super().__init__(coordinator, entity_description, cid)
         self._attr_native_min_value = 0
         self._attr_native_max_value = 100
         self._attr_native_step = 1
@@ -122,8 +121,7 @@ class BatterySoc(SolisCloudControlEntity, NumberEntity):
     def __init__(
         self, coordinator: SolisCloudControlCoordinator, cid: int, entity_description: NumberEntityDescription
     ) -> None:
-        super().__init__(coordinator, cid)
-        self.entity_description = entity_description
+        super().__init__(coordinator, entity_description, cid)
         self._attr_native_min_value = 0  # TODO: battery over discharge + 1
         self._attr_native_max_value = 100
         self._attr_native_step = 1

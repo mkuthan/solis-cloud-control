@@ -12,9 +12,11 @@ from custom_components.solis_cloud_control.const import (
     CID_BATTERY_RESERVE_SOC,
     CID_CHARGE_SLOT1_CURRENT,
     CID_CHARGE_SLOT1_SOC,
+    CID_CHARGE_SLOT1_SWITCH,
     CID_CHARGE_SLOT1_TIME,
     CID_DISCHARGE_SLOT1_CURRENT,
     CID_DISCHARGE_SLOT1_SOC,
+    CID_DISCHARGE_SLOT1_SWITCH,
     CID_DISCHARGE_SLOT1_TIME,
     CID_STORAGE_MODE,
     CONF_INVERTER_SN,
@@ -22,7 +24,7 @@ from custom_components.solis_cloud_control.const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-_NAME = "Coordinator"
+_NAME = "Solis Cloud Control"
 
 _UPDATE_INTERVAL = timedelta(minutes=5)
 
@@ -32,9 +34,11 @@ _ALL_CIDS = [
     CID_BATTERY_OVER_DISCHARGE_SOC,
     CID_CHARGE_SLOT1_CURRENT,
     CID_CHARGE_SLOT1_SOC,
+    CID_CHARGE_SLOT1_SWITCH,
     CID_CHARGE_SLOT1_TIME,
     CID_DISCHARGE_SLOT1_CURRENT,
     CID_DISCHARGE_SLOT1_SOC,
+    CID_DISCHARGE_SLOT1_SWITCH,
     CID_DISCHARGE_SLOT1_TIME,
     CID_STORAGE_MODE,
 ]

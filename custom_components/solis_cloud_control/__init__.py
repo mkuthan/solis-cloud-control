@@ -9,7 +9,7 @@ from custom_components.solis_cloud_control.coordinator import SolisCloudControlC
 from .api import SolisCloudControlApiClient
 from .const import CONF_INVERTER_SN
 
-PLATFORMS: list[Platform] = [Platform.SELECT, Platform.TEXT, Platform.NUMBER]
+PLATFORMS: list[Platform] = [Platform.SELECT, Platform.TEXT, Platform.NUMBER, Platform.SWITCH]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

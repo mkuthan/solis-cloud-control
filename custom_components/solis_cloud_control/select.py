@@ -26,12 +26,12 @@ async def async_setup_entry(
         [
             StorageModeSelect(
                 coordinator=coordinator,
-                cid=CID_STORAGE_MODE,
                 entity_description=SelectEntityDescription(
                     key="storage_mode",
                     name="Storage Mode",
                     icon="mdi:solar-power",
                 ),
+                cid=CID_STORAGE_MODE,
             ),
         ]
     )
@@ -39,10 +39,9 @@ async def async_setup_entry(
 
 class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
     def __init__(
-        self, coordinator: SolisCloudControlCoordinator, cid: int, entity_description: SelectEntityDescription
+        self, coordinator: SolisCloudControlCoordinator, entity_description: SelectEntityDescription, cid: int
     ) -> None:
-        super().__init__(coordinator, cid)
-        self.entity_description = entity_description
+        super().__init__(coordinator, entity_description, cid)
         self._attr_options = [_MODE_SELF_USE, _MODE_FEED_IN_PRIORITY]
 
     @property
