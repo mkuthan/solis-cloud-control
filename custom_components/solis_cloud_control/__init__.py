@@ -28,7 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config_entry_id=entry.entry_id,
         identifiers={(entry.domain, inverter_sn)},
         manufacturer="Solis",
-        name=f"Inverter {inverter_sn}",
+        name=f"Inverter Control {inverter_sn}",
     )
 
     await coordinator.async_config_entry_first_refresh()
