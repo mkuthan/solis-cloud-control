@@ -5,9 +5,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
-    CID_BATTERY_FORCE_CHARGE_SOC,
     CID_BATTERY_OVER_DISCHARGE_SOC,
-    CID_BATTERY_RESERVE_SOC,
     CID_CHARGE_SLOT1_CURRENT,
     CID_CHARGE_SLOT1_SOC,
     CID_DISCHARGE_SLOT1_CURRENT,
@@ -61,33 +59,6 @@ async def async_setup_entry(
                 ),
                 cid=CID_DISCHARGE_SLOT1_SOC,
             ),
-            BatterySoc(
-                coordinator=coordinator,
-                entity_description=NumberEntityDescription(
-                    key="battery_reserve_soc",
-                    name="Battery Reserve SOC",
-                    icon="mdi:battery-30",
-                ),
-                cid=CID_BATTERY_RESERVE_SOC,
-            ),
-            BatterySoc(
-                coordinator=coordinator,
-                entity_description=NumberEntityDescription(
-                    key="battery_over_discharge_soc",
-                    name="Battery Over Discharge SOC",
-                    icon="mdi:battery-10",
-                ),
-                cid=CID_BATTERY_OVER_DISCHARGE_SOC,
-            ),
-            BatterySoc(
-                coordinator=coordinator,
-                entity_description=NumberEntityDescription(
-                    key="battery_force_charge_soc",
-                    name="Battery Force Charge SOC",
-                    icon="mdi:battery-alert-variant-outline",
-                ),
-                cid=CID_BATTERY_FORCE_CHARGE_SOC,
-            ),
         ]
     )
 
@@ -122,11 +93,17 @@ class BatterySoc(SolisCloudControlEntity, NumberEntity):
         self, coordinator: SolisCloudControlCoordinator, cid: int, entity_description: NumberEntityDescription
     ) -> None:
         super().__init__(coordinator, entity_description, cid)
-        self._attr_native_min_value = 0  # TODO: battery over discharge + 1
         self._attr_native_max_value = 100
         self._attr_native_step = 1
         self._attr_device_class = NumberDeviceClass.BATTERY
         self._attr_native_unit_of_measurement = PERCENTAGE
+
+    @property
+    def native_min_value(self) -> float:
+        if not self.coordinator.data:
+            return 0
+        over_discharge_str = self.coordinator.data.get(CID_BATTERY_OVER_DISCHARGE_SOC)
+        return float(over_discharge_str) + 1 if over_discharge_str is not None else 0
 
     @property
     def native_value(self) -> float | None:

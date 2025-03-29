@@ -164,9 +164,11 @@ class SolisCloudControlApiClient:
         interval=API_RETRY_DELAY_SECONDS,
         logger=_LOGGER,
     )
-    async def control(self, inverter_sn: str, cid: int, value: str) -> None:
+    async def control(self, inverter_sn: str, cid: int, value: str, old_value: str | None = None) -> None:
         date = current_date()
         payload = {"inverterSn": inverter_sn, "cid": cid, "value": value}
+        if old_value is not None:
+            payload["yuanzhi"] = old_value
 
         data_array = await self._request(date, API_CONTROL_ENDPOINT, payload)
 

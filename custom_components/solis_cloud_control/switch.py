@@ -53,9 +53,9 @@ class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
         return value == "1" if value is not None else None
 
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "1")
+        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "1", "0")
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "0")
+        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "0", "1")
         await self.coordinator.async_request_refresh()

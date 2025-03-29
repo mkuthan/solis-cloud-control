@@ -9,6 +9,7 @@ from custom_components.solis_cloud_control.api import SolisCloudControlApiClient
 from custom_components.solis_cloud_control.const import (
     CID_BATTERY_FORCE_CHARGE_SOC,
     CID_BATTERY_OVER_DISCHARGE_SOC,
+    CID_BATTERY_RECOVERY_SOC,
     CID_BATTERY_RESERVE_SOC,
     CID_CHARGE_SLOT1_CURRENT,
     CID_CHARGE_SLOT1_SOC,
@@ -29,9 +30,10 @@ _NAME = "Solis Cloud Control"
 _UPDATE_INTERVAL = timedelta(minutes=5)
 
 _ALL_CIDS = [
-    CID_BATTERY_RESERVE_SOC,
     CID_BATTERY_FORCE_CHARGE_SOC,
     CID_BATTERY_OVER_DISCHARGE_SOC,
+    CID_BATTERY_RECOVERY_SOC,
+    CID_BATTERY_RESERVE_SOC,
     CID_CHARGE_SLOT1_CURRENT,
     CID_CHARGE_SLOT1_SOC,
     CID_CHARGE_SLOT1_SWITCH,
