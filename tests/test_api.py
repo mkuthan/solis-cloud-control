@@ -60,10 +60,10 @@ async def mock_read_endpoint_http_error(request):
 
 @pytest.fixture
 def mock_retry_request():
-    async def no_retry_request(request):
-        return await request()
+    async def _execute_without_retry(self, endpoint: str, payload):
+        return await self._execute_request(endpoint, payload)
 
-    with patch("custom_components.solis_cloud_control.api._retry_request", new=no_retry_request):
+    with patch.object(SolisCloudControlApiClient, "_execute_request_with_retry", _execute_without_retry):
         yield
 
 

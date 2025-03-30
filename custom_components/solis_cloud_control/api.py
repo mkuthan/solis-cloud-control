@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-from datetime import datetime
 
 import aiohttp
 
@@ -52,11 +51,33 @@ class SolisCloudControlApiClient:
         self._session = session
         self._request_semaphore = asyncio.Semaphore(API_CONCURRENT_REQUESTS)
 
-    async def _request(self, date: datetime, endpoint: str, payload: dict[str, any] = None) -> dict[str, any] | None:
+    async def _execute_request_with_retry(
+        self,
+        endpoint: str,
+        payload: dict[str, any],
+        retry_count: int = API_RETRY_COUNT,
+        retry_delay: float = API_RETRY_DELAY_SECONDS,
+    ) -> any:
+        attempt = 0
+
+        while attempt < retry_count:
+            try:
+                return await self._execute_request(endpoint, payload)
+            except SolisCloudControlApiError as err:
+                attempt += 1
+                if attempt < retry_count:
+                    _LOGGER.warning("Retrying due to error: %s (attempt %d/%d)", str(err), attempt, retry_count)
+                    await asyncio.sleep(retry_delay)
+                else:
+                    raise
+
+    async def _execute_request(self, endpoint: str, payload: dict[str, any] = None) -> any:
         body = json.dumps(payload)
 
         payload_digest = digest(body)
         content_type = "application/json"
+
+        date = current_date()
         date_formatted = format_date(date)
 
         authorization_str = "\n".join(["POST", payload_digest, content_type, date_formatted, endpoint])
@@ -77,8 +98,8 @@ class SolisCloudControlApiClient:
         _LOGGER.debug("API request '%s': %s", endpoint, json.dumps(payload, indent=2))
 
         try:
-            async with self._request_semaphore:
-                async with asyncio.timeout(API_TIMEOUT_SECONDS):
+            async with asyncio.timeout(API_TIMEOUT_SECONDS):
+                async with self._request_semaphore:
                     async with self._session.post(url, headers=headers, json=payload) as response:
                         if response.status != 200:
                             error_text = await response.text()
@@ -100,13 +121,9 @@ class SolisCloudControlApiClient:
             raise SolisCloudControlApiError(f"Error accessing {url}: {str(err)}") from err
 
     async def read(self, inverter_sn: str, cid: int) -> str:
-        date = current_date()
         payload = {"inverterSn": inverter_sn, "cid": cid}
 
-        async def request() -> str:
-            return await self._request(date, API_READ_ENDPOINT, payload)
-
-        data = await _retry_request(request)
+        data = await self._execute_request_with_retry(API_READ_ENDPOINT, payload)
 
         if data is None:
             raise SolisCloudControlApiError("Read failed: 'data' field is missing in response")
@@ -117,13 +134,9 @@ class SolisCloudControlApiClient:
         return data["msg"]
 
     async def read_batch(self, inverter_sn: str, cids: list[int]) -> dict[int, str]:
-        date = current_date()
         payload = {"inverterSn": inverter_sn, "cids": ",".join(map(str, cids))}
 
-        async def request() -> dict[str, any]:
-            return await self._request(date, API_READ_BATCH_ENDPOINT, payload)
-
-        data = await _retry_request(request)
+        data = await self._execute_request_with_retry(API_READ_BATCH_ENDPOINT, payload)
 
         if data is None:
             raise SolisCloudControlApiError("ReadBatch failed: 'data' field is missing in response")
@@ -150,15 +163,11 @@ class SolisCloudControlApiClient:
         return result
 
     async def control(self, inverter_sn: str, cid: int, value: str, old_value: str | None = None) -> None:
-        date = current_date()
         payload = {"inverterSn": inverter_sn, "cid": cid, "value": value}
         if old_value is not None:
             payload["yuanzhi"] = old_value
 
-        async def request() -> None:
-            return await self._request(date, API_CONTROL_ENDPOINT, payload)
-
-        data_array = _retry_request(request)
+        data_array = await self._execute_request_with_retry(API_CONTROL_ENDPOINT, payload)
 
         if data_array is None:
             return
@@ -172,17 +181,3 @@ class SolisCloudControlApiClient:
                     raise SolisCloudControlApiError(f"Control failed: {error_msg}", response_code=str(code))
 
         return
-
-
-async def _retry_request(request: callable) -> any:
-    attempt = 0
-    while attempt < API_RETRY_COUNT:
-        try:
-            return await request()
-        except SolisCloudControlApiError as err:
-            attempt += 1
-            if attempt < API_RETRY_COUNT:
-                _LOGGER.warning("Retrying due to error: %s (attempt %d/%d)", str(err), attempt, API_RETRY_COUNT)
-                await asyncio.sleep(API_RETRY_DELAY_SECONDS)
-            else:
-                raise
