@@ -4,12 +4,10 @@ import logging
 from datetime import datetime
 
 import aiohttp
-import backoff
 
 from custom_components.solis_cloud_control.utils import current_date, digest, format_date, sign_authorization
 
 from .const import (
-    API_BASE_URL,
     API_CONCURRENT_REQUESTS,
     API_CONTROL_ENDPOINT,
     API_READ_BATCH_ENDPOINT,
@@ -43,10 +41,12 @@ class SolisCloudControlApiError(Exception):
 class SolisCloudControlApiClient:
     def __init__(
         self,
+        base_url: str,
         api_key: str,
         api_token: str,
         session: aiohttp.ClientSession,
     ) -> None:
+        self._base_url = base_url
         self._api_key = api_key
         self._api_secret = api_token
         self._session = session
@@ -72,7 +72,7 @@ class SolisCloudControlApiClient:
             "Authorization": authorization,
         }
 
-        url = f"{API_BASE_URL}{endpoint}"
+        url = f"{self._base_url}{endpoint}"
 
         _LOGGER.debug("API request '%s': %s", endpoint, json.dumps(payload, indent=2))
 
@@ -99,18 +99,14 @@ class SolisCloudControlApiClient:
         except aiohttp.ClientError as err:
             raise SolisCloudControlApiError(f"Error accessing {url}: {str(err)}") from err
 
-    @backoff.on_exception(
-        backoff.constant,
-        SolisCloudControlApiError,
-        max_tries=API_RETRY_COUNT,
-        interval=API_RETRY_DELAY_SECONDS,
-        logger=_LOGGER,
-    )
     async def read(self, inverter_sn: str, cid: int) -> str:
         date = current_date()
         payload = {"inverterSn": inverter_sn, "cid": cid}
 
-        data = await self._request(date, API_READ_ENDPOINT, payload)
+        async def request() -> str:
+            return await self._request(date, API_READ_ENDPOINT, payload)
+
+        data = await _retry_request(request)
 
         if data is None:
             raise SolisCloudControlApiError("Read failed: 'data' field is missing in response")
@@ -120,18 +116,14 @@ class SolisCloudControlApiClient:
 
         return data["msg"]
 
-    @backoff.on_exception(
-        backoff.constant,
-        SolisCloudControlApiError,
-        max_tries=API_RETRY_COUNT,
-        interval=API_RETRY_DELAY_SECONDS,
-        logger=_LOGGER,
-    )
     async def read_batch(self, inverter_sn: str, cids: list[int]) -> dict[int, str]:
         date = current_date()
         payload = {"inverterSn": inverter_sn, "cids": ",".join(map(str, cids))}
 
-        data = await self._request(date, API_READ_BATCH_ENDPOINT, payload)
+        async def request() -> dict[str, any]:
+            return await self._request(date, API_READ_BATCH_ENDPOINT, payload)
+
+        data = await _retry_request(request)
 
         if data is None:
             raise SolisCloudControlApiError("ReadBatch failed: 'data' field is missing in response")
@@ -157,20 +149,16 @@ class SolisCloudControlApiClient:
 
         return result
 
-    @backoff.on_exception(
-        backoff.constant,
-        SolisCloudControlApiError,
-        max_tries=API_RETRY_COUNT,
-        interval=API_RETRY_DELAY_SECONDS,
-        logger=_LOGGER,
-    )
     async def control(self, inverter_sn: str, cid: int, value: str, old_value: str | None = None) -> None:
         date = current_date()
         payload = {"inverterSn": inverter_sn, "cid": cid, "value": value}
         if old_value is not None:
             payload["yuanzhi"] = old_value
 
-        data_array = await self._request(date, API_CONTROL_ENDPOINT, payload)
+        async def request() -> None:
+            return await self._request(date, API_CONTROL_ENDPOINT, payload)
+
+        data_array = _retry_request(request)
 
         if data_array is None:
             return
@@ -184,3 +172,17 @@ class SolisCloudControlApiClient:
                     raise SolisCloudControlApiError(f"Control failed: {error_msg}", response_code=str(code))
 
         return
+
+
+async def _retry_request(request: callable) -> any:
+    attempt = 0
+    while attempt < API_RETRY_COUNT:
+        try:
+            return await request()
+        except SolisCloudControlApiError as err:
+            attempt += 1
+            if attempt < API_RETRY_COUNT:
+                _LOGGER.warning("Retrying due to error: %s (attempt %d/%d)", str(err), attempt, API_RETRY_COUNT)
+                await asyncio.sleep(API_RETRY_DELAY_SECONDS)
+            else:
+                raise

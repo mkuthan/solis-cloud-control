@@ -7,7 +7,7 @@ from homeassistant.helpers import device_registry as dr
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
 
 from .api import SolisCloudControlApiClient
-from .const import CONF_INVERTER_SN
+from .const import API_BASE_URL, CONF_INVERTER_SN
 
 PLATFORMS: list[Platform] = [Platform.SELECT, Platform.TEXT, Platform.NUMBER, Platform.SWITCH, Platform.SENSOR]
 
@@ -18,7 +18,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     inverter_sn = entry.data[CONF_INVERTER_SN]
 
     session = aiohttp_client.async_get_clientsession(hass)
-    api_client = SolisCloudControlApiClient(api_key, api_token, session)
+    api_client = SolisCloudControlApiClient(API_BASE_URL, api_key, api_token, session)
 
     coordinator = SolisCloudControlCoordinator(hass, entry, api_client)
     entry.runtime_data = coordinator

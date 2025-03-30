@@ -1,16 +1,16 @@
 [project]
 name = "solis-cloud-control"
-version = "0.0.1"
+version = "0.0.2"
 requires-python = "~=3.13"
 dependencies = [
-    "homeassistant==2025.3.3", 
-    "backoff==2.2.1"
+    "homeassistant==2025.3.3",
 ]
 
 
 [tool.uv]
 dev-dependencies = [
     "pytest==8.3.3",
+    "pytest-aiohttp==1.1.0",
     "pytest-asyncio==0.25.3",
     "pytest-cov==6.0.0",
     "ruff==0.7.4",
@@ -20,7 +20,8 @@ dev-dependencies = [
 [tool.pytest.ini_options]
 pythonpath = "."
 testpaths = ["tests"]
-addopts = "--cov=example --cov-branch"
+addopts = "--cov=custom_components --cov-branch"
+asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 120
@@ -42,7 +43,11 @@ select = [
     "N",   # pep8-naming
 ]
 per-file-ignores = { "custom_components/**/*.py" = [
-    "ANN101",
-], "tests/*.py" = [
-    "ANN101",
-] }
+        "ANN101",
+    ], "tests/*.py" = [
+        "ANN001",
+        "ANN101",
+        "ANN201",
+        "ANN202",
+        "ARG001",
+    ]}

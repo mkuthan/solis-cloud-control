@@ -7,7 +7,7 @@ from homeassistant.helpers import aiohttp_client
 
 from custom_components.solis_cloud_control.api import SolisCloudControlApiClient, SolisCloudControlApiError
 
-from .const import CID_STORAGE_MODE, CONF_INVERTER_SN, DOMAIN
+from .const import API_BASE_URL, CID_STORAGE_MODE, CONF_INVERTER_SN, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,5 +59,5 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
 
     async def _test_credentials(self, api_key: str, api_token: str, inverter_sn: str) -> None:
         session = aiohttp_client.async_get_clientsession(self.hass)
-        api_client = SolisCloudControlApiClient(api_key, api_token, session)
+        api_client = SolisCloudControlApiClient(API_BASE_URL, api_key, api_token, session)
         await api_client.read(inverter_sn, CID_STORAGE_MODE)
