@@ -1,7 +1,7 @@
 {
     "domain": "solis_cloud_control",
     "name": "Solis Cloud Control",
-    "version": "0.0.2",
+    "version": "1.0.0",
     "documentation": "https://github.com/mkuthan/solis-cloud-control",
     "codeowners": [
         "@mkuthan"
