@@ -1,6 +1,9 @@
 # Solis Cloud Control API Integration
 
 [![CI](https://github.com/mkuthan/solis-cloud-control/actions/workflows/ci.yml/badge.svg)](https://github.com/mkuthan/solis-cloud-control/actions/workflows/ci.yml)
+![GitHub Release](https://img.shields.io/github/v/release/mkuthan/solis-cloud-control)
+
+
 
 This is very initial version of the Solis Cloud Control API integration for Home Assistant.
 It allows you to read and control various settings of your Solis inverter.
