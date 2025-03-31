@@ -3,9 +3,35 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CID_CHARGE_SLOT1_SWITCH, CID_DISCHARGE_SLOT1_SWITCH
+from .const import (
+    CID_CHARGE_SLOT1_SWITCH,
+    CID_CHARGE_SLOT2_SWITCH,
+    CID_CHARGE_SLOT3_SWITCH,
+    CID_CHARGE_SLOT4_SWITCH,
+    CID_CHARGE_SLOT5_SWITCH,
+    CID_CHARGE_SLOT6_SWITCH,
+    CID_DISCHARGE_SLOT1_SWITCH,
+    CID_DISCHARGE_SLOT2_SWITCH,
+    CID_DISCHARGE_SLOT3_SWITCH,
+    CID_DISCHARGE_SLOT4_SWITCH,
+    CID_DISCHARGE_SLOT5_SWITCH,
+    CID_DISCHARGE_SLOT6_SWITCH,
+)
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
+
+_BIT_CHARGE_SLOT1 = 0
+_BIT_CHARGE_SLOT2 = 1
+_BIT_CHARGE_SLOT3 = 2
+_BIT_CHARGE_SLOT4 = 3
+_BIT_CHARGE_SLOT5 = 4
+_BIT_CHARGE_SLOT6 = 5
+_BIT_DISCHARGE_SLOT1 = 6
+_BIT_DISCHARGE_SLOT2 = 7
+_BIT_DISCHARGE_SLOT3 = 8
+_BIT_DISCHARGE_SLOT4 = 9
+_BIT_DISCHARGE_SLOT5 = 10
+_BIT_DISCHARGE_SLOT6 = 11
 
 
 async def async_setup_entry(
@@ -53,9 +79,37 @@ class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
         return value == "1" if value is not None else None
 
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "1", "0")
+        old_value = self._calculate_old_value()
+        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "1", old_value)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "0", "1")
+        old_value = self._calculate_old_value()
+        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "0", old_value)
         await self.coordinator.async_request_refresh()
+
+    def _calculate_old_value(self) -> str:
+        if not self.coordinator.data:
+            return "0"
+
+        slot_states = {
+            _BIT_CHARGE_SLOT1: self.coordinator.data.get(CID_CHARGE_SLOT1_SWITCH) == "1",
+            _BIT_CHARGE_SLOT2: self.coordinator.data.get(CID_CHARGE_SLOT2_SWITCH) == "1",
+            _BIT_CHARGE_SLOT3: self.coordinator.data.get(CID_CHARGE_SLOT3_SWITCH) == "1",
+            _BIT_CHARGE_SLOT4: self.coordinator.data.get(CID_CHARGE_SLOT4_SWITCH) == "1",
+            _BIT_CHARGE_SLOT5: self.coordinator.data.get(CID_CHARGE_SLOT5_SWITCH) == "1",
+            _BIT_CHARGE_SLOT6: self.coordinator.data.get(CID_CHARGE_SLOT6_SWITCH) == "1",
+            _BIT_DISCHARGE_SLOT1: self.coordinator.data.get(CID_DISCHARGE_SLOT1_SWITCH) == "1",
+            _BIT_DISCHARGE_SLOT2: self.coordinator.data.get(CID_DISCHARGE_SLOT2_SWITCH) == "1",
+            _BIT_DISCHARGE_SLOT3: self.coordinator.data.get(CID_DISCHARGE_SLOT3_SWITCH) == "1",
+            _BIT_DISCHARGE_SLOT4: self.coordinator.data.get(CID_DISCHARGE_SLOT4_SWITCH) == "1",
+            _BIT_DISCHARGE_SLOT5: self.coordinator.data.get(CID_DISCHARGE_SLOT5_SWITCH) == "1",
+            _BIT_DISCHARGE_SLOT6: self.coordinator.data.get(CID_DISCHARGE_SLOT6_SWITCH) == "1",
+        }
+
+        value = 0
+        for bit_position, is_enabled in slot_states.items():
+            if is_enabled:
+                value |= 1 << bit_position
+
+        return str(value)
