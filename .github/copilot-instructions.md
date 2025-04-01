@@ -10,3 +10,5 @@ You are an expert in Home Assistant integration development. You are going to he
 - Don't use any third-party libraries
 - Don't generate docstrings
 - Add type hints for all functions and methods except tests
+
+Use conventional commits for all commit messages.
