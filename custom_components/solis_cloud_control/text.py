@@ -1,3 +1,5 @@
+import logging
+
 from homeassistant.components.text import TextEntity, TextEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -9,6 +11,8 @@ from custom_components.solis_cloud_control.utils import validate_time_range
 from .const import CID_CHARGE_SLOT1_TIME, CID_DISCHARGE_SLOT1_TIME
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
+
+_LOGGER = logging.getLogger(__name__)
 
 _TEXT_LEGHT = len("HH:MM-HH:MM")
 _TEXT_PATTERN = r"^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$"
@@ -63,6 +67,12 @@ class TimeSlotText(SolisCloudControlEntity, TextEntity):
     async def async_set_value(self, value: str) -> None:
         if not validate_time_range(value):
             raise InvalidEntityFormatError(f"Invalid time range: {value}")
+
+        _LOGGER.info(
+            "Setting time slot to %s for inverter %s",
+            value,
+            self.coordinator.inverter_sn,
+        )
 
         await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, value)
         await self.coordinator.async_request_refresh()

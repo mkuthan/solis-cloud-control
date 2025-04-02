@@ -1,3 +1,5 @@
+import logging
+
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent
@@ -13,6 +15,8 @@ from .const import (
 )
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -84,6 +88,11 @@ class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(value)
+        _LOGGER.info(
+            "Setting current to %s for inverter %s",
+            value_str,
+            self.coordinator.inverter_sn,
+        )
         await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, value_str)
         await self.coordinator.async_request_refresh()
 
@@ -115,5 +124,10 @@ class BatterySoc(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(value)
+        _LOGGER.info(
+            "Setting SOC to %s for inverter %s",
+            value_str,
+            self.coordinator.inverter_sn,
+        )
         await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, value_str)
         await self.coordinator.async_request_refresh()

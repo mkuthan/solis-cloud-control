@@ -170,7 +170,10 @@ class SolisCloudControlApiClient:
         data_array = await self._execute_request_with_retry(API_CONTROL_ENDPOINT, payload)
 
         if data_array is None:
-            return
+            raise SolisCloudControlApiError("Control failed: 'data' field is missing in response")
+
+        if not isinstance(data_array, list):
+            raise SolisCloudControlApiError("Control failed: response data is not an array")
 
         if isinstance(data_array, list):
             for data in data_array:

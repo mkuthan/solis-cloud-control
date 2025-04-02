@@ -225,6 +225,14 @@ async def mock_control_endpoint_control_error(request):
     return web.json_response({"code": "0", "msg": "Success", "data": [{"code": "100", "msg": "Any Error"}]})
 
 
+async def mock_control_endpoint_missing_data_field(request):
+    return web.json_response({"code": "0", "msg": "Success"})
+
+
+async def mock_control_endpoint_invalid_data_format(request):
+    return web.json_response({"code": "0", "msg": "Success", "data": "not an array"})
+
+
 @pytest.mark.parametrize(
     "mock_endpoint,expected_error",
     [
@@ -236,6 +244,14 @@ async def mock_control_endpoint_control_error(request):
         (
             mock_control_endpoint_control_error,
             SolisCloudControlApiError("Control failed: Any Error", response_code="100"),
+        ),
+        (
+            mock_control_endpoint_missing_data_field,
+            SolisCloudControlApiError("Control failed: 'data' field is missing in response"),
+        ),
+        (
+            mock_control_endpoint_invalid_data_format,
+            SolisCloudControlApiError("Control failed: response data is not an array"),
         ),
     ],
 )

@@ -1,3 +1,5 @@
+import logging
+
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -6,6 +8,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import CID_STORAGE_MODE
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
+
+_LOGGER = logging.getLogger(__name__)
+
 
 _MODE_SELF_USE = "Self-Use"
 _MODE_FEED_IN_PRIORITY = "Feed-In Priority"
@@ -96,6 +101,13 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
             value_int |= 1 << _BIT_SELF_USE
         elif option == _MODE_FEED_IN_PRIORITY:
             value_int |= 1 << _BIT_FEED_IN_PRIORITY
+
+        _LOGGER.info(
+            "Setting storage mode to %s (value: %s) for inverter %s",
+            option,
+            value_int,
+            self.coordinator.inverter_sn,
+        )
 
         await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, str(value_int))
         await self.coordinator.async_request_refresh()

@@ -4,3 +4,4 @@ logger:
   default: error
   logs:
     custom_components.solis_cloud_control: debug
+    custom_components.solis_cloud_control.api: info

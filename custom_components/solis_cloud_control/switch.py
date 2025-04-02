@@ -1,3 +1,5 @@
+import logging
+
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -19,6 +21,9 @@ from .const import (
 )
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
+
+_LOGGER = logging.getLogger(__name__)
+
 
 _BIT_CHARGE_SLOT1 = 0
 _BIT_CHARGE_SLOT2 = 1
@@ -80,11 +85,21 @@ class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
         old_value = self._calculate_old_value()
+        _LOGGER.info(
+            "Turning on slot (old_value: %s) for inverter %s",
+            old_value,
+            self.coordinator.inverter_sn,
+        )
         await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "1", old_value)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
         old_value = self._calculate_old_value()
+        _LOGGER.info(
+            "Turning off slot (old_value: %s) for inverter %s",
+            old_value,
+            self.coordinator.inverter_sn,
+        )
         await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "0", old_value)
         await self.coordinator.async_request_refresh()
 
