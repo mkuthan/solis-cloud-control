@@ -85,23 +85,13 @@ class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
         old_value = self._calculate_old_value()
-        _LOGGER.info(
-            "Turning on slot (old_value: %s) for inverter %s",
-            old_value,
-            self.coordinator.inverter_sn,
-        )
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "1", old_value)
-        await self.coordinator.async_request_refresh()
+        _LOGGER.info("Turning on slot (old_value: %s)", old_value)
+        await self.coordinator.control(self.cid, "1", old_value)
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
         old_value = self._calculate_old_value()
-        _LOGGER.info(
-            "Turning off slot (old_value: %s) for inverter %s",
-            old_value,
-            self.coordinator.inverter_sn,
-        )
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, "0", old_value)
-        await self.coordinator.async_request_refresh()
+        _LOGGER.info("Turning off slot (old_value: %s)", old_value)
+        await self.coordinator.control(self.cid, "0", old_value)
 
     def _calculate_old_value(self) -> str:
         if not self.coordinator.data:

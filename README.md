@@ -56,3 +56,12 @@ Run the integration locally:
 ```bash
 ./scripts/run
 ```
+
+## Release
+
+To release a new version, create a new tag and push it to the repository:
+
+```bash
+git tag -a v1.0.1
+git push origin v1.0.1
+```

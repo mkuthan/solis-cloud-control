@@ -1,8 +1,10 @@
+import asyncio
 import logging
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from custom_components.solis_cloud_control.api import SolisCloudControlApiClient, SolisCloudControlApiError
@@ -65,6 +67,8 @@ _ALL_CIDS = [
     CID_STORAGE_MODE,
 ]
 
+_CONTROL_VERIFICATION_RETRY_DELAY_SECONDS = 5
+
 
 class SolisCloudControlData(dict[int, str | None]):
     pass
@@ -84,14 +88,39 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
             config_entry=config_entry,
             update_interval=_UPDATE_INTERVAL,
         )
-        self.api_client = api_client
-        self.inverter_sn = config_entry.data[CONF_INVERTER_SN]
+        self._api_client = api_client
+        self._inverter_sn = config_entry.data[CONF_INVERTER_SN]
 
     async def _async_update_data(self) -> SolisCloudControlData:
         try:
-            result = await self.api_client.read_batch(self.inverter_sn, _ALL_CIDS)
+            result = await self._api_client.read_batch(self._inverter_sn, _ALL_CIDS)
             data = SolisCloudControlData({cid: result.get(cid) for cid in _ALL_CIDS})
             _LOGGER.debug("Data read from API: %s", data)
             return data
         except SolisCloudControlApiError as error:
             raise UpdateFailed(error) from error
+
+    async def control(self, cid: int, value: str, old_value: str | None = None, retry_count: int = 2) -> None:
+        attempt = 0
+
+        while attempt < retry_count:
+            await self._api_client.control(self._inverter_sn, cid, value, old_value)
+            current_value = await self._api_client.read(self._inverter_sn, cid)
+
+            if current_value == value:
+                await self.async_request_refresh()
+                return
+
+            attempt += 1
+            if attempt < retry_count:
+                _LOGGER.warning(
+                    "Retrying due to verification failed, current value: %s (attempt %d/%d)",
+                    current_value,
+                    attempt,
+                    retry_count,
+                )
+                await asyncio.sleep(_CONTROL_VERIFICATION_RETRY_DELAY_SECONDS)
+            else:
+                raise HomeAssistantError(
+                    f"Failed to set value for CID {cid}. " f"Expected: {value}, got: {current_value}"
+                )

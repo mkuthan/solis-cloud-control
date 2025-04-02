@@ -88,13 +88,8 @@ class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(value)
-        _LOGGER.info(
-            "Setting current to %s for inverter %s",
-            value_str,
-            self.coordinator.inverter_sn,
-        )
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, value_str)
-        await self.coordinator.async_request_refresh()
+        _LOGGER.info("Setting current to %s", value_str)
+        await self.coordinator.control(self.cid, value_str)
 
 
 class BatterySoc(SolisCloudControlEntity, NumberEntity):
@@ -124,10 +119,5 @@ class BatterySoc(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(value)
-        _LOGGER.info(
-            "Setting SOC to %s for inverter %s",
-            value_str,
-            self.coordinator.inverter_sn,
-        )
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, value_str)
-        await self.coordinator.async_request_refresh()
+        _LOGGER.info("Setting SOC to %s", value_str)
+        await self.coordinator.control(self.cid, value_str)

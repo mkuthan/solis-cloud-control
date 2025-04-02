@@ -68,11 +68,6 @@ class TimeSlotText(SolisCloudControlEntity, TextEntity):
         if not validate_time_range(value):
             raise InvalidEntityFormatError(f"Invalid time range: {value}")
 
-        _LOGGER.info(
-            "Setting time slot to %s for inverter %s",
-            value,
-            self.coordinator.inverter_sn,
-        )
+        _LOGGER.info("Setting time slot to %s", value)
 
-        await self.coordinator.api_client.control(self.coordinator.inverter_sn, self.cid, value)
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.control(self.cid, value)
