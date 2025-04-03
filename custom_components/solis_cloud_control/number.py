@@ -87,7 +87,7 @@ class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
         return float(value_str) if value_str is not None else None
 
     async def async_set_native_value(self, value: float) -> None:
-        value_str = str(value)
+        value_str = str(int(round(value)))
         _LOGGER.info("Setting current to %s", value_str)
         await self.coordinator.control(self.cid, value_str)
 
@@ -118,6 +118,6 @@ class BatterySoc(SolisCloudControlEntity, NumberEntity):
         return float(value_str) if value_str is not None else None
 
     async def async_set_native_value(self, value: float) -> None:
-        value_str = str(value)
+        value_str = str(int(round(value)))
         _LOGGER.info("Setting SOC to %s", value_str)
         await self.coordinator.control(self.cid, value_str)
