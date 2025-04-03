@@ -62,6 +62,6 @@ Run the integration locally:
 To release a new version, create a new tag and push it to the repository:
 
 ```bash
-git tag -a v1.0.1
+git tag v1.0.1
 git push origin v1.0.1
 ```
