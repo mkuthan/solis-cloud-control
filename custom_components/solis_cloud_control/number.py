@@ -2,7 +2,7 @@ import logging
 
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberEntityDescription
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent
+from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -12,6 +12,7 @@ from .const import (
     CID_CHARGE_SLOT1_SOC,
     CID_DISCHARGE_SLOT1_CURRENT,
     CID_DISCHARGE_SLOT1_SOC,
+    CID_MAX_EXPORT_POWER,
 )
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
@@ -63,6 +64,15 @@ async def async_setup_entry(
                 ),
                 cid=CID_DISCHARGE_SLOT1_SOC,
             ),
+            MaxExportPower(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="max_export_power",
+                    name="Max Export Power",
+                    icon="mdi:transmission-tower-export",
+                ),
+                cid=CID_MAX_EXPORT_POWER,
+            ),
         ]
     )
 
@@ -88,7 +98,7 @@ class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
-        _LOGGER.info("Setting current to %s", value_str)
+        _LOGGER.info("Setting current to %f (value: %s)", value, value_str)
         await self.coordinator.control(self.cid, value_str)
 
 
@@ -119,5 +129,29 @@ class BatterySoc(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
-        _LOGGER.info("Setting SOC to %s", value_str)
+        _LOGGER.info("Setting SOC to %f (value: %s)", value, value_str)
+        await self.coordinator.control(self.cid, value_str)
+
+
+class MaxExportPower(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self, coordinator: SolisCloudControlCoordinator, entity_description: NumberEntityDescription, cid: int
+    ) -> None:
+        super().__init__(coordinator, entity_description, cid)
+        self._attr_native_min_value = 0
+        self._attr_native_max_value = 13200
+        self._attr_native_step = 100
+        self._attr_device_class = NumberDeviceClass.POWER
+        self._attr_native_unit_of_measurement = UnitOfPower.WATT
+
+    @property
+    def native_value(self) -> float | None:
+        if not self.coordinator.data:
+            return None
+        value_str = self.coordinator.data.get(self.cid)
+        return float(value_str) * 100 if value_str is not None else None
+
+    async def async_set_native_value(self, value: float) -> None:
+        value_str = str(int(round(value / 100)))
+        _LOGGER.info("Setting max export power to %f (value: %s)", value, value_str)
         await self.coordinator.control(self.cid, value_str)

@@ -69,5 +69,4 @@ class TimeSlotText(SolisCloudControlEntity, TextEntity):
             raise InvalidEntityFormatError(f"Invalid time range: {value}")
 
         _LOGGER.info("Setting time slot to %s", value)
-
         await self.coordinator.control(self.cid, value)
