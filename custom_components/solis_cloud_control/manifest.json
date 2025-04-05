@@ -1,6 +1,6 @@
 {
     "domain": "solis_cloud_control",
-    "name": "Solis Cloud Control",
+    "name": "Solis Cloud Control Integration",
     "version": "1.0.0",
     "documentation": "https://github.com/mkuthan/solis-cloud-control",
     "issue_tracker": "https://github.com/mkuthan/solis-cloud-control/issues",
