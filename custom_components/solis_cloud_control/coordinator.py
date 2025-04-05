@@ -39,7 +39,10 @@ _LOGGER = logging.getLogger(__name__)
 
 _NAME = "Solis Cloud Control"
 
-_UPDATE_INTERVAL = timedelta(minutes=5)
+_UPDATE_INTERVAL = timedelta(minutes=3)
+
+_CONTROL_RETRY_COUNT = 1  # initial attempt + 1 retry
+_CONTROL_RETRY_DELAY_SECONDS = 5
 
 _ALL_CIDS = [
     CID_BATTERY_FORCE_CHARGE_SOC,
@@ -66,8 +69,6 @@ _ALL_CIDS = [
     CID_DISCHARGE_SLOT6_SWITCH,
     CID_STORAGE_MODE,
 ]
-
-_CONTROL_VERIFICATION_RETRY_DELAY_SECONDS = 5
 
 
 class SolisCloudControlData(dict[int, str | None]):
@@ -100,10 +101,17 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
         except SolisCloudControlApiError as error:
             raise UpdateFailed(error) from error
 
-    async def control(self, cid: int, value: str, old_value: str | None = None, retry_count: int = 2) -> None:
+    async def control(
+        self,
+        cid: int,
+        value: str,
+        old_value: str | None = None,
+        retry_count: int = _CONTROL_RETRY_COUNT,
+        retry_delay: float = _CONTROL_RETRY_DELAY_SECONDS,
+    ) -> None:
         attempt = 0
 
-        while attempt < retry_count:
+        while attempt <= retry_count:
             await self._api_client.control(self._inverter_sn, cid, value, old_value)
             current_value = await self._api_client.read(self._inverter_sn, cid)
 
@@ -112,14 +120,14 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
                 return
 
             attempt += 1
-            if attempt < retry_count:
+            if attempt <= retry_count:
                 _LOGGER.warning(
                     "Retrying due to verification failed, current value: %s (attempt %d/%d)",
                     current_value,
                     attempt,
                     retry_count,
                 )
-                await asyncio.sleep(_CONTROL_VERIFICATION_RETRY_DELAY_SECONDS)
+                await asyncio.sleep(retry_delay)
             else:
                 raise HomeAssistantError(
                     f"Failed to set value for CID {cid}. " f"Expected: {value}, got: {current_value}"
