@@ -6,6 +6,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CID_BATTERY_FORCE_CHARGE_SOC,
+    CID_BATTERY_MAX_CHARGE_SOC,
     CID_BATTERY_OVER_DISCHARGE_SOC,
     CID_BATTERY_RECOVERY_SOC,
     CID_BATTERY_RESERVE_SOC,
@@ -57,6 +58,15 @@ async def async_setup_entry(
                     icon="mdi:battery-50",
                 ),
                 cid=CID_BATTERY_RESERVE_SOC,
+            ),
+            BatterySocSensor(
+                coordinator=coordinator,
+                entity_description=SensorEntityDescription(
+                    key="battery_max_charge_soc",
+                    name="Battery Max Charge SOC",
+                    icon="mdi:battery",
+                ),
+                cid=CID_BATTERY_MAX_CHARGE_SOC,
             ),
         ]
     )

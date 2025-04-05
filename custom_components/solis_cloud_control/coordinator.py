@@ -10,6 +10,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from custom_components.solis_cloud_control.api import SolisCloudControlApiClient, SolisCloudControlApiError
 from custom_components.solis_cloud_control.const import (
     CID_BATTERY_FORCE_CHARGE_SOC,
+    CID_BATTERY_MAX_CHARGE_SOC,
     CID_BATTERY_OVER_DISCHARGE_SOC,
     CID_BATTERY_RECOVERY_SOC,
     CID_BATTERY_RESERVE_SOC,
@@ -47,6 +48,7 @@ _CONTROL_RETRY_DELAY_SECONDS = 5
 
 _ALL_CIDS = [
     CID_BATTERY_FORCE_CHARGE_SOC,
+    CID_BATTERY_MAX_CHARGE_SOC,
     CID_BATTERY_OVER_DISCHARGE_SOC,
     CID_BATTERY_RECOVERY_SOC,
     CID_BATTERY_RESERVE_SOC,
