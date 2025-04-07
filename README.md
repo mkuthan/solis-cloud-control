@@ -27,12 +27,10 @@ Configure Solis Cloud Control integration with:
 
 ## Features
 
-Integration supports:
-
-* ⚡ Storage Modes: "Self-Use", "Feed-In Priority"
-* ⏱️ Charge/Discharge Slots
-* ⚖️ Maximum Export Power
-* 🛠️ "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes
+* ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid"
+* ⏱️ Schedule charge and discharge slots
+* ⚖️ Set maximum export power
+* 🛠️ Access "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes
 
 ![Inverter Controls](inverter_controls.png)
 

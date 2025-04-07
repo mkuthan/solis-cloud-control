@@ -4,7 +4,7 @@ import logging
 
 import aiohttp
 
-from custom_components.solis_cloud_control.utils import current_date, digest, format_date, sign_authorization
+from custom_components.solis_cloud_control.api_utils import current_date, digest, format_date, sign_authorization
 
 _LOGGER = logging.getLogger(__name__)
 

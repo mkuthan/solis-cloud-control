@@ -35,6 +35,7 @@ jobs:
         with:
           token: ${{ github.token }}
           tag: ${{ github.ref_name }}
+          useGitmojis: false
 
       - uses: softprops/action-gh-release@v2
         with:
