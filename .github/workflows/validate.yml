@@ -8,12 +8,15 @@ on:
       - "**"
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   validate:
     runs-on: "ubuntu-latest"
 
     steps:
+      - uses: "home-assistant/actions/hassfest@master"
       - uses: "hacs/action@main"
         with:
           category: "integration"
