@@ -14,8 +14,10 @@ _LOGGER = logging.getLogger(__name__)
 
 _MODE_SELF_USE = "Self-Use"
 _MODE_FEED_IN_PRIORITY = "Feed-In Priority"
+_MODE_OFF_GRID = "Off-Grid"
 
 _BIT_SELF_USE = 0
+_BIT_OFF_GRID = 2
 _BIT_BACKUP_MODE = 4
 _BIT_GRID_CHARGING = 5
 _BIT_FEED_IN_PRIORITY = 6
@@ -47,7 +49,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         self, coordinator: SolisCloudControlCoordinator, entity_description: SelectEntityDescription, cid: int
     ) -> None:
         super().__init__(coordinator, entity_description, cid)
-        self._attr_options = [_MODE_SELF_USE, _MODE_FEED_IN_PRIORITY]
+        self._attr_options = [_MODE_SELF_USE, _MODE_FEED_IN_PRIORITY, _MODE_OFF_GRID]
 
     @property
     def current_option(self) -> str | None:
@@ -64,6 +66,8 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
             return _MODE_SELF_USE
         elif value_int & (1 << _BIT_FEED_IN_PRIORITY):
             return _MODE_FEED_IN_PRIORITY
+        elif value_int & (1 << _BIT_OFF_GRID):
+            return _MODE_OFF_GRID
 
         return None
 
@@ -96,11 +100,14 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
 
         value_int &= ~(1 << _BIT_SELF_USE)
         value_int &= ~(1 << _BIT_FEED_IN_PRIORITY)
+        value_int &= ~(1 << _BIT_OFF_GRID)
 
         if option == _MODE_SELF_USE:
             value_int |= 1 << _BIT_SELF_USE
         elif option == _MODE_FEED_IN_PRIORITY:
             value_int |= 1 << _BIT_FEED_IN_PRIORITY
+        elif option == _MODE_OFF_GRID:
+            value_int |= 1 << _BIT_OFF_GRID
 
         _LOGGER.info("Setting storage mode to %s (value: %s)", option, value_int)
 
