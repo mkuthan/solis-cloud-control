@@ -12,18 +12,22 @@ It allows you to read and control various settings of your Solis inverter.
 
 ## Installation
 
-The integration is not currently available in [HACS](https://www.hacs.xyz/). However, you can install it manually by adding [custom repository](https://www.hacs.xyz/docs/faq/custom_repositories/).
+Use [HACS](https://www.hacs.xyz/) to install the integration:
 
-> [!TIP]
-> For updates on HACS availability, see [issue #7](https://github.com/mkuthan/solis-cloud-control/issues/7).
+1. Open HACS in Home Assistant
+2. Go to "Integrations"
+3. Click on the "+" button in the bottom right corner
+4. Search for "Solis Cloud Control"
+5. Click on "Install" to add the integration to your Home Assistant instance
+6. Restart Home Assistant
 
 ## Configuration
 
-Configure Solis Cloud Control integration with:
-
-* Solis API key
-* Solis Token
-* Solis Inverter Serial Number
+1. Go to "Configuration" > "Integrations"
+2. Click on the "+" button in the bottom right corner
+3. Search for "Solis Cloud Control"
+4. Click on "Solis Cloud Control" to add the integration
+5. Enter your Solis API key, token, and inverter serial number
 
 ## Features
 
