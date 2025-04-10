@@ -1,6 +1,6 @@
 import pytest
 from homeassistant.components.text import TextEntityDescription
-from homeassistant.exceptions import InvalidEntityFormatError
+from homeassistant.exceptions import HomeAssistantError
 
 from custom_components.solis_cloud_control.const import CID_CHARGE_SLOT1_TIME
 from custom_components.solis_cloud_control.text import _TEXT_LEGHT, _TEXT_PATTERN, TimeSlotText
@@ -35,10 +35,14 @@ class TestTimeSlotText:
         time_slot_entity.coordinator.data = None
         assert time_slot_entity.native_value is None
 
+    def test_native_value_invalid_format(self, time_slot_entity):
+        time_slot_entity.coordinator.data = {CID_CHARGE_SLOT1_TIME: "00:01-2300:5000"}
+        assert time_slot_entity.native_value is None
+
     async def test_async_set_value_valid(self, time_slot_entity):
         await time_slot_entity.async_set_value("09:00-17:00")
         time_slot_entity.coordinator.control.assert_awaited_once_with(CID_CHARGE_SLOT1_TIME, "09:00-17:00")
 
     async def test_async_set_value_invalid(self, time_slot_entity):
-        with pytest.raises(InvalidEntityFormatError):
+        with pytest.raises(HomeAssistantError, match="Invalid 'Slot1 Charge Time': 25:00-26:00"):
             await time_slot_entity.async_set_value("25:00-26:00")
