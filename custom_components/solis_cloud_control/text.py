@@ -4,7 +4,7 @@ from datetime import datetime
 from homeassistant.components.text import TextEntity, TextEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import InvalidEntityFormatError
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import CID_CHARGE_SLOT1_TIME, CID_DISCHARGE_SLOT1_TIME
@@ -61,13 +61,22 @@ class TimeSlotText(SolisCloudControlEntity, TextEntity):
         if not self.coordinator.data:
             return None
 
-        return self.coordinator.data.get(self.cid)
+        value = self.coordinator.data.get(self.cid)
+
+        if value is None:
+            return None
+
+        if not self._validate_time_range(value):
+            _LOGGER.warning("Invalid '%s': %s", self.name, value)
+            return None
+
+        return value
 
     async def async_set_value(self, value: str) -> None:
         if not self._validate_time_range(value):
-            raise InvalidEntityFormatError(f"Invalid time range: {value}")
+            raise HomeAssistantError(f"Invalid '{self.name}': {value}")
 
-        _LOGGER.info("Setting time slot to %s", value)
+        _LOGGER.info("Setting '%s' to %s", self.name, value)
         await self.coordinator.control(self.cid, value)
 
     def _validate_time_range(self, value: str) -> bool:
