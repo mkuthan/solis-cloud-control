@@ -12,6 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 _READ_ENDPOINT = "/v2/api/atRead"
 _READ_BATCH_ENDPOINT = "/v2/api/atReadBatch"
 _CONTROL_ENDPOINT = "/v2/api/control"
+_INVERTER_LIST_ENDPOINT = "/v1/api/inverterList"
 _TIMEOUT_SECONDS = 30
 _CONCURRENT_REQUESTS = 2
 _RETRY_COUNT = 2  # initial attempt + 2 retries
@@ -61,10 +62,10 @@ class SolisCloudControlApiClient:
             data = await self._execute_request(_READ_ENDPOINT, payload)
 
             if data is None:
-                raise SolisCloudControlApiError("Read failed: 'data' field is missing in response")
+                raise SolisCloudControlApiError("Read failed: missing 'data' field")
 
             if "msg" not in data:
-                raise SolisCloudControlApiError("Read failed: 'msg' field is missing in response")
+                raise SolisCloudControlApiError("Read failed: missing 'msg' field")
 
             return data["msg"]
 
@@ -83,21 +84,21 @@ class SolisCloudControlApiClient:
             data = await self._execute_request(_READ_BATCH_ENDPOINT, payload)
 
             if data is None:
-                raise SolisCloudControlApiError("ReadBatch failed: 'data' field is missing in response")
+                raise SolisCloudControlApiError("ReadBatch failed: missing 'data' field")
 
             if not isinstance(data, list):
-                raise SolisCloudControlApiError("ReadBatch failed: response data is not an array")
+                raise SolisCloudControlApiError("ReadBatch failed: 'data' field is not an array")
 
             result = {}
             for outer_item in data:
                 if not isinstance(outer_item, list):
-                    raise SolisCloudControlApiError("ReadBatch failed: data outer item is not an array")
+                    raise SolisCloudControlApiError("ReadBatch failed: 'data' field element is not an array")
 
                 for item in outer_item:
                     if "msg" not in item:
-                        raise SolisCloudControlApiError("ReadBatch failed: 'msg' field is missing in response item")
+                        raise SolisCloudControlApiError("ReadBatch failed: missing 'msg' field")
                     if "cid" not in item:
-                        raise SolisCloudControlApiError("ReadBatch failed: 'cid' field is missing in response item")
+                        raise SolisCloudControlApiError("ReadBatch failed: missing 'cid' field")
 
                     result[int(item["cid"])] = item["msg"]
 
@@ -122,10 +123,10 @@ class SolisCloudControlApiClient:
             data_array = await self._execute_request(_CONTROL_ENDPOINT, payload)
 
             if data_array is None:
-                raise SolisCloudControlApiError("Control failed: 'data' field is missing in response")
+                raise SolisCloudControlApiError("Control failed: missing 'data' field")
 
             if not isinstance(data_array, list):
-                raise SolisCloudControlApiError("Control failed: response data is not an array")
+                raise SolisCloudControlApiError("Control failed: 'data' field is not an array")
 
             for data in data_array:
                 code = data.get("code")
@@ -137,6 +138,27 @@ class SolisCloudControlApiClient:
             return
 
         return await self._with_retry(control_operation, retry_count, retry_delay)
+
+    async def inverter_list(
+        self,
+        retry_count: int = _RETRY_COUNT,
+        retry_delay: float = _RETRY_DELAY_SECONDS,
+    ) -> list[dict[str, any]]:
+        async def inverter_list_operation() -> list[dict[str, any]]:
+            data = await self._execute_request(_INVERTER_LIST_ENDPOINT, {})
+
+            if data is None:
+                raise SolisCloudControlApiError("InverterList failed: missing 'data'")
+
+            if "page" not in data:
+                raise SolisCloudControlApiError("InverterList failed: missing 'page' field")
+
+            if "records" not in data["page"]:
+                raise SolisCloudControlApiError("InverterList failed: missing 'records' field")
+
+            return data["page"]["records"]
+
+        return await self._with_retry(inverter_list_operation, retry_count, retry_delay)
 
     async def _execute_request(self, endpoint: str, payload: dict[str, any] = None) -> any:
         body = json.dumps(payload)
