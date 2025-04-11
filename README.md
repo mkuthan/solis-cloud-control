@@ -27,7 +27,8 @@ Use [HACS](https://www.hacs.xyz/) to install the integration:
 2. Click on the "+" button in the bottom right corner
 3. Search for "Solis Cloud Control"
 4. Click on "Solis Cloud Control" to add the integration
-5. Enter your Solis API key, token, and inverter serial number
+5. Enter your Solis API key and token
+6. Select the inverter you want to control from the list
 
 ## Features
 
