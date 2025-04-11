@@ -2,22 +2,29 @@
     "config": {
         "step": {
             "user": {
-                "title": "Configure Cloud Control API",
+                "title": "Solis Cloud Control",
+                "description": "Set up your Solis Cloud Control integration.",
                 "data": {
-                    "api_key": "API key",
-                    "token": "API token",
+                    "api_key": "API Key",
+                    "api_token": "API Token"
+                }
+            },
+            "select_inverter": {
+                "title": "Select Inverter",
+                "description": "Select which inverter you want to control.",
+                "data": {
                     "inverter_sn": "Inverter serial number"
                 }
             }
         },
         "error": {
-            "invalid_auth": "Invalid API key or token",
-            "invalid_inverter_sn": "Invalid inverter serial number",
-            "connection_error": "Connection error",
-            "unknown_error": "Unknown error"
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error",
+            "no_inverters": "No inverters found for this account"
         },
         "abort": {
-            "already_configured": "This entry is already configured."
+            "already_configured": "Device is already configured"
         }
     }
 }

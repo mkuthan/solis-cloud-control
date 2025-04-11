@@ -1,63 +1,95 @@
 import logging
+from typing import Any
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_API_KEY, CONF_TOKEN
+from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
 from homeassistant.helpers import aiohttp_client
 
 from custom_components.solis_cloud_control.api import SolisCloudControlApiClient, SolisCloudControlApiError
 
-from .const import API_BASE_URL, CID_STORAGE_MODE, CONF_INVERTER_SN, DOMAIN
+from .const import API_BASE_URL, CONF_INVERTER_SN, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-_STEP_USER_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_API_KEY): str,
-        vol.Required(CONF_TOKEN): str,
-        vol.Required(CONF_INVERTER_SN): str,
-    }
-)
-
 
 class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
-    VERSION = 1
+    VERSION = 2
 
-    async def async_step_user(self, user_input: dict[str, any] | None = None) -> ConfigFlowResult:
+    def __init__(self) -> None:
+        self._api_key: str | None = None
+        self._api_token: str | None = None
+        self._inverters: list[dict[str, Any]] = []
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
 
         if user_input is not None:
             try:
-                await self._test_credentials(
-                    api_key=user_input[CONF_API_KEY],
-                    api_token=user_input[CONF_TOKEN],
-                    inverter_sn=user_input[CONF_INVERTER_SN],
-                )
+                self._api_key = user_input[CONF_API_KEY]
+                self._api_token = user_input[CONF_API_TOKEN]
+
+                session = aiohttp_client.async_get_clientsession(self.hass)
+                api_client = SolisCloudControlApiClient(API_BASE_URL, self._api_key, self._api_token, session)
+                self._inverters = await api_client.inverter_list(retry_count=0)
+
+                if not self._inverters:
+                    errors["base"] = "no_inverters"
+                else:
+                    return await self.async_step_select_inverter()
+
             except SolisCloudControlApiError as error:
                 if error.response_code == "Z0001":
                     errors["base"] = "invalid_auth"
-                elif error.response_code == "B0124":
-                    errors["base"] = "invalid_inverter_sn"
                 else:
-                    errors["base"] = "connection_error"
+                    errors["base"] = "cannot_connect"
             except Exception as error:
                 _LOGGER.exception(error)
-                errors["base"] = "unknown_error"
-            else:
-                await self.async_set_unique_id(unique_id=user_input[CONF_INVERTER_SN])
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title=user_input[CONF_API_KEY],
-                    data=user_input,
-                )
+                errors["base"] = "unknown"
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_API_KEY): str,
+                vol.Required(CONF_API_TOKEN): str,
+            }
+        )
 
         return self.async_show_form(
             step_id="user",
-            data_schema=_STEP_USER_DATA_SCHEMA,
+            data_schema=data_schema,
             errors=errors,
         )
 
-    async def _test_credentials(self, api_key: str, api_token: str, inverter_sn: str) -> None:
-        session = aiohttp_client.async_get_clientsession(self.hass)
-        api_client = SolisCloudControlApiClient(API_BASE_URL, api_key, api_token, session)
-        await api_client.read(inverter_sn, CID_STORAGE_MODE)
+    async def async_step_select_inverter(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            await self.async_set_unique_id(user_input[CONF_INVERTER_SN])
+            self._abort_if_unique_id_configured()
+
+            return self.async_create_entry(
+                title=f"Inverter {user_input[CONF_INVERTER_SN]}",
+                data={
+                    CONF_API_KEY: self._api_key,
+                    CONF_API_TOKEN: self._api_token,
+                    CONF_INVERTER_SN: user_input[CONF_INVERTER_SN],
+                },
+            )
+
+        inverter_options = {}
+        for inverter in self._inverters:
+            inverter_sn = inverter["sn"]
+            station_name = inverter.get("stationName", "Unknown Station")
+            inverter_options[inverter_sn] = f"{inverter_sn} ({station_name})"
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_INVERTER_SN): vol.In(inverter_options),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="select_inverter",
+            data_schema=data_schema,
+            errors=errors,
+        )
