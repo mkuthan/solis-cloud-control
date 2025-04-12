@@ -1,4 +1,4 @@
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription
+from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
@@ -77,7 +77,6 @@ class BatterySocSensor(SolisCloudControlEntity, SensorEntity):
         self, coordinator: SolisCloudControlCoordinator, entity_description: SensorEntityDescription, cid: int
     ) -> None:
         super().__init__(coordinator, entity_description, cid)
-        self._attr_device_class = SensorDeviceClass.BATTERY
         self._attr_native_unit_of_measurement = PERCENTAGE
 
     @property
