@@ -34,19 +34,21 @@ from custom_components.solis_cloud_control.const import (
     CID_DISCHARGE_SLOT6_SWITCH,
     CID_MAX_EXPORT_POWER,
     CID_STORAGE_MODE,
-    CONF_INVERTER_SN,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-_NAME = "Solis Cloud Control"
+_COORDINATOR_NAME = "Solis Cloud Control"
 
 _UPDATE_INTERVAL = timedelta(minutes=3)
 
+
+_UPDATE_DATA_RETRY_COUNT = 5  # initial attempt + 5 retries
+_UPDATE_DATA_RETRY_DELAY_SECONDS = 10
 _CONTROL_RETRY_COUNT = 1  # initial attempt + 1 retry
 _CONTROL_RETRY_DELAY_SECONDS = 5
 
-_ALL_CIDS = [
+_ALL_CIDS_LIST = [
     CID_BATTERY_FORCE_CHARGE_SOC,
     CID_BATTERY_MAX_CHARGE_SOC,
     CID_BATTERY_OVER_DISCHARGE_SOC,
@@ -85,21 +87,27 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
         hass: HomeAssistant,
         config_entry: ConfigEntry,
         api_client: SolisCloudControlApiClient,
+        inverter_sn: str,
     ) -> None:
         super().__init__(
             hass,
             _LOGGER,
-            name=_NAME,
+            name=_COORDINATOR_NAME,
             config_entry=config_entry,
             update_interval=_UPDATE_INTERVAL,
         )
         self._api_client = api_client
-        self._inverter_sn = config_entry.data[CONF_INVERTER_SN]
+        self._inverter_sn = inverter_sn
 
     async def _async_update_data(self) -> SolisCloudControlData:
         try:
-            result = await self._api_client.read_batch(self._inverter_sn, _ALL_CIDS)
-            data = SolisCloudControlData({cid: result.get(cid) for cid in _ALL_CIDS})
+            result = await self._api_client.read_batch(
+                self._inverter_sn,
+                _ALL_CIDS_LIST,
+                retry_count=_UPDATE_DATA_RETRY_COUNT,
+                retry_delay=_UPDATE_DATA_RETRY_DELAY_SECONDS,
+            )
+            data = SolisCloudControlData({cid: result.get(cid) for cid in _ALL_CIDS_LIST})
             _LOGGER.debug("Data read from API: %s", data)
             return data
         except SolisCloudControlApiError as error:

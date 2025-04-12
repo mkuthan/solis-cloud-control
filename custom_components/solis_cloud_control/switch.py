@@ -1,9 +1,10 @@
 import logging
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 
 from .const import (
     CID_CHARGE_SLOT1_SWITCH,
@@ -41,10 +42,10 @@ _BIT_DISCHARGE_SLOT6 = 11
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
-    entry: ConfigEntry,
+    entry: SolisCloudControlConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: SolisCloudControlCoordinator = entry.runtime_data
+    coordinator = entry.runtime_data.coordinator
     async_add_entities(
         [
             SlotSwitch(

@@ -2,10 +2,11 @@ import logging
 from datetime import datetime
 
 from homeassistant.components.text import TextEntity, TextEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 
 from .const import CID_CHARGE_SLOT1_TIME, CID_DISCHARGE_SLOT1_TIME
 from .coordinator import SolisCloudControlCoordinator
@@ -19,10 +20,10 @@ _TEXT_PATTERN = r"^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$"
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
-    entry: ConfigEntry,
+    entry: SolisCloudControlConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator = entry.runtime_data
+    coordinator = entry.runtime_data.coordinator
     async_add_entities(
         [
             TimeSlotText(

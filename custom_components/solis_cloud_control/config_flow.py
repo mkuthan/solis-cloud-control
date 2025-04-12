@@ -19,7 +19,7 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._api_key: str | None = None
         self._api_token: str | None = None
-        self._inverters: list[dict[str, Any]] = []
+        self._inverter_options: dict[str, str] = {}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -31,9 +31,17 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
 
                 session = aiohttp_client.async_get_clientsession(self.hass)
                 api_client = SolisCloudControlApiClient(API_BASE_URL, self._api_key, self._api_token, session)
-                self._inverters = await api_client.inverter_list(retry_count=0)
+                inverters = await api_client.inverter_list(retry_count=0)
 
-                if not self._inverters:
+                for inverter in inverters:
+                    if "sn" not in inverter:
+                        _LOGGER.warning("Inverter does not have a serial number 'sn' field, skipping")
+                        continue
+                    inverter_sn = inverter["sn"]
+                    station_name = inverter.get("stationName", "Unknown Station")
+                    self._inverter_options[inverter_sn] = f"{inverter_sn} ({station_name})"
+
+                if not self._inverter_options:
                     errors["base"] = "no_inverters"
                 else:
                     return await self.async_step_select_inverter()
@@ -76,15 +84,9 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
                 },
             )
 
-        inverter_options = {}
-        for inverter in self._inverters:
-            inverter_sn = inverter["sn"]
-            station_name = inverter.get("stationName", "Unknown Station")
-            inverter_options[inverter_sn] = f"{inverter_sn} ({station_name})"
-
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_INVERTER_SN): vol.In(inverter_options),
+                vol.Required(CONF_INVERTER_SN): vol.In(self._inverter_options),
             }
         )
 

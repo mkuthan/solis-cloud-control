@@ -1,10 +1,11 @@
 import logging
 
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 
 from .const import (
     CID_BATTERY_OVER_DISCHARGE_SOC,
@@ -22,10 +23,10 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
-    entry: ConfigEntry,
+    entry: SolisCloudControlConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: SolisCloudControlCoordinator = entry.runtime_data
+    coordinator = entry.runtime_data.coordinator
     async_add_entities(
         [
             BatteryCurrent(

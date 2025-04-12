@@ -1,9 +1,10 @@
 import logging
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 
 from .const import CID_STORAGE_MODE
 from .coordinator import SolisCloudControlCoordinator
@@ -25,10 +26,10 @@ _BIT_FEED_IN_PRIORITY = 6
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
-    entry: ConfigEntry,
+    entry: SolisCloudControlConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator = entry.runtime_data
+    coordinator = entry.runtime_data.coordinator
     async_add_entities(
         [
             StorageModeSelect(

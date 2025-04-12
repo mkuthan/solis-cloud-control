@@ -16,7 +16,7 @@ _INVERTER_LIST_ENDPOINT = "/v1/api/inverterList"
 _TIMEOUT_SECONDS = 30
 _CONCURRENT_REQUESTS = 2
 _RETRY_COUNT = 2  # initial attempt + 2 retries
-_RETRY_DELAY_SECONDS = 10
+_RETRY_DELAY_SECONDS = 5
 
 
 class SolisCloudControlApiError(Exception):

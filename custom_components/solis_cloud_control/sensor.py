@@ -1,8 +1,9 @@
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 
 from .const import (
     CID_BATTERY_FORCE_CHARGE_SOC,
@@ -17,10 +18,10 @@ from .entity import SolisCloudControlEntity
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
-    entry: ConfigEntry,
+    entry: SolisCloudControlConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: SolisCloudControlCoordinator = entry.runtime_data
+    coordinator = entry.runtime_data.coordinator
     async_add_entities(
         [
             BatterySocSensor(
