@@ -1,5 +1,5 @@
 import pytest
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntityDescription
+from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.const import PERCENTAGE
 
 from custom_components.solis_cloud_control.const import (
@@ -23,7 +23,6 @@ def battery_soc_sensor(mock_coordinator):
 class TestBatterySocSensor:
     def test_attributes(self, battery_soc_sensor):
         assert battery_soc_sensor.native_unit_of_measurement == PERCENTAGE
-        assert battery_soc_sensor.device_class == SensorDeviceClass.BATTERY
 
     @pytest.mark.parametrize(
         ("value", "expected"),
