@@ -9,6 +9,6 @@ from custom_components.solis_cloud_control.coordinator import SolisCloudControlC
 class SolisCloudControlData:
     coordinator: SolisCloudControlCoordinator
 
+
 class SolisCloudControlConfigEntry(ConfigEntry[SolisCloudControlData]):
     pass
-

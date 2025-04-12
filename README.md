@@ -5,6 +5,7 @@
 
 This is the Solis Cloud Control API integration for Home Assistant.
 It allows you to read and control various settings of your Solis inverter.
+See my blog post for inspiration how to use this integration: [Home Assistant Solar Energy Management](https://mkuthan.github.io/blog/2025/04/12/home-assistant-solar/).
 
 > [!NOTE]
 > If your primary goal is to monitor data from the Solis Cloud Monitoring API, you might want to explore the [Solis Sensor Integration](https://github.com/hultenvp/solis-sensor/).  
