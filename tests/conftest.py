@@ -12,9 +12,11 @@ def pytest_runtest_setup():
     enable_socket()
     socket_allow_hosts(["127.0.0.1", "localhost", "::1"], allow_unix_socket=True)
 
+
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):
     yield
+
 
 @pytest.fixture
 def mock_coordinator():
