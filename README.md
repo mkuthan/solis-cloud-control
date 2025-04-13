@@ -1,6 +1,7 @@
 # Solis Cloud Control Integration
 
 [![CI](https://github.com/mkuthan/solis-cloud-control/actions/workflows/ci.yml/badge.svg)](https://github.com/mkuthan/solis-cloud-control/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/mkuthan/solis-cloud-control/graph/badge.svg?token=19S6622V10)](https://codecov.io/gh/mkuthan/solis-cloud-control)
 ![GitHub Release](https://img.shields.io/github/v/release/mkuthan/solis-cloud-control)
 
 This is the Solis Cloud Control API integration for Home Assistant.
