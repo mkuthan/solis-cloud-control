@@ -113,7 +113,7 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
             if charge_discharge_mode == str(_NEW_CHARGE_DISCHARGE_MODE):
                 cids += _CHARGE_DISCHARGE_SLOTS_CIDS_LIST
             else:
-                _LOGGER.warning("Old charge/discharge mode detected, slots not available.")
+                _LOGGER.warning("Old mode detected, charging and discharging slots will not be available")
 
             result = await self._api_client.read_batch(
                 self._inverter_sn,
