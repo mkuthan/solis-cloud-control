@@ -1,4 +1,3 @@
-import pytest
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN, CONF_TOKEN
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
