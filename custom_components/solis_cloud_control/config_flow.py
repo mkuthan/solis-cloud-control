@@ -29,9 +29,7 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
                 self._api_key = user_input[CONF_API_KEY]
                 self._api_token = user_input[CONF_API_TOKEN]
 
-                session = aiohttp_client.async_get_clientsession(self.hass)
-                api_client = SolisCloudControlApiClient(API_BASE_URL, self._api_key, self._api_token, session)
-                inverters = await api_client.inverter_list(retry_count=0)
+                inverters = await self._inverter_list()
 
                 for inverter in inverters:
                     if "sn" not in inverter:
@@ -95,3 +93,8 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
             data_schema=data_schema,
             errors=errors,
         )
+
+    async def _inverter_list(self) -> list[dict[str, Any]]:
+        session = aiohttp_client.async_get_clientsession(self.hass)
+        api_client = SolisCloudControlApiClient(API_BASE_URL, self._api_key, self._api_token, session)
+        return await api_client.inverter_list(retry_count=0)
