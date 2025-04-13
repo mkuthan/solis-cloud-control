@@ -35,3 +35,12 @@ jobs:
 
       - name: Run tests
         run: uv run pytest --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+      
+      - uses: codecov/test-results-action@v1
+        if: ${{ !cancelled() }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
