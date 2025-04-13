@@ -31,8 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: SolisCloudControl
     )
 
     # create api client
-    session = aiohttp_client.async_get_clientsession(hass)
-    api_client = SolisCloudControlApiClient(API_BASE_URL, api_key, api_token, session)
+    api_client = _create_api_client(hass, api_key, api_token)
 
     # create coordinator
     coordinator = SolisCloudControlCoordinator(hass, config_entry, api_client, inverter_sn)
@@ -74,3 +73,8 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: SolisCloudContr
     hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
 
     return True
+
+
+def _create_api_client(hass: HomeAssistant, api_key: str, api_token: str) -> SolisCloudControlApiClient:
+    session = aiohttp_client.async_get_clientsession(hass)
+    return SolisCloudControlApiClient(API_BASE_URL, api_key, api_token, session)

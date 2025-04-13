@@ -65,6 +65,18 @@ Run the integration locally:
 ./scripts/run
 ```
 
+Run single test:
+
+```bash
+pytest --cov-fail-under=0 tests/test_init.py
+```
+
+Run and fix checks:
+
+````bash
+ruff check --fix
+```
+
 ## Release
 
 To release a new version, create a new tag and push it to the repository:
