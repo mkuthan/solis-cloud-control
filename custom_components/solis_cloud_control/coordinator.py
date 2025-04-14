@@ -141,6 +141,4 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
                 )
                 await asyncio.sleep(retry_delay)
             else:
-                raise HomeAssistantError(
-                    f"Failed to set value for CID {cid}. " f"Expected: {value}, got: {current_value}"
-                )
+                raise HomeAssistantError(f"Failed to set value for CID {cid}. Expected: {value}, got: {current_value}")
