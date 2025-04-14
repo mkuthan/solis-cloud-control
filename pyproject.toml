@@ -9,13 +9,8 @@ dependencies = [
 
 [tool.uv]
 dev-dependencies = [
-    "pytest==8.3.4",
-    "pytest-aiohttp==1.1.0",
-    "pytest-asyncio==0.25.3",
-    "pytest-cov==6.0.0",
     "pytest-homeassistant-custom-component==0.13.224",
-    "ruff==0.7.4",
-    "uv==0.6.1",
+    "ruff==0.11.5"
 ]
 
 [tool.pytest.ini_options]
