@@ -12,6 +12,7 @@ class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
     ) -> None:
         super().__init__(coordinator)
         self.entity_description = entity_description
+        self.cid = cid
 
         self._attr_has_entity_name = True
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_{entity_description.key}"
@@ -24,4 +25,6 @@ class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
             },
         )
 
-        self.cid = cid
+    @property
+    def available(self) -> bool:
+        return self.coordinator.data.get(self.cid) is not None

@@ -32,7 +32,7 @@ class TestTimeSlotText:
         assert time_slot_entity.native_value == "10:00-12:00"
 
     def test_native_value_no_data(self, time_slot_entity):
-        time_slot_entity.coordinator.data = None
+        time_slot_entity.coordinator.data = {CID_CHARGE_SLOT1_TIME: None}
         assert time_slot_entity.native_value is None
 
     def test_native_value_invalid_format(self, time_slot_entity):

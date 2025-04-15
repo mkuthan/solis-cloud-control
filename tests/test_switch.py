@@ -27,7 +27,7 @@ def slot_switch(mock_coordinator):
 
 class TestSlotSwitch:
     async def test_is_on_when_none(self, slot_switch):
-        slot_switch.coordinator.data = None
+        slot_switch.coordinator.data = {CID_CHARGE_SLOT1_SWITCH: None}
         assert slot_switch.is_on is None
 
     async def test_is_on_when_on(self, slot_switch):
@@ -37,10 +37,6 @@ class TestSlotSwitch:
     async def test_is_on_when_off(self, slot_switch):
         slot_switch.coordinator.data = {CID_CHARGE_SLOT1_SWITCH: "0"}
         assert slot_switch.is_on is False
-
-    async def test_calculate_old_value_no_data(self, slot_switch):
-        slot_switch.coordinator.data = None
-        assert slot_switch._calculate_old_value() == "0"
 
     async def test_calculate_old_value_with_data(self, slot_switch):
         slot_switch.coordinator.data = {

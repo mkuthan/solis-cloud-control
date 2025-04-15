@@ -91,9 +91,6 @@ class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
 
     @property
     def native_value(self) -> float | None:
-        if not self.coordinator.data:
-            return None
-
         value_str = self.coordinator.data.get(self.cid)
         return float(value_str) if value_str is not None else None
 

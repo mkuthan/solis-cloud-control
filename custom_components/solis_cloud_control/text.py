@@ -59,9 +59,6 @@ class TimeSlotText(SolisCloudControlEntity, TextEntity):
 
     @property
     def native_value(self) -> str | None:
-        if not self.coordinator.data:
-            return None
-
         value = self.coordinator.data.get(self.cid)
 
         if value is None:

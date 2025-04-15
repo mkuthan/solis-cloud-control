@@ -78,9 +78,6 @@ class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
 
     @property
     def is_on(self) -> bool | None:
-        if not self.coordinator.data:
-            return None
-
         value = self.coordinator.data.get(self.cid)
         return value == "1" if value is not None else None
 
@@ -95,9 +92,6 @@ class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
         await self.coordinator.control(self.cid, "0", old_value)
 
     def _calculate_old_value(self) -> str:
-        if not self.coordinator.data:
-            return "0"
-
         slot_states = {
             _BIT_CHARGE_SLOT1: self.coordinator.data.get(CID_CHARGE_SLOT1_SWITCH) == "1",
             _BIT_CHARGE_SLOT2: self.coordinator.data.get(CID_CHARGE_SLOT2_SWITCH) == "1",
