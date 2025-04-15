@@ -18,10 +18,15 @@ Use [HACS](https://www.hacs.xyz/) to install the integration:
 
 1. Open HACS in Home Assistant
 2. Go to "Integrations"
-3. Click on the "+" button in the bottom right corner
-4. Search for "Solis Cloud Control"
-5. Click on "Install" to add the integration to your Home Assistant instance
-6. Restart Home Assistant
+3. Click on the three dots menu in the top right corner
+4. Select "Custom repositories"
+5. Add `https://github.com/mkuthan/solis-cloud-control` as an Integration
+6. Click "Add"
+7. Go back to the Integrations page
+8. Click on the "+" button in the bottom right corner
+9. Search for "Solis Cloud Control"
+10. Click on "Install" to add the integration to your Home Assistant instance
+11. Restart Home Assistant
 
 ## Configuration
 
@@ -51,6 +56,11 @@ The integration also meets several non-functional requirements:
 * 🔄 Retry logic for API requests to mitigate API stability issues
 * 🏡 Best Home Assistant practices for integration development 😜
 
+## Supported devices
+
+* Solis Hybrid Inverter S6-EH3P12
+* Solis Datalogger S2-WL-ST
+
 ## Local Development
 
 Install dependencies (once):
@@ -65,16 +75,10 @@ Run the integration locally:
 ./scripts/run
 ```
 
-Run single test:
+Run a single test:
 
 ```bash
 pytest --cov-fail-under=0 tests/test_init.py
-```
-
-Run and fix checks:
-
-````bash
-ruff check --fix
 ```
 
 ## Release
