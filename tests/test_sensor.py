@@ -30,6 +30,7 @@ class TestBatterySocSensor:
             ("0", 0.0),
             ("50", 50.0),
             ("100", 100.0),
+            ("not a number", None),
             (None, None),
         ],
     )

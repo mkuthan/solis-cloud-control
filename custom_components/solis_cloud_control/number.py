@@ -6,8 +6,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+from custom_components.solis_cloud_control.number_utils import safe_get_float_value
 
 from .const import (
+    CID_BATTERY_MAX_CHARGE_SOC,
     CID_BATTERY_OVER_DISCHARGE_SOC,
     CID_CHARGE_SLOT1_CURRENT,
     CID_CHARGE_SLOT1_SOC,
@@ -92,7 +94,7 @@ class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
     @property
     def native_value(self) -> float | None:
         value_str = self.coordinator.data.get(self.cid)
-        return float(value_str) if value_str is not None else None
+        return safe_get_float_value(value_str)
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
@@ -105,25 +107,26 @@ class BatterySoc(SolisCloudControlEntity, NumberEntity):
         self, coordinator: SolisCloudControlCoordinator, cid: int, entity_description: NumberEntityDescription
     ) -> None:
         super().__init__(coordinator, entity_description, cid)
-        self._attr_native_max_value = 100
         self._attr_native_step = 1
         self._attr_device_class = NumberDeviceClass.BATTERY
         self._attr_native_unit_of_measurement = PERCENTAGE
 
     @property
     def native_min_value(self) -> float:
-        if not self.coordinator.data:
-            return 0
         over_discharge_str = self.coordinator.data.get(CID_BATTERY_OVER_DISCHARGE_SOC)
-        return float(over_discharge_str) + 1 if over_discharge_str is not None else 0
+        over_discharge = safe_get_float_value(over_discharge_str)
+        return over_discharge + 1 if over_discharge is not None else 0
+
+    @property
+    def native_max_value(self) -> float:
+        value_str = self.coordinator.data.get(CID_BATTERY_MAX_CHARGE_SOC)
+        value = safe_get_float_value(value_str)
+        return value if value is not None else 100
 
     @property
     def native_value(self) -> float | None:
-        if not self.coordinator.data:
-            return None
-
         value_str = self.coordinator.data.get(self.cid)
-        return float(value_str) if value_str is not None else None
+        return safe_get_float_value(value_str)
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
@@ -144,10 +147,9 @@ class MaxExportPower(SolisCloudControlEntity, NumberEntity):
 
     @property
     def native_value(self) -> float | None:
-        if not self.coordinator.data:
-            return None
         value_str = self.coordinator.data.get(self.cid)
-        return float(value_str) * 100 if value_str is not None else None
+        value = safe_get_float_value(value_str)
+        return value * 100 if value is not None else None
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value / 100)))

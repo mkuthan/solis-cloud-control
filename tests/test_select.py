@@ -45,6 +45,9 @@ class TestStorageModeSelect:
             (str(1 << _BIT_SELF_USE), _MODE_SELF_USE),
             (str(1 << _BIT_FEED_IN_PRIORITY), _MODE_FEED_IN_PRIORITY),
             (str(1 << _BIT_OFF_GRID), _MODE_OFF_GRID),
+            (str(0), None),
+            ("not a number", None),
+            (None, None),
         ],
     )
     async def test_current_option(self, storage_mode_entity, value, expected_mode):
@@ -80,3 +83,15 @@ class TestStorageModeSelect:
     async def test_async_select_option(self, storage_mode_entity, option, expected_value):
         await storage_mode_entity.async_select_option(option)
         storage_mode_entity.coordinator.control.assert_awaited_once_with(CID_STORAGE_MODE, expected_value)
+
+    @pytest.mark.parametrize(
+        "initial_value",
+        [
+            "not a number",
+            None,
+        ],
+    )
+    async def test_async_select_option_invalid_initial(self, storage_mode_entity, initial_value):
+        storage_mode_entity.coordinator.data = {CID_STORAGE_MODE: initial_value}
+        await storage_mode_entity.async_select_option(_MODE_SELF_USE)
+        storage_mode_entity.coordinator.control.assert_not_awaited()

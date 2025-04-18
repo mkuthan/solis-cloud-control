@@ -3,6 +3,7 @@ from homeassistant.components.number import NumberEntityDescription
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
 
 from custom_components.solis_cloud_control.const import (
+    CID_BATTERY_MAX_CHARGE_SOC,
     CID_BATTERY_OVER_DISCHARGE_SOC,
     CID_CHARGE_SLOT1_CURRENT,
     CID_CHARGE_SLOT1_SOC,
@@ -40,6 +41,7 @@ class TestBatteryCurrent:
             ("50", 50.0),
             ("0", 0.0),
             ("100", 100.0),
+            ("not a number", None),
             (None, None),
         ],
     )
@@ -84,6 +86,7 @@ class TestBatterySoc:
         [
             ("10", 11.0),
             ("0", 1.0),
+            ("not a number", 0.0),
             (None, 0.0),
         ],
     )
@@ -92,11 +95,25 @@ class TestBatterySoc:
         assert battery_soc_entity.native_min_value == expected_min
 
     @pytest.mark.parametrize(
+        ("max_charge", "expected_max"),
+        [
+            ("90", 90.0),
+            ("100", 100.0),
+            ("not a number", 100.0),
+            (None, 100.0),
+        ],
+    )
+    def test_native_max_value(self, battery_soc_entity, max_charge, expected_max):
+        battery_soc_entity.coordinator.data = {CID_BATTERY_MAX_CHARGE_SOC: max_charge}
+        assert battery_soc_entity.native_max_value == expected_max
+
+    @pytest.mark.parametrize(
         ("value", "expected"),
         [
             ("50", 50.0),
             ("0", 0.0),
             ("100", 100.0),
+            ("not a number", None),
             (None, None),
         ],
     )
@@ -142,6 +159,7 @@ class TestMaxExportPower:
             ("0", 0.0),
             ("50", 5000.0),
             ("132", 13200.0),
+            ("not a number", None),
             (None, None),
         ],
     )

@@ -4,6 +4,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+from custom_components.solis_cloud_control.number_utils import safe_get_float_value
 
 from .const import (
     CID_BATTERY_FORCE_CHARGE_SOC,
@@ -83,4 +84,4 @@ class BatterySocSensor(SolisCloudControlEntity, SensorEntity):
     @property
     def native_value(self) -> float | None:
         value_str = self.coordinator.data.get(self.cid)
-        return float(value_str) if value_str is not None else None
+        return safe_get_float_value(value_str)

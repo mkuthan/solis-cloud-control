@@ -5,6 +5,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+from custom_components.solis_cloud_control.number_utils import safe_get_int_value
 
 from .const import CID_STORAGE_MODE
 from .coordinator import SolisCloudControlCoordinator
@@ -54,31 +55,29 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
 
     @property
     def current_option(self) -> str | None:
-        storage_mode_value = self.coordinator.data.get(self.cid)
-        if storage_mode_value is None:
+        value_str = self.coordinator.data.get(self.cid)
+        value = safe_get_int_value(value_str)
+        if value is None:
             return None
 
-        value_int = int(storage_mode_value)
-
-        if value_int & (1 << _BIT_SELF_USE):
+        if value & (1 << _BIT_SELF_USE):
             return _MODE_SELF_USE
-        elif value_int & (1 << _BIT_FEED_IN_PRIORITY):
+        elif value & (1 << _BIT_FEED_IN_PRIORITY):
             return _MODE_FEED_IN_PRIORITY
-        elif value_int & (1 << _BIT_OFF_GRID):
+        elif value & (1 << _BIT_OFF_GRID):
             return _MODE_OFF_GRID
 
         return None
 
     @property
     def extra_state_attributes(self) -> dict[str, str]:
+        value_str = self.coordinator.data.get(self.cid)
+        value = safe_get_int_value(value_str)
+
         attributes = {}
-
-        storage_mode_value = self.coordinator.data.get(self.cid)
-        if storage_mode_value is not None:
-            value_int = int(storage_mode_value)
-
-            battery_reserve = "ON" if value_int & (1 << _BIT_BACKUP_MODE) else "OFF"
-            allow_grid_charging = "ON" if value_int & (1 << _BIT_GRID_CHARGING) else "OFF"
+        if value is not None:
+            battery_reserve = "ON" if value & (1 << _BIT_BACKUP_MODE) else "OFF"
+            allow_grid_charging = "ON" if value & (1 << _BIT_GRID_CHARGING) else "OFF"
 
             attributes["battery_reserve"] = battery_reserve
             attributes["allow_grid_charging"] = allow_grid_charging
@@ -86,23 +85,22 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         return attributes
 
     async def async_select_option(self, option: str) -> None:
-        current_value = self.coordinator.data.get(self.cid)
-        if current_value is None:
+        value_str = self.coordinator.data.get(self.cid)
+        value = safe_get_int_value(value_str)
+        if value is None:
             return
 
-        value_int = int(current_value)
-
-        value_int &= ~(1 << _BIT_SELF_USE)
-        value_int &= ~(1 << _BIT_FEED_IN_PRIORITY)
-        value_int &= ~(1 << _BIT_OFF_GRID)
+        value &= ~(1 << _BIT_SELF_USE)
+        value &= ~(1 << _BIT_FEED_IN_PRIORITY)
+        value &= ~(1 << _BIT_OFF_GRID)
 
         if option == _MODE_SELF_USE:
-            value_int |= 1 << _BIT_SELF_USE
+            value |= 1 << _BIT_SELF_USE
         elif option == _MODE_FEED_IN_PRIORITY:
-            value_int |= 1 << _BIT_FEED_IN_PRIORITY
+            value |= 1 << _BIT_FEED_IN_PRIORITY
         elif option == _MODE_OFF_GRID:
-            value_int |= 1 << _BIT_OFF_GRID
+            value |= 1 << _BIT_OFF_GRID
 
-        _LOGGER.info("Setting storage mode to %s (value: %s)", option, value_int)
+        _LOGGER.info("Setting storage mode to %s (value: %s)", option, value)
 
-        await self.coordinator.control(self.cid, str(value_int))
+        await self.coordinator.control(self.cid, str(value))
