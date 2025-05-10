@@ -6,9 +6,9 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+from custom_components.solis_cloud_control.inverter import InverterChargeDischargeSlot
 from custom_components.solis_cloud_control.time_utils import validate_time_range
 
-from .const import CID_CHARGE_SLOT1_TIME, CID_DISCHARGE_SLOT1_TIME
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
 
@@ -23,9 +23,13 @@ async def async_setup_entry(
     entry: SolisCloudControlConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    inverter = entry.runtime_data.inverter
     coordinator = entry.runtime_data.coordinator
-    async_add_entities(
-        [
+
+    entities = []
+
+    if inverter.charge_discharge_slots is not None:
+        entities.append(
             TimeSlotText(
                 coordinator=coordinator,
                 entity_description=TextEntityDescription(
@@ -33,8 +37,10 @@ async def async_setup_entry(
                     name="Slot1 Charge Time",
                     icon="mdi:timer-plus-outline",
                 ),
-                cid=CID_CHARGE_SLOT1_TIME,
-            ),
+                charge_discharge_slot=inverter.charge_discharge_slots.charge_slot1,
+            )
+        )
+        entities.append(
             TimeSlotText(
                 coordinator=coordinator,
                 entity_description=TextEntityDescription(
@@ -42,24 +48,30 @@ async def async_setup_entry(
                     name="Slot1 Discharge Time",
                     icon="mdi:timer-minus-outline",
                 ),
-                cid=CID_DISCHARGE_SLOT1_TIME,
-            ),
-        ]
-    )
+                charge_discharge_slot=inverter.charge_discharge_slots.discharge_slot1,
+            )
+        )
+
+    async_add_entities(entities)
 
 
 class TimeSlotText(SolisCloudControlEntity, TextEntity):
     def __init__(
-        self, coordinator: SolisCloudControlCoordinator, entity_description: TextEntityDescription, cid: int
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: TextEntityDescription,
+        charge_discharge_slot: InverterChargeDischargeSlot,
     ) -> None:
-        super().__init__(coordinator, entity_description, cid)
+        super().__init__(coordinator, entity_description)
         self._attr_native_min = _TEXT_LEGHT
         self._attr_native_max = _TEXT_LEGHT
         self._attr_pattern = _TEXT_PATTERN
 
+        self.charge_discharge_slot = charge_discharge_slot
+
     @property
     def native_value(self) -> str | None:
-        value = self.coordinator.data.get(self.cid)
+        value = self.coordinator.data.get(self.charge_discharge_slot.time_cid)
 
         if value is None:
             return None
@@ -75,4 +87,4 @@ class TimeSlotText(SolisCloudControlEntity, TextEntity):
             raise HomeAssistantError(f"Invalid '{self.name}': {value}")
 
         _LOGGER.info("Setting '%s' to %s", self.name, value)
-        await self.coordinator.control(self.cid, value)
+        await self.coordinator.control(self.charge_discharge_slot.time_cid, value)

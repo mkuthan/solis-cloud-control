@@ -15,5 +15,6 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, any]:
     return {
         "entry_data": async_redact_data(config_entry.data, _TO_REDACT),
-        "data": config_entry.runtime_data.coordinator.data,
+        "inverter_info": config_entry.runtime_data.inverter.info,
+        "coordinator_data": config_entry.runtime_data.coordinator.data,
     }

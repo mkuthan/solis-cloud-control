@@ -1,58 +1,51 @@
 import pytest
 from homeassistant.components.switch import SwitchEntityDescription
 
-from custom_components.solis_cloud_control.const import (
-    CID_CHARGE_SLOT1_SWITCH,
-    CID_CHARGE_SLOT2_SWITCH,
-    CID_DISCHARGE_SLOT1_SWITCH,
-)
 from custom_components.solis_cloud_control.switch import SlotSwitch
 
 
 @pytest.fixture
-def slot_switch(mock_coordinator):
-    mock_coordinator.data = {CID_CHARGE_SLOT1_SWITCH: "0"}
-
-    entity = SlotSwitch(
+def slot_switch(mock_coordinator, any_inverter):
+    return SlotSwitch(
         coordinator=mock_coordinator,
         entity_description=SwitchEntityDescription(
             key="slot1_charge_switch",
             name="Slot1 Charge",
             icon="mdi:battery-plus-outline",
         ),
-        cid=CID_CHARGE_SLOT1_SWITCH,
+        charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
+        charge_discharge_slots=any_inverter.charge_discharge_slots,
     )
-    return entity
 
 
 class TestSlotSwitch:
     async def test_is_on_when_none(self, slot_switch):
-        slot_switch.coordinator.data = {CID_CHARGE_SLOT1_SWITCH: None}
+        slot_switch.coordinator.data = {slot_switch.charge_discharge_slot.switch_cid: None}
         assert slot_switch.is_on is None
 
     async def test_is_on_when_on(self, slot_switch):
-        slot_switch.coordinator.data = {CID_CHARGE_SLOT1_SWITCH: "1"}
+        slot_switch.coordinator.data = {slot_switch.charge_discharge_slot.switch_cid: "1"}
         assert slot_switch.is_on is True
 
     async def test_is_on_when_off(self, slot_switch):
-        slot_switch.coordinator.data = {CID_CHARGE_SLOT1_SWITCH: "0"}
+        slot_switch.coordinator.data = {slot_switch.charge_discharge_slot.switch_cid: "0"}
         assert slot_switch.is_on is False
 
     async def test_calculate_old_value_with_data(self, slot_switch):
         slot_switch.coordinator.data = {
-            CID_CHARGE_SLOT1_SWITCH: "1",
-            CID_CHARGE_SLOT2_SWITCH: "1",
-            CID_DISCHARGE_SLOT1_SWITCH: "0",
+            slot_switch.charge_discharge_slots.charge_slot1.switch_cid: "1",
+            slot_switch.charge_discharge_slots.charge_slot2.switch_cid: "1",
+            slot_switch.charge_discharge_slots.discharge_slot1.switch_cid: "0",
         }
         # First two bits should be set (positions 0 and 1)
         assert slot_switch._calculate_old_value() == "3"
 
     async def test_turn_on(self, slot_switch):
-        slot_switch.coordinator.data = {CID_CHARGE_SLOT1_SWITCH: "0"}
+        slot_switch.coordinator.data = {slot_switch.charge_discharge_slot.switch_cid: "0"}
         await slot_switch.async_turn_on()
-        slot_switch.coordinator.control.assert_awaited_once_with(CID_CHARGE_SLOT1_SWITCH, "1", "0")
+        slot_switch.coordinator.control.assert_awaited_once_with(slot_switch.charge_discharge_slot.switch_cid, "1", "0")
 
     async def test_turn_off(self, slot_switch):
-        slot_switch.coordinator.data = {CID_CHARGE_SLOT1_SWITCH: "1"}
+        slot_switch.coordinator.data = {slot_switch.charge_discharge_slot.switch_cid: "1"}
         await slot_switch.async_turn_off()
-        slot_switch.coordinator.control.assert_awaited_once_with(CID_CHARGE_SLOT1_SWITCH, "0", "1")
+        slot_switch.coordinator.control.assert_awaited_once_with(slot_switch.charge_discharge_slot.switch_cid, "0", "1")
