@@ -7,6 +7,7 @@ from homeassistant.helpers import device_registry as dr
 
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry, SolisCloudControlData
+from custom_components.solis_cloud_control.inverter_factory import create_inverter, create_inverter_info
 
 from .api import SolisCloudControlApiClient
 from .const import API_BASE_URL, CONF_INVERTER_SN
@@ -21,26 +22,34 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: SolisCloudControl
     api_token = config_entry.data[CONF_API_TOKEN]
     inverter_sn = config_entry.data[CONF_INVERTER_SN]
 
+    # create api client
+    api_client = _create_api_client(hass, api_key, api_token)
+
+    # create inverter
+    inverter_info = await create_inverter_info(api_client, inverter_sn)
+    inverter = await create_inverter(api_client, inverter_info)
+
     # register the inverter in the device registry
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
-        identifiers={(config_entry.domain, inverter_sn)},
+        identifiers={(config_entry.domain, inverter_info.serial_number)},
         manufacturer="Solis",
-        name=f"Inverter Control {inverter_sn}",
+        name=f"Inverter Control {inverter_info.serial_number}",
+        serial_number=inverter_info.serial_number,
+        model_id=inverter_info.model,
+        model=inverter_info.machine,
+        sw_version=inverter_info.version,
     )
 
-    # create api client
-    api_client = _create_api_client(hass, api_key, api_token)
-
     # create coordinator
-    coordinator = SolisCloudControlCoordinator(hass, config_entry, api_client, inverter_sn)
+    coordinator = SolisCloudControlCoordinator(hass, config_entry, api_client, inverter)
 
     # perform an initial data load from api
     await coordinator.async_config_entry_first_refresh()
 
     # make coordinator available to integration
-    config_entry.runtime_data = SolisCloudControlData(coordinator)
+    config_entry.runtime_data = SolisCloudControlData(inverter, coordinator)
 
     # setup platforms, call async_setup for each entity
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
