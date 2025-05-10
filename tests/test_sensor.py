@@ -2,21 +2,18 @@ import pytest
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.const import PERCENTAGE
 
-from custom_components.solis_cloud_control.const import (
-    CID_BATTERY_FORCE_CHARGE_SOC,
-)
 from custom_components.solis_cloud_control.sensor import BatterySocSensor
 
 
 @pytest.fixture
-def battery_soc_sensor(mock_coordinator):
+def battery_soc_sensor(mock_coordinator, any_inverter):
     return BatterySocSensor(
         coordinator=mock_coordinator,
         entity_description=SensorEntityDescription(
             key="test_battery_soc",
             name="Test Battery SOC",
         ),
-        cid=CID_BATTERY_FORCE_CHARGE_SOC,
+        battery_soc=any_inverter.battery_force_charge_soc,
     )
 
 
@@ -35,5 +32,5 @@ class TestBatterySocSensor:
         ],
     )
     def test_native_value(self, battery_soc_sensor, value, expected):
-        battery_soc_sensor.coordinator.data = {CID_BATTERY_FORCE_CHARGE_SOC: value}
+        battery_soc_sensor.coordinator.data = {battery_soc_sensor.battery_soc.cid: value}
         assert battery_soc_sensor.native_value == expected
