@@ -1,18 +1,9 @@
-from unittest.mock import AsyncMock
-
 import pytest
 
-from custom_components.solis_cloud_control.api import SolisCloudControlApiClient
-from custom_components.solis_cloud_control.inverter_utils import (
+from custom_components.solis_cloud_control.inverters.inverter_utils import (
     _CHARGE_DISCHARGE_MODE_SLOTS_ENABLED,
     charge_discharge_mode_slots_enabled,
 )
-
-
-@pytest.fixture
-def mock_api_client():
-    client = AsyncMock(spec=SolisCloudControlApiClient)
-    return client
 
 
 @pytest.mark.asyncio

@@ -8,7 +8,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from custom_components.solis_cloud_control.api import SolisCloudControlApiClient, SolisCloudControlApiError
-from custom_components.solis_cloud_control.inverter import Inverter
+from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 _LOGGER = logging.getLogger(__name__)
 

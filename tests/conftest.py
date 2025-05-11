@@ -6,7 +6,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_socket import enable_socket, socket_allow_hosts
 
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
-from custom_components.solis_cloud_control.inverter import (
+from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
     InverterBatteryForceChargeSOC,
     InverterBatteryMaxChargeCurrent,

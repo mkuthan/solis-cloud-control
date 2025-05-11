@@ -6,7 +6,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
-from custom_components.solis_cloud_control.inverter import InverterChargeDischargeSlot
+from custom_components.solis_cloud_control.inverters.inverter import InverterChargeDischargeSlot
 from custom_components.solis_cloud_control.time_utils import validate_time_range
 
 from .coordinator import SolisCloudControlCoordinator

@@ -12,6 +12,17 @@ See my blog post for inspiration how to use this integration: [Home Assistant So
 > If your primary goal is to monitor data from the Solis Cloud Monitoring API, you might want to explore the [Solis Sensor Integration](https://github.com/hultenvp/solis-sensor/).  
 > Both integrations are complementary and can be used together to enhance your Home Assistant setup.
 
+## Supported devices
+
+* S6-EH3P(8-15)K02-NV-YD-L, model "3331"
+* RHI-3P(3-10)K-HVES-5G, model "CA"
+
+> [!NOTE]
+> If your inverter is not listed here, please open an issue on GitHub with the inverter model identifier and model name.
+> Diagnostics could also be helpful.
+
+![Device Info](device_info.png)
+
 ## Installation
 
 Use [HACS](https://www.hacs.xyz/) to install the integration:
@@ -56,11 +67,6 @@ The integration also meets several non-functional requirements:
 * 🔄 Retry logic for API requests to mitigate API stability issues
 * 🏡 Best Home Assistant practices for integration development 😜
 
-## Supported devices
-
-* Solis Hybrid Inverter S6-EH3P12
-* Solis Datalogger S2-WL-ST
-
 ## Local Development
 
 Install dependencies (once):
@@ -88,4 +94,11 @@ To release a new version, create a new tag and push it to the repository:
 ```bash
 git tag v1.0.1
 git push origin v1.0.1
+```
+
+To release a new alpha version, create a new tag with the `alpha` suffix and push it to the repository:
+
+```bash
+git tag v1.0.1-alpha.1
+git push origin v1.0.1-alpha
 ```
