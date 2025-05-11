@@ -7,11 +7,11 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 from custom_components.solis_cloud_control.inverter import (
+    InverterBatteryMaxChargeCurrent,
     InverterBatteryMaxChargeSOC,
+    InverterBatteryMaxDischargeCurrent,
     InverterBatteryOverDischargeSOC,
     InverterChargeDischargeSlot,
-    InverterMaxChargingCurrent,
-    InverterMaxDischargingCurrent,
     InverterMaxExportPower,
 )
 from custom_components.solis_cloud_control.safe_converters import safe_get_float_value
@@ -42,7 +42,7 @@ async def async_setup_entry(
                     icon="mdi:battery-plus-outline",
                 ),
                 charge_discharge_slot=inverter.charge_discharge_slots.charge_slot1,
-                max_charging_discharging_current=inverter.max_charging_current,
+                battery_max_charge_discharge_current=inverter.battery_max_charge_current,
             )
         )
         entities.append(
@@ -54,7 +54,7 @@ async def async_setup_entry(
                     icon="mdi:battery-minus-outline",
                 ),
                 charge_discharge_slot=inverter.charge_discharge_slots.discharge_slot1,
-                max_charging_discharging_current=inverter.max_discharging_current,
+                battery_max_charge_discharge_current=inverter.battery_max_discharge_current,
             )
         )
         entities.append(
@@ -106,7 +106,9 @@ class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
         coordinator: SolisCloudControlCoordinator,
         entity_description: NumberEntityDescription,
         charge_discharge_slot: InverterChargeDischargeSlot,
-        max_charging_discharging_current: InverterMaxChargingCurrent | InverterMaxDischargingCurrent | None,
+        battery_max_charge_discharge_current: InverterBatteryMaxChargeCurrent
+        | InverterBatteryMaxDischargeCurrent
+        | None,
     ) -> None:
         super().__init__(coordinator, entity_description)
         self._attr_native_min_value = charge_discharge_slot.current_min_value
@@ -115,18 +117,18 @@ class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
 
         self.charge_discharge_slot = charge_discharge_slot
-        self.max_charging_discharging_current = max_charging_discharging_current
+        self.battery_max_charge_discharge_current = battery_max_charge_discharge_current
 
     @property
     def native_max_value(self) -> float:
-        max_charging_discharging_current = None
+        if self.battery_max_charge_discharge_current is not None:
+            battery_max_charge_discharge_current_str = self.coordinator.data.get(
+                self.battery_max_charge_discharge_current.cid
+            )
+            battery_max_charge_discharge_current = safe_get_float_value(battery_max_charge_discharge_current_str)
 
-        if self.max_charging_discharging_current is not None:
-            max_charging_discharging_current_str = self.coordinator.data.get(self.max_charging_discharging_current.cid)
-            max_charging_discharging_current = safe_get_float_value(max_charging_discharging_current_str)
-
-        if max_charging_discharging_current is not None:
-            return max_charging_discharging_current
+        if battery_max_charge_discharge_current is not None:
+            return battery_max_charge_discharge_current
         else:
             return self.charge_discharge_slot.current_max_value
 
