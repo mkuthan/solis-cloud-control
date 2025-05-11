@@ -18,7 +18,7 @@ def battery_current_entity(mock_coordinator, any_inverter):
             name="Test Current",
         ),
         charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
-        max_charging_discharging_current=any_inverter.max_charging_current,
+        battery_max_charge_discharge_current=any_inverter.battery_max_charge_current,
     )
 
 
@@ -31,7 +31,9 @@ class TestBatteryCurrent:
         assert battery_current_entity.native_unit_of_measurement == UnitOfElectricCurrent.AMPERE
 
     def test_native_max_value(self, battery_current_entity):
-        battery_current_entity.coordinator.data = {battery_current_entity.max_charging_discharging_current.cid: "50"}
+        battery_current_entity.coordinator.data = {
+            battery_current_entity.battery_max_charge_discharge_current.cid: "50"
+        }
         assert battery_current_entity.native_max_value == 50
 
     @pytest.mark.parametrize(

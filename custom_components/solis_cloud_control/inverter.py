@@ -196,16 +196,6 @@ class InverterMaxExportPower:
 
 
 @dataclass
-class InverterMaxChargingCurrent:
-    cid: int = 162
-
-
-@dataclass
-class InverterMaxDischargingCurrent:
-    cid: int = 163
-
-
-@dataclass
 class InverterBatteryReserveSOC:
     cid: int = 157
 
@@ -231,19 +221,29 @@ class InverterBatteryMaxChargeSOC:
 
 
 @dataclass
+class InverterBatteryMaxChargeCurrent:
+    cid: int = 7224
+
+
+@dataclass
+class InverterBatteryMaxDischargeCurrent:
+    cid: int = 7226
+
+
+@dataclass
 class Inverter:
     info: InverterInfo
     storage_mode: InverterStorageMode | None = None
     charge_discharge_settings: InverterChargeDischargeSettings | None = None
     charge_discharge_slots: InverterChargeDischargeSlots | None = None
     max_export_power: InverterMaxExportPower | None = None
-    max_charging_current: InverterMaxChargingCurrent | None = None
-    max_discharging_current: InverterMaxDischargingCurrent | None = None
     battery_reserve_soc: InverterBatteryReserveSOC | None = None
     battery_over_discharge_soc: InverterBatteryOverDischargeSOC | None = None
     battery_force_charge_soc: InverterBatteryForceChargeSOC | None = None
     battery_recovery_soc: InverterBatteryRecoverySOC | None = None
     battery_max_charge_soc: InverterBatteryMaxChargeSOC | None = None
+    battery_max_charge_current: InverterBatteryMaxChargeCurrent | None = None
+    battery_max_discharge_current: InverterBatteryMaxDischargeCurrent | None = None
 
     def all_cids(self) -> list[int]:
         cids = []
@@ -256,10 +256,6 @@ class Inverter:
             cids.extend(self.charge_discharge_slots.all_cids())
         if self.max_export_power is not None:
             cids.append(self.max_export_power.cid)
-        if self.max_charging_current is not None:
-            cids.append(self.max_charging_current.cid)
-        if self.max_discharging_current is not None:
-            cids.append(self.max_discharging_current.cid)
         if self.battery_reserve_soc is not None:
             cids.append(self.battery_reserve_soc.cid)
         if self.battery_over_discharge_soc is not None:
@@ -270,5 +266,9 @@ class Inverter:
             cids.append(self.battery_recovery_soc.cid)
         if self.battery_max_charge_soc is not None:
             cids.append(self.battery_max_charge_soc.cid)
+        if self.battery_max_charge_current is not None:
+            cids.append(self.battery_max_charge_current.cid)
+        if self.battery_max_discharge_current is not None:
+            cids.append(self.battery_max_discharge_current.cid)
 
         return cids
