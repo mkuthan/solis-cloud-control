@@ -74,6 +74,7 @@ def any_inverter_info():
         model="any_model",
         machine="any_machine",
         version="any_version",
+        power=None,
     )
 
 

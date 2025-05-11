@@ -7,6 +7,7 @@ class InverterInfo:
     model: str
     version: str
     machine: str
+    power: float | None
 
 
 @dataclass

@@ -6,7 +6,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 from custom_components.solis_cloud_control.inverter import InverterStorageMode
-from custom_components.solis_cloud_control.number_utils import safe_get_int_value
+from custom_components.solis_cloud_control.safe_converters import safe_get_int_value
 
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
