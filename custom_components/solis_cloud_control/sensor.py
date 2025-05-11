@@ -4,7 +4,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
-from custom_components.solis_cloud_control.inverter import (
+from custom_components.solis_cloud_control.inverters.inverter import (
     InverterBatteryForceChargeSOC,
     InverterBatteryMaxChargeSOC,
     InverterBatteryOverDischargeSOC,
