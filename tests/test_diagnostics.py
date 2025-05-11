@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
 
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN
@@ -16,6 +18,6 @@ async def test_diagnostics(hass, mock_coordinator, mock_config_entry, any_invert
             CONF_API_TOKEN: "**REDACTED**",
             CONF_INVERTER_SN: "any_inverter_sn",
         },
-        "inverter_info": any_inverter.info,
+        "inverter_info": asdict(any_inverter.info),
         "coordinator_data": mock_coordinator.data,
     }

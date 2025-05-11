@@ -14,9 +14,8 @@ from custom_components.solis_cloud_control.inverter import (
     InverterMaxExportPower,
     InverterStorageMode,
 )
-
-_CHARGE_DISCHARGE_MODE_CID = 6798
-_CHARGE_DISCHARGE_MODE_USING_SLOTS = 43605  # 0xAA55
+from custom_components.solis_cloud_control.inverter_utils import charge_discharge_mode_slots_enabled
+from custom_components.solis_cloud_control.safe_converters import safe_convert_power_to_watts
 
 
 async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_sn: str) -> InverterInfo:
@@ -25,12 +24,14 @@ async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_
     model = str(inverter_details.get("model", "Unknown"))
     version = str(inverter_details.get("version", "Unknown"))
     machine = str(inverter_details.get("machine", "Unknown"))
+    power = safe_convert_power_to_watts(inverter_details.get("power"), inverter_details.get("powerStr"))
 
     return InverterInfo(
         serial_number=inverter_sn,
         model=model,
         version=version,
         machine=machine,
+        power=power,
     )
 
 
@@ -49,10 +50,12 @@ async def create_inverter(api_client: SolisCloudControlApiClient, inverter_info:
 
 
 async def _create_3331(api_client: SolisCloudControlApiClient, inverter_info: InverterInfo) -> Inverter:
+    power = inverter_info.power if inverter_info.power is not None else 15_000
+
     inverter = Inverter(
         info=inverter_info,
         storage_mode=InverterStorageMode(),
-        max_export_power=InverterMaxExportPower(max_value=13_200, step=100, scale=0.01),
+        max_export_power=InverterMaxExportPower(max_value=power, step=100, scale=0.01),
         max_charging_current=InverterMaxChargingCurrent(),
         max_discharging_current=InverterMaxDischargingCurrent(),
         battery_reserve_soc=InverterBatteryReserveSOC(),
@@ -62,9 +65,7 @@ async def _create_3331(api_client: SolisCloudControlApiClient, inverter_info: In
         battery_max_charge_soc=InverterBatteryMaxChargeSOC(),
     )
 
-    charge_discharge_mode = await api_client.read(inverter_info.serial_number, _CHARGE_DISCHARGE_MODE_CID)
-
-    if charge_discharge_mode == str(_CHARGE_DISCHARGE_MODE_USING_SLOTS):
+    if await charge_discharge_mode_slots_enabled(api_client, inverter_info.serial_number):
         inverter.charge_discharge_slots = InverterChargeDischargeSlots()
     else:
         inverter.charge_discharge_settings = InverterChargeDischargeSettings()
