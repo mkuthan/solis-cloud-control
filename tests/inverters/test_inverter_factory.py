@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 
 from custom_components.solis_cloud_control.inverters.inverter import (
