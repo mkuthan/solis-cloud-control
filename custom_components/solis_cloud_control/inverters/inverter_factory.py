@@ -1,9 +1,9 @@
 import importlib
 import logging
 
-from custom_components.solis_cloud_control.api import SolisCloudControlApiClient
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
 from custom_components.solis_cloud_control.inverters.inverter import Inverter, InverterInfo
-from custom_components.solis_cloud_control.safe_converters import safe_convert_power_to_watts
+from custom_components.solis_cloud_control.utils.safe_converters import safe_convert_power_to_watts
 
 _LOGGER = logging.getLogger(__name__)
 

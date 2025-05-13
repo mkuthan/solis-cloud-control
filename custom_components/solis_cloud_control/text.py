@@ -10,7 +10,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSettings,
     InverterChargeDischargeSlot,
 )
-from custom_components.solis_cloud_control.time_utils import validate_time_range
+from custom_components.solis_cloud_control.utils.time_utils import validate_time_range
 
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity

@@ -14,7 +14,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSlot,
     InverterMaxExportPower,
 )
-from custom_components.solis_cloud_control.safe_converters import safe_get_float_value
+from custom_components.solis_cloud_control.utils.safe_converters import safe_get_float_value
 
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity

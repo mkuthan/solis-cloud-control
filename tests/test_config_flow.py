@@ -5,7 +5,7 @@ from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.solis_cloud_control.api import SolisCloudControlApiError
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 
 _TEST_API_KEY = "any api key"

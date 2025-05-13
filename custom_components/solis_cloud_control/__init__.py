@@ -5,12 +5,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers import device_registry as dr
 
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
+from custom_components.solis_cloud_control.const import API_BASE_URL, CONF_INVERTER_SN
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry, SolisCloudControlData
 from custom_components.solis_cloud_control.inverters.inverter_factory import create_inverter, create_inverter_info
-
-from .api import SolisCloudControlApiClient
-from .const import API_BASE_URL, CONF_INVERTER_SN
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -6,9 +6,8 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
 from homeassistant.helpers import aiohttp_client
 
-from custom_components.solis_cloud_control.api import SolisCloudControlApiClient, SolisCloudControlApiError
-
-from .const import API_BASE_URL, CONF_INVERTER_SN, DOMAIN
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient, SolisCloudControlApiError
+from custom_components.solis_cloud_control.const import API_BASE_URL, CONF_INVERTER_SN, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 

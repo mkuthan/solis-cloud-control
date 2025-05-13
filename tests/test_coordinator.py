@@ -5,7 +5,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from custom_components.solis_cloud_control.api import SolisCloudControlApiError
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
 
 

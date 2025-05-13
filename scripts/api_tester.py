@@ -5,7 +5,7 @@ import os
 
 import aiohttp
 
-from custom_components.solis_cloud_control.api import SolisCloudControlApiClient
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
 from custom_components.solis_cloud_control.const import API_BASE_URL
 
 

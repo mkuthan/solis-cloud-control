@@ -1,4 +1,4 @@
-from custom_components.solis_cloud_control.api import SolisCloudControlApiClient
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
 from custom_components.solis_cloud_control.inverters.inverter import Inverter, InverterInfo, InverterMaxExportPower
 
 
