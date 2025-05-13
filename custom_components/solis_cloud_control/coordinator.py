@@ -47,7 +47,7 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
 
     async def _async_update_data(self) -> SolisCloudControlData:
         inverter_sn = self._inverter.info.serial_number
-        all_cids = self._inverter.all_cids()
+        all_cids = self._inverter.all_cids
         try:
             result = await self._api_client.read_batch(
                 inverter_sn,

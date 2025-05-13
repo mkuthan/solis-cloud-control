@@ -95,6 +95,7 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
         )
 
     async def _inverter_list(self) -> list[dict[str, Any]]:
-        session = aiohttp_client.async_get_clientsession(self.hass)
-        api_client = SolisCloudControlApiClient(API_BASE_URL, self._api_key, self._api_token, session)
+        api_client = SolisCloudControlApiClient(
+            API_BASE_URL, self._api_key, self._api_token, aiohttp_client.async_get_clientsession(self.hass)
+        )
         return await api_client.inverter_list(retry_count=0)

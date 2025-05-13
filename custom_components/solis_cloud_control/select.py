@@ -22,10 +22,8 @@ async def async_setup_entry(
     inverter = entry.runtime_data.inverter
     coordinator = entry.runtime_data.coordinator
 
-    entities = []
-
-    if inverter.storage_mode is not None:
-        entities.append(
+    async_add_entities(
+        [
             StorageModeSelect(
                 coordinator=coordinator,
                 entity_description=SelectEntityDescription(
@@ -34,10 +32,9 @@ async def async_setup_entry(
                     icon="mdi:solar-power",
                 ),
                 storage_mode=inverter.storage_mode,
-            ),
-        )
-
-    async_add_entities(entities)
+            )
+        ]
+    )
 
 
 class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
@@ -47,7 +44,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         entity_description: SelectEntityDescription,
         storage_mode: InverterStorageMode,
     ) -> None:
-        super().__init__(coordinator, entity_description)
+        super().__init__(coordinator, entity_description, storage_mode.cid)
         self._attr_options = [
             storage_mode.mode_self_use,
             storage_mode.mode_feed_in_priority,

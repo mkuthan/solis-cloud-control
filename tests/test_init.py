@@ -13,7 +13,7 @@ from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 
 
 async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter):
-    mock_api_client.read_batch.return_value = dict.fromkeys(any_inverter.all_cids(), None)
+    mock_api_client.read_batch.return_value = dict.fromkeys(any_inverter.all_cids, None)
 
     with (
         patch(
@@ -58,11 +58,11 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
     entries = er.async_entries_for_config_entry(entity_registry, mock_config_entry.entry_id)
 
     platform_counts = Counter(entry.domain for entry in entries)
-    assert platform_counts[Platform.NUMBER] == 5
+    assert platform_counts[Platform.NUMBER] == 25
     assert platform_counts[Platform.SELECT] == 1
-    assert platform_counts[Platform.SENSOR] == 5
-    assert platform_counts[Platform.SWITCH] == 2
-    assert platform_counts[Platform.TEXT] == 2
+    assert platform_counts[Platform.SENSOR] == 7
+    assert platform_counts[Platform.SWITCH] == 12
+    assert platform_counts[Platform.TEXT] == 13
 
 
 async def test_migrate_config_entry_v1_to_v2(hass: HomeAssistant):

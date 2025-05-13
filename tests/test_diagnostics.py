@@ -8,7 +8,7 @@ from custom_components.solis_cloud_control.diagnostics import async_get_config_e
 
 
 async def test_diagnostics(hass, mock_coordinator, mock_config_entry, any_inverter) -> None:
-    mock_coordinator.data = {-1: "any value"}
+    mock_coordinator.data = {1: "any value"}
     mock_config_entry.runtime_data = SolisCloudControlData(inverter=any_inverter, coordinator=mock_coordinator)
 
     diagnostics = await async_get_config_entry_diagnostics(hass, mock_config_entry)
