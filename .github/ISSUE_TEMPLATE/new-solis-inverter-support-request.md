@@ -27,7 +27,7 @@ Please provide the model name if you know it (e.g., "3331").
 Download diagnostic from Home Assistant integration page. Please paste `inverter_info` and `coordinator_data` fields within the code block below.
 
 ```json
-[Paste Your Diagnostic JSON Here, if available]
+[Paste Your Diagnostic JSON Here]
 ```
 
 **4. Additional Details:**
