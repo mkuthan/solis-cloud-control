@@ -7,7 +7,12 @@ from custom_components.solis_cloud_control.coordinator import SolisCloudControlC
 
 
 class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
-    def __init__(self, coordinator: SolisCloudControlCoordinator, entity_description: EntityDescription) -> None:
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: EntityDescription,
+        cids: int | list[int],
+    ) -> None:
         super().__init__(coordinator)
         self.entity_description = entity_description
 
@@ -21,3 +26,19 @@ class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
                 ),
             },
         )
+
+        if isinstance(cids, int):
+            self.cids = [cids]
+        else:
+            self.cids = cids
+
+    @property
+    def available(self) -> bool:
+        if not super().available:
+            return False
+
+        for cid in self.cids:
+            if cid not in self.coordinator.data or self.coordinator.data[cid] is None:
+                return False
+
+        return True

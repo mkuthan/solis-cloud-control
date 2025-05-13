@@ -30,7 +30,7 @@ async def create_inverter(api_client: SolisCloudControlApiClient, inverter_info:
         inverter_model = inverter_info.model.lower()
         module_name = f"custom_components.solis_cloud_control.inverters.model_{inverter_model}"
         model_module = importlib.import_module(module_name)
-        inverter = await model_module.create_inverter(api_client, inverter_info)
+        inverter = await model_module.create_inverter(inverter_info, api_client)
         _LOGGER.info("Inverter model '%s' created", inverter_info.model)
         return inverter
     except ImportError:

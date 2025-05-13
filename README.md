@@ -14,14 +14,13 @@ See my blog post for inspiration how to use this integration: [Home Assistant So
 
 ## Supported devices
 
+All Solis hybrid inverters should be supported, although the integration has been tested with the following models:
+
 * S6-EH3P(8-15)K02-NV-YD-L, model "3331"
 * RHI-3P(3-10)K-HVES-5G, model "CA"
 
 > [!NOTE]
-> If your inverter is not listed here, please open an issue on GitHub with the inverter model identifier and model name.
-> Diagnostics could also be helpful.
-
-![Device Info](device_info.png)
+> If your inverter is not listed here, please open an issue on GitHub using "New Solis Inverter Support Request" template.
 
 ## Installation
 
@@ -51,9 +50,9 @@ Use [HACS](https://www.hacs.xyz/) to install the integration:
 ## Features
 
 * ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid"
+* 🛠️ Access "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes
 * ⏱️ Schedule charge and discharge slots
 * ⚖️ Set maximum export power
-* 🛠️ Access "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes
 
 ![Inverter Controls](inverter_controls.png)
 

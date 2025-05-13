@@ -20,7 +20,7 @@ def coordinator(hass: HomeAssistant, mock_config_entry, mock_api_client, any_inv
 
 
 async def test_async_update_data(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
-    all_cids = any_inverter.all_cids()
+    all_cids = any_inverter.all_cids
 
     any_data = {cid: f"value_{cid}" for cid in all_cids}
     mock_api_client.read_batch.return_value = any_data
@@ -48,7 +48,7 @@ async def test_async_update_data_api_error(hass: HomeAssistant, coordinator, moc
 
     mock_api_client.read_batch.assert_called_once_with(
         coordinator._inverter.info.serial_number,
-        coordinator._inverter.all_cids(),
+        coordinator._inverter.all_cids,
         retry_count=5,
         retry_delay=10,
     )

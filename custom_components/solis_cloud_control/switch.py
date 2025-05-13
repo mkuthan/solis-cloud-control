@@ -25,29 +25,32 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
 
     entities = []
-    if inverter.charge_discharge_slots is not None:
+
+    slots = inverter.charge_discharge_slots
+
+    for i in range(1, slots.SLOT_COUNT + 1):
         entities.append(
             SlotSwitch(
                 coordinator=coordinator,
                 entity_description=SwitchEntityDescription(
-                    key="slot1_charge_switch",
-                    name="Slot1 Charge",
+                    key=f"slot{i}_charge_switch",
+                    name=f"Slot{i} Charge",
                     icon="mdi:battery-plus-outline",
                 ),
-                charge_discharge_slot=inverter.charge_discharge_slots.charge_slot1,
-                charge_discharge_slots=inverter.charge_discharge_slots,
+                charge_discharge_slot=slots.get_charge_slot(i),
+                charge_discharge_slots=slots,
             )
         )
         entities.append(
             SlotSwitch(
                 coordinator=coordinator,
                 entity_description=SwitchEntityDescription(
-                    key="slot1_discharge_switch",
-                    name="Slot1 Discharge",
+                    key=f"slot{i}_discharge_switch",
+                    name=f"Slot{i} Discharge",
                     icon="mdi:battery-minus-outline",
                 ),
-                charge_discharge_slot=inverter.charge_discharge_slots.discharge_slot1,
-                charge_discharge_slots=inverter.charge_discharge_slots,
+                charge_discharge_slot=slots.get_discharge_slot(i),
+                charge_discharge_slots=slots,
             )
         )
 
@@ -62,7 +65,7 @@ class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
         charge_discharge_slot: InverterChargeDischargeSlot,
         charge_discharge_slots: InverterChargeDischargeSlots,
     ) -> None:
-        super().__init__(coordinator, entity_description)
+        super().__init__(coordinator, entity_description, charge_discharge_slots.all_cids)
 
         self.charge_discharge_slot = charge_discharge_slot
         self.charge_discharge_slots = charge_discharge_slots
@@ -83,55 +86,22 @@ class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
         await self.coordinator.control(self.charge_discharge_slot.switch_cid, "0", old_value)
 
     def _calculate_old_value(self) -> str:
+        slots = self.charge_discharge_slots
+        data = self.coordinator.data
+
         slot_states = {
-            self.charge_discharge_slots.bit_charge_slot1: self.coordinator.data.get(
-                self.charge_discharge_slots.charge_slot1.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_charge_slot2: self.coordinator.data.get(
-                self.charge_discharge_slots.charge_slot2.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_charge_slot3: self.coordinator.data.get(
-                self.charge_discharge_slots.charge_slot3.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_charge_slot4: self.coordinator.data.get(
-                self.charge_discharge_slots.charge_slot4.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_charge_slot5: self.coordinator.data.get(
-                self.charge_discharge_slots.charge_slot5.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_charge_slot6: self.coordinator.data.get(
-                self.charge_discharge_slots.charge_slot6.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_discharge_slot1: self.coordinator.data.get(
-                self.charge_discharge_slots.discharge_slot1.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_discharge_slot2: self.coordinator.data.get(
-                self.charge_discharge_slots.discharge_slot2.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_discharge_slot3: self.coordinator.data.get(
-                self.charge_discharge_slots.discharge_slot3.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_discharge_slot4: self.coordinator.data.get(
-                self.charge_discharge_slots.discharge_slot4.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_discharge_slot5: self.coordinator.data.get(
-                self.charge_discharge_slots.discharge_slot5.switch_cid
-            )
-            == "1",
-            self.charge_discharge_slots.bit_discharge_slot6: self.coordinator.data.get(
-                self.charge_discharge_slots.discharge_slot6.switch_cid
-            )
-            == "1",
+            slots.bit_charge_slot1: data.get(slots.charge_slot1.switch_cid) == "1",
+            slots.bit_charge_slot2: data.get(slots.charge_slot2.switch_cid) == "1",
+            slots.bit_charge_slot3: data.get(slots.charge_slot3.switch_cid) == "1",
+            slots.bit_charge_slot4: data.get(slots.charge_slot4.switch_cid) == "1",
+            slots.bit_charge_slot5: data.get(slots.charge_slot5.switch_cid) == "1",
+            slots.bit_charge_slot6: data.get(slots.charge_slot6.switch_cid) == "1",
+            slots.bit_discharge_slot1: data.get(slots.discharge_slot1.switch_cid) == "1",
+            slots.bit_discharge_slot2: data.get(slots.discharge_slot2.switch_cid) == "1",
+            slots.bit_discharge_slot3: data.get(slots.discharge_slot3.switch_cid) == "1",
+            slots.bit_discharge_slot4: data.get(slots.discharge_slot4.switch_cid) == "1",
+            slots.bit_discharge_slot5: data.get(slots.discharge_slot5.switch_cid) == "1",
+            slots.bit_discharge_slot6: data.get(slots.discharge_slot6.switch_cid) == "1",
         }
 
         value = 0
