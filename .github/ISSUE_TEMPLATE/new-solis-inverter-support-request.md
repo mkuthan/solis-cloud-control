@@ -34,6 +34,7 @@ Download diagnostic from Home Assistant integration page. Please paste `inverter
 Please provide any other relevant information that might help us add support for this inverter. For example:
 
 - What specific features or sensors are you hoping to see?
+- Logs or error messages that you have encountered
 - Any other context or observations
 
 We appreciate you taking the time to provide this information. Adding support for new hardware can be complex, and your detailed input is crucial for success!
