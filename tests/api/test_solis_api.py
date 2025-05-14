@@ -1,14 +1,7 @@
 import pytest
 from aiohttp import web
 
-from custom_components.solis_cloud_control.api import (
-    _CONTROL_ENDPOINT,
-    _INVERTER_LIST_ENDPOINT,
-    _READ_BATCH_ENDPOINT,
-    _READ_ENDPOINT,
-    SolisCloudControlApiClient,
-    SolisCloudControlApiError,
-)
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient, SolisCloudControlApiError
 
 
 @pytest.fixture
@@ -36,7 +29,7 @@ async def test_read(create_api_client, aiohttp_client):
         return web.json_response({"code": "0", "msg": "Success", "data": {"msg": any_result}})
 
     app = web.Application()
-    app.router.add_route("POST", _READ_ENDPOINT, mock_read_endpoint)
+    app.router.add_route("POST", SolisCloudControlApiClient._READ_ENDPOINT, mock_read_endpoint)
 
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
@@ -59,7 +52,7 @@ async def test_read_batch(create_api_client, aiohttp_client):
         return web.json_response({"code": "0", "msg": "Success", "data": data})
 
     app = web.Application()
-    app.router.add_route("POST", _READ_BATCH_ENDPOINT, mock_read_batch_endpoint)
+    app.router.add_route("POST", SolisCloudControlApiClient._READ_BATCH_ENDPOINT, mock_read_batch_endpoint)
 
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
@@ -84,7 +77,7 @@ async def test_control(create_api_client, aiohttp_client):
         return web.json_response({"code": "0", "msg": "Success", "data": [{"code": "0", "msg": "Success"}]})
 
     app = web.Application()
-    app.router.add_route("POST", _CONTROL_ENDPOINT, mock_control_endpoint)
+    app.router.add_route("POST", SolisCloudControlApiClient._CONTROL_ENDPOINT, mock_control_endpoint)
 
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
@@ -102,7 +95,7 @@ async def test_inverter_list(create_api_client, aiohttp_client):
         return web.json_response({"code": "0", "msg": "Success", "data": {"page": {"records": any_records}}})
 
     app = web.Application()
-    app.router.add_route("POST", _INVERTER_LIST_ENDPOINT, mock_inverter_list_endpoint)
+    app.router.add_route("POST", SolisCloudControlApiClient._INVERTER_LIST_ENDPOINT, mock_inverter_list_endpoint)
 
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
@@ -110,6 +103,26 @@ async def test_inverter_list(create_api_client, aiohttp_client):
     result = await api_client.inverter_list()
 
     assert result == any_records
+
+
+async def test_inverter_details(create_api_client, aiohttp_client):
+    any_inverter_sn = "any_inverter_sn"
+    any_details_response = {"field1": "value1", "field2": "value2"}
+
+    async def mock_inverter_details_endpoint(request):
+        body = await request.json()
+        assert body.get("sn") == any_inverter_sn
+        return web.json_response({"code": "0", "msg": "Success", "data": any_details_response})
+
+    app = web.Application()
+    app.router.add_route("POST", SolisCloudControlApiClient._INVERTER_DETAILS_ENDPOINT, mock_inverter_details_endpoint)
+
+    client = await aiohttp_client(app)
+    api_client = create_api_client(client)
+
+    result = await api_client.inverter_details(inverter_sn=any_inverter_sn)
+
+    assert result == any_details_response
 
 
 async def mock_read_endpoint_http_error(request):
@@ -148,7 +161,7 @@ async def mock_read_endpoint_missing_msg_field(request):
 )
 async def test_read_errors(mock_endpoint, expected_error, create_api_client, aiohttp_client):
     app = web.Application()
-    app.router.add_route("POST", _READ_ENDPOINT, mock_endpoint)
+    app.router.add_route("POST", SolisCloudControlApiClient._READ_ENDPOINT, mock_endpoint)
 
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
@@ -219,7 +232,7 @@ async def mock_read_batch_endpoint_missing_cid_field(request):
 )
 async def test_read_batch_errors(mock_endpoint, expected_error, create_api_client, aiohttp_client):
     app = web.Application()
-    app.router.add_route("POST", _READ_BATCH_ENDPOINT, mock_endpoint)
+    app.router.add_route("POST", SolisCloudControlApiClient._READ_BATCH_ENDPOINT, mock_endpoint)
 
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
@@ -274,7 +287,7 @@ async def mock_control_endpoint_invalid_data_format(request):
 )
 async def test_control_errors(mock_endpoint, expected_error, create_api_client, aiohttp_client):
     app = web.Application()
-    app.router.add_route("POST", _CONTROL_ENDPOINT, mock_endpoint)
+    app.router.add_route("POST", SolisCloudControlApiClient._CONTROL_ENDPOINT, mock_endpoint)
 
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
@@ -283,6 +296,10 @@ async def test_control_errors(mock_endpoint, expected_error, create_api_client, 
         await api_client.control(inverter_sn="any inverter", cid=-1, value="any value", retry_count=0)
 
     assert str(excinfo.value) == str(expected_error)
+
+
+async def mock_inverter_list_endpoint_missing_data_field(request):
+    return web.json_response({"code": "0", "msg": "Success"})
 
 
 async def mock_inverter_list_endpoint_missing_page(request):
@@ -302,6 +319,10 @@ async def mock_inverter_list_endpoint_missing_records(request):
             SolisCloudControlApiError("API operation failed: API Error", response_code="100"),
         ),
         (
+            mock_inverter_list_endpoint_missing_data_field,
+            SolisCloudControlApiError("InverterList failed: missing 'data' field"),
+        ),
+        (
             mock_inverter_list_endpoint_missing_page,
             SolisCloudControlApiError("InverterList failed: missing 'page' field"),
         ),
@@ -313,12 +334,43 @@ async def mock_inverter_list_endpoint_missing_records(request):
 )
 async def test_inverter_list_errors(mock_endpoint, expected_error, create_api_client, aiohttp_client):
     app = web.Application()
-    app.router.add_route("POST", _INVERTER_LIST_ENDPOINT, mock_endpoint)
+    app.router.add_route("POST", SolisCloudControlApiClient._INVERTER_LIST_ENDPOINT, mock_endpoint)
 
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
     with pytest.raises(SolisCloudControlApiError) as excinfo:
         await api_client.inverter_list(retry_count=0)
+
+    assert str(excinfo.value) == str(expected_error)
+
+
+async def mock_inverter_details_endpoint_missing_data_field(request):
+    return web.json_response({"code": "0", "msg": "Success"})
+
+
+@pytest.mark.parametrize(
+    "mock_endpoint,expected_error",
+    [
+        (mock_read_endpoint_http_error, SolisCloudControlApiError("Internal Server Error", status_code=500)),
+        (
+            mock_read_endpoint_api_error,
+            SolisCloudControlApiError("API operation failed: API Error", response_code="100"),
+        ),
+        (
+            mock_inverter_details_endpoint_missing_data_field,
+            SolisCloudControlApiError("InverterDetails failed: missing 'data' field"),
+        ),
+    ],
+)
+async def test_inverter_details_errors(mock_endpoint, expected_error, create_api_client, aiohttp_client):
+    app = web.Application()
+    app.router.add_route("POST", SolisCloudControlApiClient._INVERTER_DETAILS_ENDPOINT, mock_endpoint)
+
+    client = await aiohttp_client(app)
+    api_client = create_api_client(client)
+
+    with pytest.raises(SolisCloudControlApiError) as excinfo:
+        await api_client.inverter_details(inverter_sn="any_inverter_sn", retry_count=0)
 
     assert str(excinfo.value) == str(expected_error)

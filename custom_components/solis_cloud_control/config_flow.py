@@ -6,9 +6,8 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
 from homeassistant.helpers import aiohttp_client
 
-from custom_components.solis_cloud_control.api import SolisCloudControlApiClient, SolisCloudControlApiError
-
-from .const import API_BASE_URL, CONF_INVERTER_SN, DOMAIN
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient, SolisCloudControlApiError
+from custom_components.solis_cloud_control.const import API_BASE_URL, CONF_INVERTER_SN, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -95,6 +94,7 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
         )
 
     async def _inverter_list(self) -> list[dict[str, Any]]:
-        session = aiohttp_client.async_get_clientsession(self.hass)
-        api_client = SolisCloudControlApiClient(API_BASE_URL, self._api_key, self._api_token, session)
+        api_client = SolisCloudControlApiClient(
+            API_BASE_URL, self._api_key, self._api_token, aiohttp_client.async_get_clientsession(self.hass)
+        )
         return await api_client.inverter_list(retry_count=0)

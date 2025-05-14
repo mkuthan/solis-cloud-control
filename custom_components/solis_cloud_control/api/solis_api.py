@@ -4,19 +4,14 @@ import logging
 
 import aiohttp
 
-from custom_components.solis_cloud_control.api_utils import current_date, digest, format_date, sign_authorization
+from custom_components.solis_cloud_control.api.solis_api_utils import (
+    current_date,
+    digest,
+    format_date,
+    sign_authorization,
+)
 
 _LOGGER = logging.getLogger(__name__)
-
-
-_READ_ENDPOINT = "/v2/api/atRead"
-_READ_BATCH_ENDPOINT = "/v2/api/atReadBatch"
-_CONTROL_ENDPOINT = "/v2/api/control"
-_INVERTER_LIST_ENDPOINT = "/v1/api/inverterList"
-_TIMEOUT_SECONDS = 30
-_CONCURRENT_REQUESTS = 2
-_RETRY_COUNT = 2  # initial attempt + 2 retries
-_RETRY_DELAY_SECONDS = 5
 
 
 class SolisCloudControlApiError(Exception):
@@ -38,6 +33,16 @@ class SolisCloudControlApiError(Exception):
 
 
 class SolisCloudControlApiClient:
+    _READ_ENDPOINT = "/v2/api/atRead"
+    _READ_BATCH_ENDPOINT = "/v2/api/atReadBatch"
+    _CONTROL_ENDPOINT = "/v2/api/control"
+    _INVERTER_LIST_ENDPOINT = "/v1/api/inverterList"
+    _INVERTER_DETAILS_ENDPOINT = "/v1/api/inverterDetail"
+    _TIMEOUT_SECONDS = 30
+    _CONCURRENT_REQUESTS = 2
+    _RETRY_COUNT = 2  # initial attempt + 2 retries
+    _RETRY_DELAY_SECONDS = 5
+
     def __init__(
         self,
         base_url: str,
@@ -59,7 +64,7 @@ class SolisCloudControlApiClient:
     ) -> str:
         async def read_operation() -> str:
             payload = {"inverterSn": inverter_sn, "cid": cid}
-            data = await self._execute_request(_READ_ENDPOINT, payload)
+            data = await self._execute_request(self._READ_ENDPOINT, payload)
 
             if data is None:
                 raise SolisCloudControlApiError("Read failed: missing 'data' field")
@@ -81,7 +86,7 @@ class SolisCloudControlApiClient:
         async def read_batch_operation() -> dict[int, str]:
             payload = {"inverterSn": inverter_sn, "cids": ",".join(map(str, cids))}
 
-            data = await self._execute_request(_READ_BATCH_ENDPOINT, payload)
+            data = await self._execute_request(self._READ_BATCH_ENDPOINT, payload)
 
             if data is None:
                 raise SolisCloudControlApiError("ReadBatch failed: missing 'data' field")
@@ -120,7 +125,7 @@ class SolisCloudControlApiClient:
             if old_value is not None:
                 payload["yuanzhi"] = old_value
 
-            data_array = await self._execute_request(_CONTROL_ENDPOINT, payload)
+            data_array = await self._execute_request(self._CONTROL_ENDPOINT, payload)
 
             if data_array is None:
                 raise SolisCloudControlApiError("Control failed: missing 'data' field")
@@ -145,10 +150,10 @@ class SolisCloudControlApiClient:
         retry_delay: float = _RETRY_DELAY_SECONDS,
     ) -> list[dict[str, any]]:
         async def inverter_list_operation() -> list[dict[str, any]]:
-            data = await self._execute_request(_INVERTER_LIST_ENDPOINT, {})
+            data = await self._execute_request(self._INVERTER_LIST_ENDPOINT, {})
 
             if data is None:
-                raise SolisCloudControlApiError("InverterList failed: missing 'data'")
+                raise SolisCloudControlApiError("InverterList failed: missing 'data' field")
 
             if "page" not in data:
                 raise SolisCloudControlApiError("InverterList failed: missing 'page' field")
@@ -159,6 +164,23 @@ class SolisCloudControlApiClient:
             return data["page"]["records"]
 
         return await self._with_retry(inverter_list_operation, retry_count, retry_delay)
+
+    async def inverter_details(
+        self,
+        inverter_sn: str,
+        retry_count: int = _RETRY_COUNT,
+        retry_delay: float = _RETRY_DELAY_SECONDS,
+    ) -> dict[str, any]:
+        async def inverter_details_operation() -> dict[str, any]:
+            payload = {"sn": inverter_sn}
+            data = await self._execute_request(self._INVERTER_DETAILS_ENDPOINT, payload)
+
+            if data is None:
+                raise SolisCloudControlApiError("InverterDetails failed: missing 'data' field")
+
+            return data
+
+        return await self._with_retry(inverter_details_operation, retry_count, retry_delay)
 
     async def _execute_request(self, endpoint: str, payload: dict[str, any] = None) -> any:
         body = json.dumps(payload)

@@ -12,6 +12,16 @@ See my blog post for inspiration how to use this integration: [Home Assistant So
 > If your primary goal is to monitor data from the Solis Cloud Monitoring API, you might want to explore the [Solis Sensor Integration](https://github.com/hultenvp/solis-sensor/).  
 > Both integrations are complementary and can be used together to enhance your Home Assistant setup.
 
+## Supported devices
+
+All Solis hybrid inverters should be supported, although the integration has been tested with the following models:
+
+* S6-EH3P(8-15)K02-NV-YD-L, model "3331"
+* RHI-3P(3-10)K-HVES-5G, model "CA"
+
+> [!NOTE]
+> If your inverter is not listed here, please open an issue on GitHub using "New Solis Inverter Support Request" template.
+
 ## Installation
 
 Use [HACS](https://www.hacs.xyz/) to install the integration:
@@ -40,9 +50,9 @@ Use [HACS](https://www.hacs.xyz/) to install the integration:
 ## Features
 
 * ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid"
+* 🛠️ Access "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes
 * ⏱️ Schedule charge and discharge slots
 * ⚖️ Set maximum export power
-* 🛠️ Access "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes
 
 ![Inverter Controls](inverter_controls.png)
 
@@ -50,16 +60,14 @@ It also provides battery related sensors:
 
 ![Inverter Sensors](inverter_sensors.png)
 
+> [!NOTE]
+> If the inverter doesn't support a specific feature, the integration disables the corresponding controls in the UI.
+
 The integration also meets several non-functional requirements:
 
 * 📦 Batch reading of all inverter settings in a single request to fit within the Solis Cloud API limits
 * 🔄 Retry logic for API requests to mitigate API stability issues
 * 🏡 Best Home Assistant practices for integration development 😜
-
-## Supported devices
-
-* Solis Hybrid Inverter S6-EH3P12
-* Solis Datalogger S2-WL-ST
 
 ## Local Development
 
@@ -69,16 +77,22 @@ Install dependencies (once):
 uv sync
 ```
 
-Run the integration locally:
+Run the integration locally and open the UI at <http://localhost:8123>:
 
 ```bash
 ./scripts/run
 ```
 
+Run all tests:
+
+```bash
+uv run pytest
+```
+
 Run a single test:
 
 ```bash
-pytest --cov-fail-under=0 tests/test_init.py
+uv run pytest --cov-fail-under=0 tests/test_init.py
 ```
 
 ## Release
@@ -88,4 +102,11 @@ To release a new version, create a new tag and push it to the repository:
 ```bash
 git tag v1.0.1
 git push origin v1.0.1
+```
+
+To release a new alpha version, create a new tag with the `alpha` suffix and push it to the repository:
+
+```bash
+git tag v1.0.1-alpha.1
+git push origin v1.0.1-alpha
 ```
