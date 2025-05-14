@@ -60,6 +60,9 @@ It also provides battery related sensors:
 
 ![Inverter Sensors](inverter_sensors.png)
 
+> [!NOTE]
+> If the inverter doesn't support a specific feature, the integration disables the corresponding controls in the UI.
+
 The integration also meets several non-functional requirements:
 
 * 📦 Batch reading of all inverter settings in a single request to fit within the Solis Cloud API limits
@@ -74,16 +77,22 @@ Install dependencies (once):
 uv sync
 ```
 
-Run the integration locally:
+Run the integration locally and open the UI at <http://localhost:8123>:
 
 ```bash
 ./scripts/run
 ```
 
+Run all tests:
+
+```bash
+uv run pytest
+```
+
 Run a single test:
 
 ```bash
-pytest --cov-fail-under=0 tests/test_init.py
+uv run pytest --cov-fail-under=0 tests/test_init.py
 ```
 
 ## Release
