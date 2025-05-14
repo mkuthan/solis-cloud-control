@@ -53,7 +53,7 @@ class InverterChargeDischargeSlot:
 
 @dataclass
 class InverterChargeDischargeSlots:
-    SLOT_COUNT: int = 6
+    SLOTS_COUNT: int = 6
 
     charge_slot1: InverterChargeDischargeSlot = field(
         default_factory=lambda: InverterChargeDischargeSlot(
@@ -285,29 +285,16 @@ class Inverter:
 
     @property
     def all_cids(self) -> list[int]:
-        cids = []
-
-        if self.storage_mode is not None:
-            cids.append(self.storage_mode.cid)
-        if self.charge_discharge_settings is not None:
-            cids.append(self.charge_discharge_settings.cid)
-        if self.charge_discharge_slots is not None:
-            cids.extend(self.charge_discharge_slots.all_cids)
-        if self.max_export_power is not None:
-            cids.append(self.max_export_power.cid)
-        if self.battery_reserve_soc is not None:
-            cids.append(self.battery_reserve_soc.cid)
-        if self.battery_over_discharge_soc is not None:
-            cids.append(self.battery_over_discharge_soc.cid)
-        if self.battery_force_charge_soc is not None:
-            cids.append(self.battery_force_charge_soc.cid)
-        if self.battery_recovery_soc is not None:
-            cids.append(self.battery_recovery_soc.cid)
-        if self.battery_max_charge_soc is not None:
-            cids.append(self.battery_max_charge_soc.cid)
-        if self.battery_max_charge_current is not None:
-            cids.append(self.battery_max_charge_current.cid)
-        if self.battery_max_discharge_current is not None:
-            cids.append(self.battery_max_discharge_current.cid)
-
-        return cids
+        return [
+            self.storage_mode.cid,
+            self.charge_discharge_settings.cid,
+            *self.charge_discharge_slots.all_cids,
+            self.max_export_power.cid,
+            self.battery_reserve_soc.cid,
+            self.battery_over_discharge_soc.cid,
+            self.battery_force_charge_soc.cid,
+            self.battery_recovery_soc.cid,
+            self.battery_max_charge_soc.cid,
+            self.battery_max_charge_current.cid,
+            self.battery_max_discharge_current.cid,
+        ]

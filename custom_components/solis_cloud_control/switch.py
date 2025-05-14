@@ -28,7 +28,7 @@ async def async_setup_entry(
 
     slots = inverter.charge_discharge_slots
 
-    for i in range(1, slots.SLOT_COUNT + 1):
+    for i in range(1, slots.SLOTS_COUNT + 1):
         entities.append(
             SlotSwitch(
                 coordinator=coordinator,

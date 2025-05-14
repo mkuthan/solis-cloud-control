@@ -76,3 +76,9 @@ class TestChargeDischargeSettingsText:
             charge_discharge_settings_entity.charge_discharge_settings.cid: None
         }
         assert charge_discharge_settings_entity.native_value is None
+
+    async def test_async_set_value(self, charge_discharge_settings_entity):
+        await charge_discharge_settings_entity.async_set_value(self.ANY_VALUE)
+        charge_discharge_settings_entity.coordinator.control.assert_awaited_once_with(
+            charge_discharge_settings_entity.charge_discharge_settings.cid, self.ANY_VALUE
+        )

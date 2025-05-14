@@ -42,7 +42,7 @@ async def async_setup_entry(
 
     slots = inverter.charge_discharge_slots
 
-    for i in range(1, slots.SLOT_COUNT + 1):
+    for i in range(1, slots.SLOTS_COUNT + 1):
         entities.append(
             TimeSlotText(
                 coordinator=coordinator,
@@ -84,6 +84,10 @@ class ChargeDischargeSettingsText(SolisCloudControlEntity, TextEntity):
     def native_value(self) -> str | None:
         value = self.coordinator.data.get(self.charge_discharge_settings.cid)
         return value
+
+    async def async_set_value(self, value: str) -> None:
+        _LOGGER.info("Setting '%s' to %s", self.name, value)
+        await self.coordinator.control(self.charge_discharge_settings.cid, value)
 
 
 class TimeSlotText(SolisCloudControlEntity, TextEntity):
