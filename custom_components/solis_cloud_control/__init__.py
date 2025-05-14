@@ -53,19 +53,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: SolisCloudControl
     # setup platforms, call async_setup for each entity
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
 
-    # initialise a listener for config flow options changes
-    config_entry.async_on_unload(config_entry.add_update_listener(async_reload_entry))
-
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: SolisCloudControlConfigEntry) -> bool:
     return await hass.config_entries.async_unload_platforms(config_entry, _PLATFORMS)
-
-
-async def async_reload_entry(hass: HomeAssistant, config_entry: SolisCloudControlConfigEntry) -> None:
-    await async_unload_entry(hass, config_entry)
-    await async_setup_entry(hass, config_entry)
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: SolisCloudControlConfigEntry) -> bool:

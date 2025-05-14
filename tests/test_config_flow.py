@@ -33,10 +33,23 @@ def flow_id(config_flow_init) -> str:
     return config_flow_init["flow_id"]
 
 
-async def test_all_steps(hass: HomeAssistant, flow_id, user_step_input, inverter_select_step_input) -> None:
+@pytest.fixture
+def mock_setup_entry():
+    with patch(
+        "custom_components.solis_cloud_control.async_setup_entry",
+        return_value=True,
+    ) as mock_setup:
+        yield mock_setup
+
+
+async def test_all_steps(
+    hass: HomeAssistant, flow_id, user_step_input, inverter_select_step_input, mock_setup_entry
+) -> None:
+    inverters = [{"sn": _TEST_INVERTER_SN, "stationName": "any test station name"}]
+
     with patch(
         "custom_components.solis_cloud_control.config_flow.SolisCloudControlFlowHandler._inverter_list",
-        return_value=[{"sn": _TEST_INVERTER_SN, "stationName": "any test station name"}],
+        return_value=inverters,
     ):
         result = await hass.config_entries.flow.async_configure(
             flow_id,
@@ -59,13 +72,13 @@ async def test_all_steps(hass: HomeAssistant, flow_id, user_step_input, inverter
 
 
 async def test_all_steps_duplicate_inverter(
-    hass: HomeAssistant, flow_id, user_step_input, inverter_select_step_input
+    hass: HomeAssistant, flow_id, user_step_input, inverter_select_step_input, mock_setup_entry
 ) -> None:
-    mock_inverters = [{"sn": _TEST_INVERTER_SN, "stationName": "any test station name"}]
+    inverters = [{"sn": _TEST_INVERTER_SN, "stationName": "any test station name"}]
 
     with patch(
         "custom_components.solis_cloud_control.config_flow.SolisCloudControlFlowHandler._inverter_list",
-        return_value=mock_inverters,
+        return_value=inverters,
     ):
         result = await hass.config_entries.flow.async_configure(
             flow_id,
@@ -80,7 +93,7 @@ async def test_all_steps_duplicate_inverter(
     # add the same inverter again
     with patch(
         "custom_components.solis_cloud_control.config_flow.SolisCloudControlFlowHandler._inverter_list",
-        return_value=mock_inverters,
+        return_value=inverters,
     ):
         config_flow = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
         result = await hass.config_entries.flow.async_configure(

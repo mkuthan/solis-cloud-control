@@ -96,7 +96,7 @@ async def test_control_retry_and_fail(hass: HomeAssistant, coordinator, mock_api
         pytest.raises(HomeAssistantError) as exc_info,
         patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_refresh,
     ):
-        await coordinator.control(any_cid, any_value)
+        await coordinator.control(any_cid, any_value, retry_delay=0)
 
     assert f"Failed to set value for CID {any_cid}" in str(exc_info.value)
     assert mock_api_client.control.call_count == 2  # Initial + 1 retry
