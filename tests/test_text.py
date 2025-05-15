@@ -63,7 +63,7 @@ class TestTimeSlotText:
 
 
 class TestChargeDischargeSettingsText:
-    ANY_VALUE = "100,100,09:44,09:44,09:44,09:44,100,100,09:44,09:44,09:44,09:44,99,100,09:44,09:44,09:44,09:44"
+    ANY_VALUE = "0,0,09:00,10:00,11:00,12:00,50,0,12:30,13:30,14:30,15:30,0,100,16:00,17:00,18:00,19:00"
 
     def test_native_value(self, charge_discharge_settings_entity):
         charge_discharge_settings_entity.coordinator.data = {
@@ -77,8 +77,54 @@ class TestChargeDischargeSettingsText:
         }
         assert charge_discharge_settings_entity.native_value is None
 
-    async def test_async_set_value(self, charge_discharge_settings_entity):
+    def test_extra_state_attributes(self, charge_discharge_settings_entity):
+        charge_discharge_settings_entity.coordinator.data = {
+            charge_discharge_settings_entity.charge_discharge_settings.cid: self.ANY_VALUE
+        }
+
+        attributes = charge_discharge_settings_entity.extra_state_attributes
+
+        assert attributes["slot1_charge_current"] == "0"
+        assert attributes["slot1_discharge_current"] == "0"
+        assert attributes["slot1_charge_time"] == "09:00-10:00"
+        assert attributes["slot1_discharge_time"] == "11:00-12:00"
+
+        assert attributes["slot2_charge_current"] == "50"
+        assert attributes["slot2_discharge_current"] == "0"
+        assert attributes["slot2_charge_time"] == "12:30-13:30"
+        assert attributes["slot2_discharge_time"] == "14:30-15:30"
+
+        assert attributes["slot3_charge_current"] == "0"
+        assert attributes["slot3_discharge_current"] == "100"
+        assert attributes["slot3_charge_time"] == "16:00-17:00"
+        assert attributes["slot3_discharge_time"] == "18:00-19:00"
+
+    def test_extra_state_attributes_no_data(self, charge_discharge_settings_entity):
+        charge_discharge_settings_entity.coordinator.data = {
+            charge_discharge_settings_entity.charge_discharge_settings.cid: None
+        }
+
+        attributes = charge_discharge_settings_entity.extra_state_attributes
+        assert attributes == {}
+
+    async def test_async_set_value_valid(self, charge_discharge_settings_entity):
         await charge_discharge_settings_entity.async_set_value(self.ANY_VALUE)
         charge_discharge_settings_entity.coordinator.control.assert_awaited_once_with(
             charge_discharge_settings_entity.charge_discharge_settings.cid, self.ANY_VALUE
         )
+
+    @pytest.mark.parametrize(
+        "invalid_value",
+        [
+            "X,0,09:00,10:00,11:00,12:00,50,0,12:30,13:30,14:30,15:30,0,100,16:00,17:00,18:00,19:00",
+            "0,X,09:00,10:00,11:00,12:00,50,0,12:30,13:30,14:30,15:30,0,100,16:00,17:00,18:00,19:00",
+            "0,0,25:00,10:00,11:00,12:00,50,0,12:30,13:30,14:30,15:30,0,100,16:00,17:00,18:00,19:00",
+            "0,0,09:00,25:00,11:00,12:00,50,0,12:30,13:30,14:30,15:30,0,100,16:00,17:00,18:00,19:00",
+            "0,0,09:00,10:00,25:00,12:00,50,0,12:30,13:30,14:30,15:30,0,100,16:00,17:00,18:00,19:00",
+            "0,0,09:00,10:00,11:00,25:00,50,0,12:30,13:30,14:30,15:30,0,100,16:00,17:00,18:00,19:00",
+            "",
+        ],
+    )
+    async def test_async_set_value_invalid(self, charge_discharge_settings_entity, invalid_value):
+        with pytest.raises(HomeAssistantError, match="Invalid 'Charge Discharge Settings'"):
+            await charge_discharge_settings_entity.async_set_value(invalid_value)

@@ -25,6 +25,8 @@ class InverterStorageMode:
 
 @dataclass
 class InverterChargeDischargeSettings:
+    SLOTS_COUNT: int = 3
+
     cid: int = 103
 
 
