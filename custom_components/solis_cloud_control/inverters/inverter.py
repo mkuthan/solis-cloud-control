@@ -234,6 +234,11 @@ class InverterMaxExportPower:
 
 
 @dataclass
+class InverterPowerLimit:
+    cid: int = 15
+
+
+@dataclass
 class InverterBatteryReserveSOC:
     cid: int = 157
 
@@ -271,32 +276,72 @@ class InverterBatteryMaxDischargeCurrent:
 @dataclass
 class Inverter:
     info: InverterInfo
-    storage_mode: InverterStorageMode = field(default_factory=InverterStorageMode)
-    charge_discharge_settings: InverterChargeDischargeSettings = field(default_factory=InverterChargeDischargeSettings)
-    charge_discharge_slots: InverterChargeDischargeSlots = field(default_factory=InverterChargeDischargeSlots)
-    max_export_power: InverterMaxExportPower = field(default_factory=InverterMaxExportPower)
-    battery_reserve_soc: InverterBatteryReserveSOC = field(default_factory=InverterBatteryReserveSOC)
-    battery_over_discharge_soc: InverterBatteryOverDischargeSOC = field(default_factory=InverterBatteryOverDischargeSOC)
-    battery_force_charge_soc: InverterBatteryForceChargeSOC = field(default_factory=InverterBatteryForceChargeSOC)
-    battery_recovery_soc: InverterBatteryRecoverySOC = field(default_factory=InverterBatteryRecoverySOC)
-    battery_max_charge_soc: InverterBatteryMaxChargeSOC = field(default_factory=InverterBatteryMaxChargeSOC)
-    battery_max_charge_current: InverterBatteryMaxChargeCurrent = field(default_factory=InverterBatteryMaxChargeCurrent)
-    battery_max_discharge_current: InverterBatteryMaxDischargeCurrent = field(
-        default_factory=InverterBatteryMaxDischargeCurrent
-    )
+    storage_mode: InverterStorageMode | None = None
+    charge_discharge_settings: InverterChargeDischargeSettings | None = None
+    charge_discharge_slots: InverterChargeDischargeSlots | None = None
+    max_export_power: InverterMaxExportPower | None = None
+    power_limit: InverterPowerLimit | None = None
+    battery_reserve_soc: InverterBatteryReserveSOC | None = None
+    battery_over_discharge_soc: InverterBatteryOverDischargeSOC | None = None
+    battery_force_charge_soc: InverterBatteryForceChargeSOC | None = None
+    battery_recovery_soc: InverterBatteryRecoverySOC | None = None
+    battery_max_charge_soc: InverterBatteryMaxChargeSOC | None = None
+    battery_max_charge_current: InverterBatteryMaxChargeCurrent | None = None
+    battery_max_discharge_current: InverterBatteryMaxDischargeCurrent | None = None
+
+    @staticmethod
+    def create_string_inverter(
+        inverter_info: InverterInfo,
+    ) -> "Inverter":
+        return Inverter(
+            info=inverter_info,
+            power_limit=InverterPowerLimit(),
+        )
+
+    @staticmethod
+    def create_hybrid_inverter(
+        inverter_info: InverterInfo,
+    ) -> "Inverter":
+        return Inverter(
+            info=inverter_info,
+            storage_mode=InverterStorageMode(),
+            charge_discharge_settings=InverterChargeDischargeSettings(),
+            charge_discharge_slots=InverterChargeDischargeSlots(),
+            max_export_power=InverterMaxExportPower(),
+            battery_reserve_soc=InverterBatteryReserveSOC(),
+            battery_over_discharge_soc=InverterBatteryOverDischargeSOC(),
+            battery_force_charge_soc=InverterBatteryForceChargeSOC(),
+            battery_recovery_soc=InverterBatteryRecoverySOC(),
+            battery_max_charge_soc=InverterBatteryMaxChargeSOC(),
+            battery_max_charge_current=InverterBatteryMaxChargeCurrent(),
+            battery_max_discharge_current=InverterBatteryMaxDischargeCurrent(),
+        )
 
     @property
     def all_cids(self) -> list[int]:
-        return [
-            self.storage_mode.cid,
-            self.charge_discharge_settings.cid,
-            *self.charge_discharge_slots.all_cids,
-            self.max_export_power.cid,
-            self.battery_reserve_soc.cid,
-            self.battery_over_discharge_soc.cid,
-            self.battery_force_charge_soc.cid,
-            self.battery_recovery_soc.cid,
-            self.battery_max_charge_soc.cid,
-            self.battery_max_charge_current.cid,
-            self.battery_max_discharge_current.cid,
-        ]
+        cids: list[int] = []
+        if self.storage_mode:
+            cids.append(self.storage_mode.cid)
+        if self.charge_discharge_settings:
+            cids.append(self.charge_discharge_settings.cid)
+        if self.charge_discharge_slots:
+            cids.extend(self.charge_discharge_slots.all_cids)
+        if self.max_export_power:
+            cids.append(self.max_export_power.cid)
+        if self.power_limit:
+            cids.append(self.power_limit.cid)
+        if self.battery_reserve_soc:
+            cids.append(self.battery_reserve_soc.cid)
+        if self.battery_over_discharge_soc:
+            cids.append(self.battery_over_discharge_soc.cid)
+        if self.battery_force_charge_soc:
+            cids.append(self.battery_force_charge_soc.cid)
+        if self.battery_recovery_soc:
+            cids.append(self.battery_recovery_soc.cid)
+        if self.battery_max_charge_soc:
+            cids.append(self.battery_max_charge_soc.cid)
+        if self.battery_max_charge_current:
+            cids.append(self.battery_max_charge_current.cid)
+        if self.battery_max_discharge_current:
+            cids.append(self.battery_max_discharge_current.cid)
+        return cids

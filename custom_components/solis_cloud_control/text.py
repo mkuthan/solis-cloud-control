@@ -28,43 +28,45 @@ async def async_setup_entry(
 
     entities = []
 
-    entities.append(
-        ChargeDischargeSettingsText(
-            coordinator=coordinator,
-            entity_description=TextEntityDescription(
-                key="charge_discharge_settings",
-                name="Charge Discharge Settings",
-                icon="mdi:timer-outline",
-            ),
-            charge_discharge_settings=inverter.charge_discharge_settings,
+    if inverter.charge_discharge_settings is not None:
+        entities.append(
+            ChargeDischargeSettingsText(
+                coordinator=coordinator,
+                entity_description=TextEntityDescription(
+                    key="charge_discharge_settings",
+                    name="Charge Discharge Settings",
+                    icon="mdi:timer-outline",
+                ),
+                charge_discharge_settings=inverter.charge_discharge_settings,
+            )
         )
-    )
 
     slots = inverter.charge_discharge_slots
 
-    for i in range(1, slots.SLOTS_COUNT + 1):
-        entities.append(
-            TimeSlotText(
-                coordinator=coordinator,
-                entity_description=TextEntityDescription(
-                    key=f"slot{i}_charge_time",
-                    name=f"Slot{i} Charge Time",
-                    icon="mdi:timer-plus-outline",
-                ),
-                charge_discharge_slot=slots.get_charge_slot(i),
+    if slots is not None:
+        for i in range(1, slots.SLOTS_COUNT + 1):
+            entities.append(
+                TimeSlotText(
+                    coordinator=coordinator,
+                    entity_description=TextEntityDescription(
+                        key=f"slot{i}_charge_time",
+                        name=f"Slot{i} Charge Time",
+                        icon="mdi:timer-plus-outline",
+                    ),
+                    charge_discharge_slot=slots.get_charge_slot(i),
+                )
             )
-        )
-        entities.append(
-            TimeSlotText(
-                coordinator=coordinator,
-                entity_description=TextEntityDescription(
-                    key=f"slot{i}_discharge_time",
-                    name=f"Slot{i} Discharge Time",
-                    icon="mdi:timer-minus-outline",
-                ),
-                charge_discharge_slot=slots.get_discharge_slot(i),
+            entities.append(
+                TimeSlotText(
+                    coordinator=coordinator,
+                    entity_description=TextEntityDescription(
+                        key=f"slot{i}_discharge_time",
+                        name=f"Slot{i} Discharge Time",
+                        icon="mdi:timer-minus-outline",
+                    ),
+                    charge_discharge_slot=slots.get_discharge_slot(i),
+                )
             )
-        )
 
     async_add_entities(entities)
 

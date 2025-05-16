@@ -10,6 +10,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.solis_cloud_control import async_migrate_entry
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
+from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter):
@@ -58,11 +59,39 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
     entries = er.async_entries_for_config_entry(entity_registry, mock_config_entry.entry_id)
 
     platform_counts = Counter(entry.domain for entry in entries)
-    assert platform_counts[Platform.NUMBER] == 25
+    assert platform_counts[Platform.NUMBER] == 26
     assert platform_counts[Platform.SELECT] == 1
     assert platform_counts[Platform.SENSOR] == 7
     assert platform_counts[Platform.SWITCH] == 12
     assert platform_counts[Platform.TEXT] == 13
+
+
+async def test_async_setup_entry_undefined_inverter(hass, mock_api_client, mock_config_entry, any_inverter_info):
+    undefined_inverter = Inverter(info=any_inverter_info)
+
+    mock_api_client.read_batch.return_value = dict.fromkeys(undefined_inverter.all_cids, None)
+
+    with (
+        patch(
+            "custom_components.solis_cloud_control._create_api_client",
+            return_value=mock_api_client,
+        ),
+        patch(
+            "custom_components.solis_cloud_control.create_inverter_info",
+            return_value=undefined_inverter.info,
+        ),
+        patch(
+            "custom_components.solis_cloud_control.create_inverter",
+            return_value=undefined_inverter,
+        ),
+    ):
+        await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+
+    # check entity registration
+    entity_registry = er.async_get(hass)
+    entries = er.async_entries_for_config_entry(entity_registry, mock_config_entry.entry_id)
+    assert len(entries) == 0
 
 
 async def test_migrate_config_entry_v1_to_v2(hass: HomeAssistant):

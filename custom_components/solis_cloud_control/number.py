@@ -13,6 +13,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterBatteryOverDischargeSOC,
     InverterChargeDischargeSlot,
     InverterMaxExportPower,
+    InverterPowerLimit,
 )
 from custom_components.solis_cloud_control.utils.safe_converters import safe_get_float_value
 
@@ -34,65 +35,80 @@ async def async_setup_entry(
 
     slots = inverter.charge_discharge_slots
 
-    for i in range(1, slots.SLOTS_COUNT + 1):
-        entities.extend(
-            [
-                BatteryCurrent(
-                    coordinator=coordinator,
-                    entity_description=NumberEntityDescription(
-                        key=f"slot{i}_charge_current",
-                        name=f"Slot{i} Charge Current",
-                        icon="mdi:battery-plus-outline",
+    if slots is not None:
+        for i in range(1, slots.SLOTS_COUNT + 1):
+            entities.extend(
+                [
+                    BatteryCurrent(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_charge_current",
+                            name=f"Slot{i} Charge Current",
+                            icon="mdi:battery-plus-outline",
+                        ),
+                        charge_discharge_slot=slots.get_charge_slot(i),
+                        battery_max_charge_discharge_current=inverter.battery_max_charge_current,
                     ),
-                    charge_discharge_slot=slots.get_charge_slot(i),
-                    battery_max_charge_discharge_current=inverter.battery_max_charge_current,
-                ),
-                BatteryCurrent(
-                    coordinator=coordinator,
-                    entity_description=NumberEntityDescription(
-                        key=f"slot{i}_discharge_current",
-                        name=f"Slot{i} Discharge Current",
-                        icon="mdi:battery-minus-outline",
+                    BatteryCurrent(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_discharge_current",
+                            name=f"Slot{i} Discharge Current",
+                            icon="mdi:battery-minus-outline",
+                        ),
+                        charge_discharge_slot=slots.get_discharge_slot(i),
+                        battery_max_charge_discharge_current=inverter.battery_max_discharge_current,
                     ),
-                    charge_discharge_slot=slots.get_discharge_slot(i),
-                    battery_max_charge_discharge_current=inverter.battery_max_discharge_current,
-                ),
-                BatterySoc(
-                    coordinator=coordinator,
-                    entity_description=NumberEntityDescription(
-                        key=f"slot{i}_charge_soc",
-                        name=f"Slot{i} Charge SOC",
-                        icon="mdi:battery-plus-outline",
+                    BatterySoc(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_charge_soc",
+                            name=f"Slot{i} Charge SOC",
+                            icon="mdi:battery-plus-outline",
+                        ),
+                        charge_discharge_slot=slots.get_charge_slot(i),
+                        battery_over_discharge_soc=inverter.battery_over_discharge_soc,
+                        battery_max_charge_soc=inverter.battery_max_charge_soc,
                     ),
-                    charge_discharge_slot=slots.get_charge_slot(i),
-                    battery_over_discharge_soc=inverter.battery_over_discharge_soc,
-                    battery_max_charge_soc=inverter.battery_max_charge_soc,
-                ),
-                BatterySoc(
-                    coordinator=coordinator,
-                    entity_description=NumberEntityDescription(
-                        key=f"slot{i}_discharge_soc",
-                        name=f"Slot{i} Discharge SOC",
-                        icon="mdi:battery-minus-outline",
+                    BatterySoc(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_discharge_soc",
+                            name=f"Slot{i} Discharge SOC",
+                            icon="mdi:battery-minus-outline",
+                        ),
+                        charge_discharge_slot=slots.get_discharge_slot(i),
+                        battery_over_discharge_soc=inverter.battery_over_discharge_soc,
+                        battery_max_charge_soc=inverter.battery_max_charge_soc,
                     ),
-                    charge_discharge_slot=slots.get_discharge_slot(i),
-                    battery_over_discharge_soc=inverter.battery_over_discharge_soc,
-                    battery_max_charge_soc=inverter.battery_max_charge_soc,
+                ]
+            )
+
+    if inverter.max_export_power is not None:
+        entities.append(
+            MaxExportPower(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="max_export_power",
+                    name="Max Export Power",
+                    icon="mdi:transmission-tower-export",
                 ),
-            ]
+                max_export_power=inverter.max_export_power,
+            )
         )
 
-    entities.append(
-        MaxExportPower(
-            coordinator=coordinator,
-            entity_description=NumberEntityDescription(
-                key="max_export_power",
-                name="Max Export Power",
-                icon="mdi:transmission-tower-export",
-            ),
-            max_export_power=inverter.max_export_power,
+    if inverter.power_limit is not None:
+        entities.append(
+            PowerLimit(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="power_limit",
+                    name="Power Limit",
+                    icon="mdi:transmission-tower-export",
+                ),
+                power_limit=inverter.power_limit,
+            )
         )
-    )
 
     async_add_entities(entities)
 
@@ -220,3 +236,29 @@ class MaxExportPower(SolisCloudControlEntity, NumberEntity):
         value_str = str(int(round(value * self.max_export_power.scale)))
         _LOGGER.info("Setting max export power to %f (value: %s)", value, value_str)
         await self.coordinator.control(self.max_export_power.cid, value_str)
+
+
+class PowerLimit(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        power_limit: InverterPowerLimit,
+    ) -> None:
+        super().__init__(coordinator, entity_description, power_limit.cid)
+        self.power_limit = power_limit
+
+        self._attr_native_min_value = 0
+        self._attr_native_max_value = 100
+        self._attr_native_step = 1
+        self._attr_native_unit_of_measurement = PERCENTAGE
+
+    @property
+    def native_value(self) -> float | None:
+        value_str = self.coordinator.data.get(self.power_limit.cid)
+        return safe_get_float_value(value_str)
+
+    async def async_set_native_value(self, value: float) -> None:
+        value_str = str(int(round(value)))
+        _LOGGER.info("Setting power limit to %f (value: %s)", value, value_str)
+        await self.coordinator.control(self.power_limit.cid, value_str)
