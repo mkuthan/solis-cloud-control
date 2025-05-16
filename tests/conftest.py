@@ -8,8 +8,20 @@ from pytest_socket import enable_socket, socket_allow_hosts
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
+    InverterBatteryForceChargeSOC,
+    InverterBatteryMaxChargeCurrent,
+    InverterBatteryMaxChargeSOC,
+    InverterBatteryMaxDischargeCurrent,
+    InverterBatteryOverDischargeSOC,
+    InverterBatteryRecoverySOC,
+    InverterBatteryReserveSOC,
+    InverterChargeDischargeSettings,
+    InverterChargeDischargeSlots,
     InverterInfo,
+    InverterMaxExportPower,
+    InverterStorageMode,
 )
+from custom_components.solis_cloud_control.number import InverterPowerLimit
 
 
 # https://github.com/MatthewFlamm/pytest-homeassistant-custom-component/issues/154
@@ -69,4 +81,18 @@ def any_inverter_info():
 
 @pytest.fixture
 def any_inverter(any_inverter_info: InverterInfo) -> Inverter:
-    return Inverter(info=any_inverter_info)
+    return Inverter(
+        info=any_inverter_info,
+        storage_mode=InverterStorageMode(),
+        charge_discharge_settings=InverterChargeDischargeSettings(),
+        charge_discharge_slots=InverterChargeDischargeSlots(),
+        max_export_power=InverterMaxExportPower(),
+        power_limit=InverterPowerLimit(),
+        battery_reserve_soc=InverterBatteryReserveSOC(),
+        battery_over_discharge_soc=InverterBatteryOverDischargeSOC(),
+        battery_force_charge_soc=InverterBatteryForceChargeSOC(),
+        battery_recovery_soc=InverterBatteryRecoverySOC(),
+        battery_max_charge_soc=InverterBatteryMaxChargeSOC(),
+        battery_max_charge_current=InverterBatteryMaxChargeCurrent(),
+        battery_max_discharge_current=InverterBatteryMaxDischargeCurrent(),
+    )

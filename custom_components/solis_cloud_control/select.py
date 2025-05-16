@@ -22,8 +22,10 @@ async def async_setup_entry(
     inverter = entry.runtime_data.inverter
     coordinator = entry.runtime_data.coordinator
 
-    async_add_entities(
-        [
+    entities = []
+
+    if inverter.storage_mode is not None:
+        entities.append(
             StorageModeSelect(
                 coordinator=coordinator,
                 entity_description=SelectEntityDescription(
@@ -33,8 +35,9 @@ async def async_setup_entry(
                 ),
                 storage_mode=inverter.storage_mode,
             )
-        ]
-    )
+        )
+
+    async_add_entities(entities)
 
 
 class StorageModeSelect(SolisCloudControlEntity, SelectEntity):

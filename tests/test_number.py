@@ -6,6 +6,7 @@ from custom_components.solis_cloud_control.number import (
     BatteryCurrent,
     BatterySoc,
     MaxExportPower,
+    PowerLimit,
 )
 
 
@@ -14,8 +15,8 @@ def battery_current_entity(mock_coordinator, any_inverter):
     return BatteryCurrent(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(
-            key="test_current",
-            name="Test Current",
+            key="any_key",
+            name="any name",
         ),
         charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
         battery_max_charge_discharge_current=any_inverter.battery_max_charge_current,
@@ -70,8 +71,8 @@ def battery_soc_entity(mock_coordinator, any_inverter):
     return BatterySoc(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(
-            key="test_soc",
-            name="Test SOC",
+            key="any_key",
+            name="any name",
         ),
         charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
         battery_over_discharge_soc=any_inverter.battery_over_discharge_soc,
@@ -129,8 +130,8 @@ def max_export_power_entity(mock_coordinator, any_inverter):
     return MaxExportPower(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(
-            key="test_power",
-            name="Test Power",
+            key="any_key",
+            name="any name",
         ),
         max_export_power=any_inverter.max_export_power,
     )
@@ -142,8 +143,8 @@ def max_export_power_entity_scaled_0_1(mock_coordinator, any_inverter):
     return MaxExportPower(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(
-            key="test_power",
-            name="Test Power",
+            key="any_key",
+            name="any name",
         ),
         max_export_power=any_inverter.max_export_power,
     )
@@ -213,4 +214,52 @@ class TestMaxExportPower:
         await max_export_power_entity_scaled_0_1.async_set_native_value(value)
         max_export_power_entity_scaled_0_1.coordinator.control.assert_awaited_once_with(
             max_export_power_entity_scaled_0_1.max_export_power.cid, expected_str
+        )
+
+
+@pytest.fixture
+def power_limit_entity(mock_coordinator, any_inverter):
+    return PowerLimit(
+        coordinator=mock_coordinator,
+        entity_description=NumberEntityDescription(
+            key="any_key",
+            name="any name",
+        ),
+        power_limit=any_inverter.power_limit,
+    )
+
+
+class TestPowerLimit:
+    def test_attributes(self, power_limit_entity):
+        assert power_limit_entity.native_min_value == 0
+        assert power_limit_entity.native_max_value == 100
+        assert power_limit_entity.native_step == 1
+        assert power_limit_entity.native_unit_of_measurement == PERCENTAGE
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("0", 0.0),
+            ("50", 50.0),
+            ("100", 100.0),
+            ("not a number", None),
+            (None, None),
+        ],
+    )
+    def test_native_value(self, power_limit_entity, value, expected):
+        power_limit_entity.coordinator.data = {power_limit_entity.power_limit.cid: value}
+        assert power_limit_entity.native_value == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (0.1, "0"),
+            (50.4, "50"),
+            (99.9, "100"),
+        ],
+    )
+    async def test_set_native_value(self, power_limit_entity, value, expected_str):
+        await power_limit_entity.async_set_native_value(value)
+        power_limit_entity.coordinator.control.assert_awaited_once_with(
+            power_limit_entity.power_limit.cid, expected_str
         )

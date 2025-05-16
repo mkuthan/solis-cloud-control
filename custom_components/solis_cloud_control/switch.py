@@ -28,31 +28,32 @@ async def async_setup_entry(
 
     slots = inverter.charge_discharge_slots
 
-    for i in range(1, slots.SLOTS_COUNT + 1):
-        entities.append(
-            SlotSwitch(
-                coordinator=coordinator,
-                entity_description=SwitchEntityDescription(
-                    key=f"slot{i}_charge_switch",
-                    name=f"Slot{i} Charge",
-                    icon="mdi:battery-plus-outline",
-                ),
-                charge_discharge_slot=slots.get_charge_slot(i),
-                charge_discharge_slots=slots,
+    if slots is not None:
+        for i in range(1, slots.SLOTS_COUNT + 1):
+            entities.append(
+                SlotSwitch(
+                    coordinator=coordinator,
+                    entity_description=SwitchEntityDescription(
+                        key=f"slot{i}_charge_switch",
+                        name=f"Slot{i} Charge",
+                        icon="mdi:battery-plus-outline",
+                    ),
+                    charge_discharge_slot=slots.get_charge_slot(i),
+                    charge_discharge_slots=slots,
+                )
             )
-        )
-        entities.append(
-            SlotSwitch(
-                coordinator=coordinator,
-                entity_description=SwitchEntityDescription(
-                    key=f"slot{i}_discharge_switch",
-                    name=f"Slot{i} Discharge",
-                    icon="mdi:battery-minus-outline",
-                ),
-                charge_discharge_slot=slots.get_discharge_slot(i),
-                charge_discharge_slots=slots,
+            entities.append(
+                SlotSwitch(
+                    coordinator=coordinator,
+                    entity_description=SwitchEntityDescription(
+                        key=f"slot{i}_discharge_switch",
+                        name=f"Slot{i} Discharge",
+                        icon="mdi:battery-minus-outline",
+                    ),
+                    charge_discharge_slot=slots.get_discharge_slot(i),
+                    charge_discharge_slots=slots,
+                )
             )
-        )
 
     async_add_entities(entities)
 

@@ -34,5 +34,5 @@ async def create_inverter(api_client: SolisCloudControlApiClient, inverter_info:
         _LOGGER.info("Inverter model '%s' created", inverter_info.model)
         return inverter
     except ImportError:
-        _LOGGER.warning("Unknown inverter model '%s', fallback to generic inverter", inverter_info.model)
+        _LOGGER.warning("Unknown inverter model '%s', fallback to generic hybrid inverter", inverter_info.model)
         return Inverter(inverter_info)

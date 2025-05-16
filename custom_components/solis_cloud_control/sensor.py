@@ -27,8 +27,10 @@ async def async_setup_entry(
     inverter = entry.runtime_data.inverter
     coordinator = entry.runtime_data.coordinator
 
-    async_add_entities(
-        [
+    entities = []
+
+    if inverter.battery_force_charge_soc:
+        entities.append(
             BatterySocSensor(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
@@ -37,7 +39,10 @@ async def async_setup_entry(
                     icon="mdi:battery-alert",
                 ),
                 battery_soc=inverter.battery_force_charge_soc,
-            ),
+            )
+        )
+    if inverter.battery_over_discharge_soc:
+        entities.append(
             BatterySocSensor(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
@@ -46,7 +51,10 @@ async def async_setup_entry(
                     icon="mdi:battery-50",
                 ),
                 battery_soc=inverter.battery_over_discharge_soc,
-            ),
+            )
+        )
+    if inverter.battery_recovery_soc:
+        entities.append(
             BatterySocSensor(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
@@ -55,7 +63,10 @@ async def async_setup_entry(
                     icon="mdi:battery-50",
                 ),
                 battery_soc=inverter.battery_recovery_soc,
-            ),
+            )
+        )
+    if inverter.battery_reserve_soc:
+        entities.append(
             BatterySocSensor(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
@@ -64,7 +75,10 @@ async def async_setup_entry(
                     icon="mdi:battery-50",
                 ),
                 battery_soc=inverter.battery_reserve_soc,
-            ),
+            )
+        )
+    if inverter.battery_max_charge_soc:
+        entities.append(
             BatterySocSensor(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
@@ -73,7 +87,10 @@ async def async_setup_entry(
                     icon="mdi:battery",
                 ),
                 battery_soc=inverter.battery_max_charge_soc,
-            ),
+            )
+        )
+    if inverter.battery_max_charge_current:
+        entities.append(
             BatteryCurrentSensor(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
@@ -82,7 +99,10 @@ async def async_setup_entry(
                     icon="mdi:battery-arrow-down-outline",
                 ),
                 battery_current=inverter.battery_max_charge_current,
-            ),
+            )
+        )
+    if inverter.battery_max_discharge_current:
+        entities.append(
             BatteryCurrentSensor(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
@@ -91,9 +111,10 @@ async def async_setup_entry(
                     icon="mdi:battery-arrow-up-outline",
                 ),
                 battery_current=inverter.battery_max_discharge_current,
-            ),
-        ]
-    )
+            )
+        )
+
+    async_add_entities(entities)
 
 
 class BatterySocSensor(SolisCloudControlEntity, SensorEntity):
