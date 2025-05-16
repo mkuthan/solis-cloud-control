@@ -9,9 +9,9 @@ assignees: ''
 
 Thank you for your interest in expanding the capabilities of this integration! To help us add support for your new Solis inverter, please provide as much of the following information as possible.
 
-Sample device info page:
+Sample device info page (use "Preview" tab to see the image):
 
-![Device Details Screen](../../device_info.png)
+![Device Details Screen](https://raw.githubusercontent.com/mkuthan/solis-cloud-control/main/device_info.png)
 
 **1. Inverter Model Name/Type:**
 Please provide the exact model name/type of your Solis inverter (e.g., S6-EH3P12K02-NV-YD-L).
