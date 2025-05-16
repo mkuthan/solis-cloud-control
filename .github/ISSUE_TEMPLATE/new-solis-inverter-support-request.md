@@ -7,20 +7,24 @@ assignees: ''
 
 ---
 
-Thank you for your interest in expanding the capabilities of this integration! To help us add support for your new Solis inverter, please provide as much of the following information as possible:
+Thank you for your interest in expanding the capabilities of this integration! To help us add support for your new Solis inverter, please provide as much of the following information as possible.
 
-**1. Inverter Model Type:**
-Please provide the exact model number of your Solis inverter (e.g., S6-EH3P12K02-NV-YD-L).
+Sample device info page:
 
-```
-[Your Inverter Model Type Here]
-```
+![Device Details Screen](../../device_info.png)
 
-**2. Inverter Model Number:**
-Please provide the model name if you know it (e.g., "3331").
+**1. Inverter Model Name/Type:**
+Please provide the exact model name/type of your Solis inverter (e.g., S6-EH3P12K02-NV-YD-L).
 
 ```
-[Your Inverter Model Number Here]
+[Your Inverter Model Name/Type Here]
+```
+
+**2. Inverter Model Identifier/Number:**
+Please provide the model identifier/number of your Solis inverter (e.g., "3331").
+
+```
+[Your Inverter Model Identifier/Number]
 ```
 
 **3. Diagnostic Information:**
