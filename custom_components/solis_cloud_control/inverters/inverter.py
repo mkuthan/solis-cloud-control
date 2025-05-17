@@ -11,6 +11,14 @@ class InverterInfo:
 
 
 @dataclass
+class InverterOnOff:
+    on_cid: int = 52
+    off_cid: int = 54
+    on_value: str = "190"
+    off_value: str = "222"
+
+
+@dataclass
 class InverterStorageMode:
     cid: int = 636
     mode_self_use: str = "Self-Use"
@@ -276,6 +284,7 @@ class InverterBatteryMaxDischargeCurrent:
 @dataclass
 class Inverter:
     info: InverterInfo
+    on_off: InverterOnOff | None = None
     storage_mode: InverterStorageMode | None = None
     charge_discharge_settings: InverterChargeDischargeSettings | None = None
     charge_discharge_slots: InverterChargeDischargeSlots | None = None
@@ -295,6 +304,7 @@ class Inverter:
     ) -> "Inverter":
         return Inverter(
             info=inverter_info,
+            on_off=InverterOnOff(on_cid=48, off_cid=53),
             power_limit=InverterPowerLimit(),
         )
 
@@ -304,6 +314,7 @@ class Inverter:
     ) -> "Inverter":
         return Inverter(
             info=inverter_info,
+            on_off=InverterOnOff(on_cid=52, off_cid=54),
             storage_mode=InverterStorageMode(),
             charge_discharge_settings=InverterChargeDischargeSettings(),
             charge_discharge_slots=InverterChargeDischargeSlots(),
@@ -320,6 +331,10 @@ class Inverter:
     @property
     def all_cids(self) -> list[int]:
         cids: list[int] = []
+
+        if self.on_off:
+            cids.append(self.on_off.on_cid)
+            cids.append(self.on_off.off_cid)
         if self.storage_mode:
             cids.append(self.storage_mode.cid)
         if self.charge_discharge_settings:
@@ -344,4 +359,5 @@ class Inverter:
             cids.append(self.battery_max_charge_current.cid)
         if self.battery_max_discharge_current:
             cids.append(self.battery_max_discharge_current.cid)
+
         return cids

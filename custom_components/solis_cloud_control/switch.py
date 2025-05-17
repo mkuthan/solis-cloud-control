@@ -8,6 +8,7 @@ from custom_components.solis_cloud_control.data import SolisCloudControlConfigEn
 from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSlot,
     InverterChargeDischargeSlots,
+    InverterOnOff,
 )
 
 from .coordinator import SolisCloudControlCoordinator
@@ -25,6 +26,19 @@ async def async_setup_entry(
     coordinator = entry.runtime_data.coordinator
 
     entities = []
+
+    if inverter.on_off is not None:
+        entities.append(
+            OnOffSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="on_off_switch",
+                    name="Inverter On/Off",
+                    icon="mdi:power",
+                ),
+                on_off=inverter.on_off,
+            )
+        )
 
     slots = inverter.charge_discharge_slots
 
@@ -56,6 +70,27 @@ async def async_setup_entry(
             )
 
     async_add_entities(entities)
+
+
+class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        on_off: InverterOnOff,
+    ) -> None:
+        super().__init__(coordinator, entity_description, [on_off.on_cid, on_off.off_cid])
+        self.on_off = on_off
+        self._attr_is_on = True
+        self._attr_assumed_state = True
+
+    async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+        await self.coordinator.control(self.on_off.on_cid, self.on_off.on_value)
+        self._attr_is_on = True
+
+    async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+        await self.coordinator.control(self.on_off.off_cid, self.on_off.off_value)
+        self._attr_is_on = False
 
 
 class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
