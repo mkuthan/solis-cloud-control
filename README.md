@@ -57,6 +57,7 @@ Use [HACS](https://www.hacs.xyz/) to install the integration:
 * 🛠️ Access "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes
 * ⏱️ Schedule charge and discharge slots
 * ⚖️ Set maximum export power
+* 🔌 Switch the inverter on or off
 
 ![Inverter Controls](inverter_controls.png)
 
