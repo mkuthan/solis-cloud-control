@@ -3,7 +3,6 @@ import logging
 
 from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
 from custom_components.solis_cloud_control.inverters.inverter import Inverter, InverterInfo
-from custom_components.solis_cloud_control.utils.safe_converters import safe_convert_power_to_watts
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,14 +13,24 @@ async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_
     model = str(inverter_details.get("model", "Unknown"))
     version = str(inverter_details.get("version", "Unknown"))
     machine = str(inverter_details.get("machine", "Unknown"))
-    power = safe_convert_power_to_watts(inverter_details.get("power"), inverter_details.get("powerStr"))
+    type = str(inverter_details.get("inverterType", "Unknown"))
+    smart_support = str(inverter_details.get("smartSupport", "Unknown"))
+    generator_support = str(inverter_details.get("generatorSupport", "Unknown"))
+    battery_num = str(inverter_details.get("batteryNum", "Unknown"))
+    power = str(inverter_details.get("power", "Unknown"))
+    power_unit = str(inverter_details.get("powerStr", "Unknown"))
 
     return InverterInfo(
         serial_number=inverter_sn,
         model=model,
         version=version,
         machine=machine,
+        type=type,
+        smart_support=smart_support,
+        generator_support=generator_support,
+        battery_num=battery_num,
         power=power,
+        power_unit=power_unit,
     )
 
 
