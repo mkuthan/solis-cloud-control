@@ -46,6 +46,7 @@ def mock_api_client():
 def mock_coordinator():
     coordinator = Mock()
     coordinator.control = AsyncMock()
+    coordinator.control_no_check = AsyncMock()
     coordinator.data = {}
     coordinator.config_entry = Mock()
     coordinator.config_entry.entry_id = "any_entry_id"

@@ -24,14 +24,14 @@ class TestOnOffSwitch:
 
     async def test_turn_on(self, on_off_switch):
         await on_off_switch.async_turn_on()
-        on_off_switch.coordinator.control.assert_awaited_once_with(
+        on_off_switch.coordinator.control_no_check.assert_awaited_once_with(
             on_off_switch.on_off.on_cid, on_off_switch.on_off.on_value
         )
         assert on_off_switch.is_on is True
 
     async def test_turn_off(self, on_off_switch):
         await on_off_switch.async_turn_off()
-        on_off_switch.coordinator.control.assert_awaited_once_with(
+        on_off_switch.coordinator.control_no_check.assert_awaited_once_with(
             on_off_switch.on_off.off_cid, on_off_switch.on_off.off_value
         )
         assert on_off_switch.is_on is False

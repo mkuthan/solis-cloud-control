@@ -102,3 +102,36 @@ async def test_control_retry_and_fail(hass: HomeAssistant, coordinator, mock_api
     assert mock_api_client.control.call_count == 2  # Initial + 1 retry
     assert mock_api_client.read.call_count == 2  # Initial + 1 retry
     mock_refresh.assert_not_called()
+
+
+async def test_control_no_check(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
+    any_cid = 123
+    any_value = "any_value"
+    any_old_value = "any_old_value"
+
+    mock_api_client.control.return_value = None
+
+    with patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_refresh:
+        await coordinator.control_no_check(any_cid, any_value, any_old_value)
+
+        mock_api_client.control.assert_called_once_with(
+            any_inverter.info.serial_number, any_cid, any_value, any_old_value
+        )
+        mock_api_client.read.assert_not_called()
+        mock_refresh.assert_called_once()
+
+
+async def test_control_no_check_api_error(hass: HomeAssistant, coordinator, mock_api_client):
+    any_cid = 123
+    any_value = "any_value"
+    any_error = "any error"
+
+    mock_api_client.control.side_effect = SolisCloudControlApiError(any_error)
+
+    with pytest.raises(SolisCloudControlApiError) as exc_info:
+        await coordinator.control_no_check(any_cid, any_value)
+
+    assert str(exc_info.value) == any_error
+
+    mock_api_client.control.assert_called_once_with(coordinator._inverter.info.serial_number, any_cid, any_value, None)
+    mock_api_client.read.assert_not_called()
