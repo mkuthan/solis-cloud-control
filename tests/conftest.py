@@ -77,7 +77,12 @@ def any_inverter_info():
         model="any_model",
         machine="any_machine",
         version="any_version",
-        power=None,
+        type="any_type",
+        smart_support="any_smart_support",
+        generator_support="any_generator_support",
+        battery_num="any_battery_num",
+        power="any_power",
+        power_unit="any_power_unit",
     )
 
 
