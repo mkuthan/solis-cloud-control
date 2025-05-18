@@ -85,11 +85,13 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
         self._attr_assumed_state = True
 
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        await self.coordinator.control(self.on_off.on_cid, self.on_off.on_value)
+        _LOGGER.info("Turning on inverter")
+        await self.coordinator.control_no_check(self.on_off.on_cid, self.on_off.on_value)
         self._attr_is_on = True
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        await self.coordinator.control(self.on_off.off_cid, self.on_off.off_value)
+        _LOGGER.info("Turning off inverter")
+        await self.coordinator.control_no_check(self.on_off.off_cid, self.on_off.off_value)
         self._attr_is_on = False
 
 

@@ -75,8 +75,8 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
 
         while attempt <= retry_count:
             await self._api_client.control(inverter_sn, cid, value, old_value)
-            current_value = await self._api_client.read(inverter_sn, cid)
 
+            current_value = await self._api_client.read(inverter_sn, cid)
             if current_value == value:
                 await self.async_request_refresh()
                 return
@@ -92,3 +92,13 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
                 await asyncio.sleep(retry_delay)
             else:
                 raise HomeAssistantError(f"Failed to set value for CID {cid}. Expected: {value}, got: {current_value}")
+
+    async def control_no_check(
+        self,
+        cid: int,
+        value: str,
+        old_value: str | None = None,
+    ) -> None:
+        inverter_sn = self._inverter.info.serial_number
+        await self._api_client.control(inverter_sn, cid, value, old_value)
+        await self.async_request_refresh()
