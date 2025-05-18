@@ -22,6 +22,7 @@ All Solis hybrid inverters should be supported, although the integration has bee
 The integration also supports the following Solis string inverters:
 
 * S6-GR1P(2.5-6)K, model "0200"
+* S5-GR3P(3-20)K, model "0507"
 
 > [!NOTE]
 > If your inverter is not listed here, please open an issue on GitHub using "New Solis Inverter Support Request" template.

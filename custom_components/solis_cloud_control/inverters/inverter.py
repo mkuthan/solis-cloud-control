@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from custom_components.solis_cloud_control.utils.safe_converters import safe_convert_power_to_watts
+
 
 @dataclass
 class InverterInfo:
@@ -7,7 +9,16 @@ class InverterInfo:
     model: str
     version: str
     machine: str
-    power: float | None
+    type: str
+    smart_support: str
+    generator_support: str
+    battery_num: str
+    power: str
+    power_unit: str
+
+    @property
+    def power_watts(self) -> float | None:
+        return safe_convert_power_to_watts(self.power, self.power_unit)
 
 
 @dataclass

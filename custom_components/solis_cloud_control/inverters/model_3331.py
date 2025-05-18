@@ -9,7 +9,7 @@ async def create_inverter(
 ) -> Inverter:
     inverter = Inverter.create_hybrid_inverter(inverter_info)
 
-    power = inverter_info.power if inverter_info.power is not None else 15_000
+    power = inverter_info.power_watts if inverter_info.power_watts is not None else 15_000
     inverter.max_export_power = InverterMaxExportPower(max_value=power, step=100, scale=0.01)
 
     return inverter
