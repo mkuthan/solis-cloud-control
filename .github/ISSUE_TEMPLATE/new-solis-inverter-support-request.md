@@ -9,10 +9,6 @@ assignees: ''
 
 Thank you for your interest in expanding the capabilities of this integration! To help us add support for your new Solis inverter, please provide as much of the following information as possible.
 
-Sample device info page (use "Preview" tab to see the image):
-
-![Device Details Screen](https://raw.githubusercontent.com/mkuthan/solis-cloud-control/main/device_info.png)
-
 **1. Inverter Model Name/Type:**
 Please provide the exact model name/type of your Solis inverter (e.g., S6-EH3P12K02-NV-YD-L).
 
@@ -27,8 +23,8 @@ Please provide the model identifier/number of your Solis inverter (e.g., "3331")
 [Your Inverter Model Identifier/Number]
 ```
 
-**3. Diagnostic Information:**
-Download diagnostic from Home Assistant integration page. Please paste `inverter_info` and `coordinator_data` fields within the code block below.
+**3. Diagnostics Information:**
+Download diagnostics from Home Assistant integration page. Please paste `inverter_info` and `coordinator_data` fields within the code block below.
 
 ```json
 [Paste Your Diagnostic JSON Here]
@@ -38,7 +34,7 @@ Download diagnostic from Home Assistant integration page. Please paste `inverter
 Please provide any other relevant information that might help us add support for this inverter. For example:
 
 - What specific features or sensors are you hoping to see?
-- Logs or error messages that you have encountered
-- Any other context or observations
+- Screenshots of the inverter's web interface or app with settings you would like to control
+- Logs or error messages from the integration that you have encountered
 
 We appreciate you taking the time to provide this information. Adding support for new hardware can be complex, and your detailed input is crucial for success!
