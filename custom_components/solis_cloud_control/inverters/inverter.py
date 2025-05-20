@@ -6,15 +6,15 @@ from custom_components.solis_cloud_control.utils.safe_converters import safe_con
 @dataclass
 class InverterInfo:
     serial_number: str
-    model: str
-    version: str
-    machine: str
-    type: str
-    smart_support: str
-    generator_support: str
-    battery_num: str
-    power: str
-    power_unit: str
+    model: str | None
+    version: str | None
+    machine: str | None
+    type: str | None
+    smart_support: str | None
+    generator_support: str | None
+    battery_num: str | None
+    power: str | None
+    power_unit: str | None
 
     @property
     def power_watts(self) -> float | None:

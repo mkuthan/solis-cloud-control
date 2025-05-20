@@ -1,15 +1,11 @@
 from dataclasses import asdict
 
 from homeassistant.components.diagnostics import async_redact_data
-from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
 from homeassistant.core import HomeAssistant
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 
-_TO_REDACT = [
-    CONF_API_KEY,
-    CONF_API_TOKEN,
-]
+_TO_REDACT = ["serial_number"]
 
 
 async def async_get_config_entry_diagnostics(
@@ -17,7 +13,6 @@ async def async_get_config_entry_diagnostics(
     config_entry: SolisCloudControlConfigEntry,
 ) -> dict[str, any]:
     return {
-        "entry_data": async_redact_data(dict(config_entry.data), _TO_REDACT),
-        "inverter_info": asdict(config_entry.runtime_data.inverter.info),
+        "inverter_info": async_redact_data(asdict(config_entry.runtime_data.inverter.info), _TO_REDACT),
         "coordinator_data": config_entry.runtime_data.coordinator.data,
     }

@@ -32,13 +32,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: SolisCloudControl
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
-        identifiers={(config_entry.domain, inverter_info.serial_number)},
+        identifiers={(config_entry.domain, inverter_sn)},
         manufacturer="Solis",
-        name=f"Inverter Control {inverter_info.serial_number}",
-        serial_number=inverter_info.serial_number,
-        model_id=inverter_info.model,
-        model=inverter_info.machine,
-        sw_version=inverter_info.version,
+        name=f"Inverter Control {inverter_sn}",
+        serial_number=inverter_sn,
+        model_id=inverter_info.model or "Unknown",
+        model=inverter_info.machine or "Unknown",
+        sw_version=inverter_info.version or "Unknown",
     )
 
     # create coordinator

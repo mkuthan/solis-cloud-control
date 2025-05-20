@@ -10,27 +10,17 @@ _LOGGER = logging.getLogger(__name__)
 async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_sn: str) -> InverterInfo:
     inverter_details = await api_client.inverter_details(inverter_sn)
 
-    model = str(inverter_details.get("model", "Unknown"))
-    version = str(inverter_details.get("version", "Unknown"))
-    machine = str(inverter_details.get("machine", "Unknown"))
-    type = str(inverter_details.get("inverterType", "Unknown"))
-    smart_support = str(inverter_details.get("smartSupport", "Unknown"))
-    generator_support = str(inverter_details.get("generatorSupport", "Unknown"))
-    battery_num = str(inverter_details.get("batteryNum", "Unknown"))
-    power = str(inverter_details.get("power", "Unknown"))
-    power_unit = str(inverter_details.get("powerStr", "Unknown"))
-
     return InverterInfo(
         serial_number=inverter_sn,
-        model=model,
-        version=version,
-        machine=machine,
-        type=type,
-        smart_support=smart_support,
-        generator_support=generator_support,
-        battery_num=battery_num,
-        power=power,
-        power_unit=power_unit,
+        model=_get_inverter_detail(inverter_details, "model"),
+        version=_get_inverter_detail(inverter_details, "version"),
+        machine=_get_inverter_detail(inverter_details, "machine"),
+        type=_get_inverter_detail(inverter_details, "inverterType"),
+        smart_support=_get_inverter_detail(inverter_details, "smartSupport"),
+        generator_support=_get_inverter_detail(inverter_details, "generatorSupport"),
+        battery_num=_get_inverter_detail(inverter_details, "batteryNum"),
+        power=_get_inverter_detail(inverter_details, "power"),
+        power_unit=_get_inverter_detail(inverter_details, "powerStr"),
     )
 
 
@@ -45,3 +35,7 @@ async def create_inverter(api_client: SolisCloudControlApiClient, inverter_info:
     except ImportError:
         _LOGGER.warning("Unknown inverter model '%s', fallback to generic hybrid inverter", inverter_info.model)
         return Inverter(inverter_info)
+
+
+def _get_inverter_detail(inverter_details: dict[str, any], field: str) -> str | None:
+    return str(value) if (value := inverter_details.get(field)) is not None else None

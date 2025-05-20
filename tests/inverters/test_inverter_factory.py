@@ -46,15 +46,15 @@ async def test_create_inverter_info_missing_fields(mock_api_client):
     result = await create_inverter_info(mock_api_client, inverter_sn)
 
     assert result.serial_number == inverter_sn
-    assert result.model == "Unknown"
-    assert result.version == "Unknown"
-    assert result.machine == "Unknown"
-    assert result.type == "Unknown"
-    assert result.smart_support == "Unknown"
-    assert result.generator_support == "Unknown"
-    assert result.battery_num == "Unknown"
-    assert result.power == "Unknown"
-    assert result.power_unit == "Unknown"
+    assert result.model is None
+    assert result.version is None
+    assert result.machine is None
+    assert result.type is None
+    assert result.smart_support is None
+    assert result.generator_support is None
+    assert result.battery_num is None
+    assert result.power is None
+    assert result.power_unit is None
 
 
 @pytest.mark.asyncio
