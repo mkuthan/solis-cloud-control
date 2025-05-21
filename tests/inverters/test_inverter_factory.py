@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from custom_components.solis_cloud_control.inverters.inverter import (
@@ -59,7 +61,7 @@ async def test_create_inverter_info_missing_fields(mock_api_client):
 
 @pytest.mark.asyncio
 async def test_create_inverter_unknown_model(mock_api_client, any_inverter_info):
-    any_inverter_info.model = "unknown model"
-    result = await create_inverter(mock_api_client, any_inverter_info)
+    inverter_info = replace(any_inverter_info, model="unknown model")
+    result = await create_inverter(mock_api_client, inverter_info)
 
-    assert result == Inverter(info=any_inverter_info)
+    assert result == Inverter(info=inverter_info)

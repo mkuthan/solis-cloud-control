@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from custom_components.solis_cloud_control.utils.safe_converters import safe_convert_power_to_watts
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterInfo:
     serial_number: str
     model: str | None
@@ -21,7 +21,7 @@ class InverterInfo:
         return safe_convert_power_to_watts(self.power, self.power_unit)
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterOnOff:
     on_cid: int = 52
     off_cid: int = 54
@@ -29,7 +29,7 @@ class InverterOnOff:
     off_value: str = "222"
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterStorageMode:
     cid: int = 636
     mode_self_use: str = "Self-Use"
@@ -42,14 +42,14 @@ class InverterStorageMode:
     bit_feed_in_priority: int = 6
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterChargeDischargeSettings:
     SLOTS_COUNT: int = 3
 
     cid: int = 103
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterChargeDischargeSlot:
     switch_cid: int
     time_cid: int
@@ -72,7 +72,7 @@ class InverterChargeDischargeSlot:
         ]
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterChargeDischargeSlots:
     SLOTS_COUNT: int = 6
 
@@ -243,7 +243,7 @@ class InverterChargeDischargeSlots:
             return None
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterMaxExportPower:
     cid: int = 499
     min_value: float = 0
@@ -252,47 +252,47 @@ class InverterMaxExportPower:
     scale: float = 1
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterPowerLimit:
     cid: int = 15
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterBatteryReserveSOC:
     cid: int = 157
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterBatteryOverDischargeSOC:
     cid: int = 158
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterBatteryForceChargeSOC:
     cid: int = 160
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterBatteryRecoverySOC:
     cid: int = 7229
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterBatteryMaxChargeSOC:
     cid: int = 7963
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterBatteryMaxChargeCurrent:
     cid: int = 7224
 
 
-@dataclass
+@dataclass(frozen=True)
 class InverterBatteryMaxDischargeCurrent:
     cid: int = 7226
 
 
-@dataclass
+@dataclass(frozen=True)
 class Inverter:
     info: InverterInfo
     on_off: InverterOnOff | None = None

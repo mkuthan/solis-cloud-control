@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
@@ -139,14 +141,14 @@ def max_export_power_entity(mock_coordinator, any_inverter):
 
 @pytest.fixture
 def max_export_power_entity_scaled_0_1(mock_coordinator, any_inverter):
-    any_inverter.max_export_power.scale = 0.1
+    max_export_power = replace(any_inverter.max_export_power, scale = 0.1)
     return MaxExportPower(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(
             key="any_key",
             name="any name",
         ),
-        max_export_power=any_inverter.max_export_power,
+        max_export_power=max_export_power,
     )
 
 
