@@ -56,6 +56,7 @@ After successful configuration, the integration creates a new entity for your in
 All Solis hybrid inverters should be supported, although the integration has been tested with the following models:
 
 * S6-EH3P(8-15)K02-NV-YD-L, model "3331"
+* S6-EH3P(5-10)K-H, model "3306"
 * RHI-3P(3-10)K-HVES-5G, model "CA"
 
 The integration also supports the following Solis string inverters:
