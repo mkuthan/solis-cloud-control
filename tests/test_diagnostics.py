@@ -1,6 +1,5 @@
 from dataclasses import asdict
 
-from custom_components.solis_cloud_control.const import CONF_INVERTER_SN
 from custom_components.solis_cloud_control.data import SolisCloudControlData
 from custom_components.solis_cloud_control.diagnostics import async_get_config_entry_diagnostics
 
