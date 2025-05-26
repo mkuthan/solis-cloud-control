@@ -17,10 +17,9 @@ async def test_create_inverter_info(mock_api_client):
         "model": "any model",
         "version": "any version",
         "machine": "any machine",
-        "inverterType": "any type",
+        "energyStorageControl": "any energy storage control",
         "smartSupport": "any smart support",
         "generatorSupport": "any generator support",
-        "batteryNum": "any battery num",
         "power": 10,
         "powerStr": "kW",
     }
@@ -32,10 +31,9 @@ async def test_create_inverter_info(mock_api_client):
     assert result.model == "any model"
     assert result.version == "any version"
     assert result.machine == "any machine"
-    assert result.type == "any type"
+    assert result.energy_storage_control == "any energy storage control"
     assert result.smart_support == "any smart support"
     assert result.generator_support == "any generator support"
-    assert result.battery_num == "any battery num"
     assert result.power == "10"
     assert result.power_unit == "kW"
 
@@ -51,17 +49,33 @@ async def test_create_inverter_info_missing_fields(mock_api_client):
     assert result.model is None
     assert result.version is None
     assert result.machine is None
-    assert result.type is None
+    assert result.energy_storage_control is None
     assert result.smart_support is None
     assert result.generator_support is None
-    assert result.battery_num is None
     assert result.power is None
     assert result.power_unit is None
 
 
 @pytest.mark.asyncio
-async def test_create_inverter_unknown_model(mock_api_client, any_inverter_info):
-    inverter_info = replace(any_inverter_info, model="unknown model")
+async def test_create_inverter_unknown_hybrid_model(mock_api_client, any_inverter_info):
+    inverter_info = replace(any_inverter_info, model="unknown model", energy_storage_control="1")
     result = await create_inverter(mock_api_client, inverter_info)
 
     assert result == Inverter.create_hybrid_inverter(inverter_info)
+
+
+@pytest.mark.asyncio
+async def test_create_inverter_unknown_string_model(mock_api_client, any_inverter_info):
+    inverter_info = replace(any_inverter_info, model="unknown model", energy_storage_control="0")
+    result = await create_inverter(mock_api_client, inverter_info)
+
+    assert result == Inverter.create_string_inverter(inverter_info)
+
+
+@pytest.mark.asyncio
+async def test_create_inverter_3331(mock_api_client, any_inverter_info):
+    inverter_info = replace(any_inverter_info, model="3331")
+    result = await create_inverter(mock_api_client, inverter_info)
+
+    assert result != Inverter.create_hybrid_inverter(inverter_info)
+    assert result != Inverter.create_string_inverter(inverter_info)

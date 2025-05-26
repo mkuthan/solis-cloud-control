@@ -15,10 +15,9 @@ async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_
         model=_get_inverter_detail(inverter_details, "model"),
         version=_get_inverter_detail(inverter_details, "version"),
         machine=_get_inverter_detail(inverter_details, "machine"),
-        type=_get_inverter_detail(inverter_details, "inverterType"),
+        energy_storage_control=_get_inverter_detail(inverter_details, "energyStorageControl"),
         smart_support=_get_inverter_detail(inverter_details, "smartSupport"),
         generator_support=_get_inverter_detail(inverter_details, "generatorSupport"),
-        battery_num=_get_inverter_detail(inverter_details, "batteryNum"),
         power=_get_inverter_detail(inverter_details, "power"),
         power_unit=_get_inverter_detail(inverter_details, "powerStr"),
     )
@@ -29,12 +28,15 @@ async def create_inverter(api_client: SolisCloudControlApiClient, inverter_info:
         inverter_model = inverter_info.model.lower()
         module_name = f"custom_components.solis_cloud_control.inverters.model_{inverter_model}"
         model_module = importlib.import_module(module_name)
-        inverter = await model_module.create_inverter(inverter_info, api_client)
-        _LOGGER.info("Inverter model '%s' created", inverter_info.model)
-        return inverter
+        _LOGGER.info("Supported inverter model '%s' found", inverter_info.model)
+        return await model_module.create_inverter(inverter_info, api_client)
     except ImportError:
-        _LOGGER.warning("Unknown inverter model '%s', fallback to generic hybrid inverter", inverter_info.model)
-        return Inverter.create_hybrid_inverter(inverter_info)
+        if inverter_info.is_string_inverter:
+            _LOGGER.warning("Unknown inverter model '%s', fallback to generic string inverter", inverter_info.model)
+            return Inverter.create_string_inverter(inverter_info)
+        else:
+            _LOGGER.warning("Unknown inverter model '%s', fallback to generic hybrid inverter", inverter_info.model)
+            return Inverter.create_hybrid_inverter(inverter_info)
 
 
 def _get_inverter_detail(inverter_details: dict[str, any], field: str) -> str | None:

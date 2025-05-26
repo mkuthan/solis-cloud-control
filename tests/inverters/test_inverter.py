@@ -21,3 +21,18 @@ async def test_inverter_info_power_watts(mock_api_client, any_inverter_info, pow
     inverter = replace(any_inverter_info, power=power, power_unit=power_unit)
 
     assert inverter.power_watts == expected_power
+
+
+@pytest.mark.parametrize(
+    "energy_storage_control,expected",
+    [
+        ("0", True),
+        ("1", False),
+        (None, False),
+        ("", False),
+        ("unexpected", False),
+    ],
+)
+def test_inverter_info_is_string_inverter(any_inverter_info, energy_storage_control, expected):
+    inverter = replace(any_inverter_info, energy_storage_control=energy_storage_control)
+    assert inverter.is_string_inverter == expected

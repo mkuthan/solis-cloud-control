@@ -9,16 +9,19 @@ class InverterInfo:
     model: str | None
     version: str | None
     machine: str | None
-    type: str | None
+    energy_storage_control: str | None
     smart_support: str | None
     generator_support: str | None
-    battery_num: str | None
     power: str | None
     power_unit: str | None
 
     @property
     def power_watts(self) -> float | None:
         return safe_convert_power_to_watts(self.power, self.power_unit)
+
+    @property
+    def is_string_inverter(self) -> bool:
+        return self.energy_storage_control is not None and self.energy_storage_control == "0"
 
 
 @dataclass(frozen=True)
