@@ -55,13 +55,13 @@ After successful configuration, the integration creates a new entity for your in
 
 All Solis inverters should be supported, although the integration has been tested with the following models:
 
-| Name                     | Model | Hybrid |
-| ------------------------ | ----- | ------ |
-| S6-EH3P(8-15)K02-NV-YD-L | 3331  | ✅      |
-| S6-EH3P(5-10)K-H         | 3306  | ✅      |
-| RHI-3P(3-10)K-HVES-5G    | CA    | ✅      |
-| S6-GR1P(2.5-6)K          | 0200  | ❌      |
-| S5-GR3P(3-20)K           | 0507  | ❌      |
+| Model Name               | Model Id | Hybrid |
+| ------------------------ | -------- | ------ |
+| S6-EH3P(8-15)K02-NV-YD-L | 3331     | ✅ |
+| S6-EH3P(5-10)K-H         | 3306     | ✅ |
+| RHI-3P(3-10)K-HVES-5G    | CA       | ✅ |
+| S6-GR1P(2.5-6)K          | 0200     | ❌ |
+| S5-GR3P(3-20)K           | 0507     | ❌ |
 
 > [!NOTE]
 > If your inverter is not listed above, please open a GitHub issue using the "New Solis Inverter Support Request" template.
