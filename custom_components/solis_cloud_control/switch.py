@@ -9,7 +9,9 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSlot,
     InverterChargeDischargeSlots,
     InverterOnOff,
+    InverterStorageMode,  # Added import
 )
+from custom_components.solis_cloud_control.utils.safe_converters import safe_get_int_value  # Added import
 
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
@@ -68,6 +70,30 @@ async def async_setup_entry(
                     charge_discharge_slots=slots,
                 )
             )
+
+    if inverter.storage_mode is not None:
+        entities.append(
+            BatteryReserveSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="battery_reserve",
+                    name="Battery Reserve",
+                    icon="mdi:battery-heart-outline",
+                ),
+                storage_mode=inverter.storage_mode,
+            )
+        )
+        entities.append(
+            AllowGridChargingSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="allow_grid_charging",
+                    name="Allow Grid Charging",
+                    icon="mdi:battery-charging-outline",
+                ),
+                storage_mode=inverter.storage_mode,
+            )
+        )
 
     async_add_entities(entities)
 
@@ -148,3 +174,83 @@ class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
                 value |= 1 << bit_position
 
         return str(value)
+
+
+class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        storage_mode: InverterStorageMode,
+    ) -> None:
+        super().__init__(coordinator, entity_description, storage_mode.cid)
+        self.storage_mode = storage_mode
+
+    @property
+    def is_on(self) -> bool | None:
+        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value = safe_get_int_value(value_str)
+        if value is None:
+            return None
+
+        return bool(value & (1 << self.storage_mode.bit_backup_mode))
+
+    async def async_turn_on(self, **kwargs: any) -> None:  # noqa: ARG002
+        await self._async_set_bit(True)
+
+    async def async_turn_off(self, **kwargs: any) -> None:  # noqa: ARG002
+        await self._async_set_bit(False)
+
+    async def _async_set_bit(self, state: bool) -> None:
+        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value = safe_get_int_value(value_str)
+        if value is None:
+            return
+
+        if state:
+            value |= 1 << self.storage_mode.bit_backup_mode
+        else:
+            value &= ~(1 << self.storage_mode.bit_backup_mode)
+
+        _LOGGER.info("Setting battery reserve to %s (value: %s)", state, value)
+        await self.coordinator.control(self.storage_mode.cid, str(value))
+
+
+class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        storage_mode: InverterStorageMode,
+    ) -> None:
+        super().__init__(coordinator, entity_description, storage_mode.cid)
+        self.storage_mode = storage_mode
+
+    @property
+    def is_on(self) -> bool | None:
+        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value = safe_get_int_value(value_str)
+        if value is None:
+            return None
+
+        return bool(value & (1 << self.storage_mode.bit_grid_charging))
+
+    async def async_turn_on(self, **kwargs: any) -> None:  # noqa: ARG002
+        await self._async_set_bit(True)
+
+    async def async_turn_off(self, **kwargs: any) -> None:  # noqa: ARG002
+        await self._async_set_bit(False)
+
+    async def _async_set_bit(self, state: bool) -> None:
+        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value = safe_get_int_value(value_str)
+        if value is None:
+            return
+
+        if state:
+            value |= 1 << self.storage_mode.bit_grid_charging
+        else:
+            value &= ~(1 << self.storage_mode.bit_grid_charging)
+
+        _LOGGER.info("Setting allow grid charging to %s (value: %s)", state, value)
+        await self.coordinator.control(self.storage_mode.cid, str(value))

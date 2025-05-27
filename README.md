@@ -72,8 +72,8 @@ All Solis inverters should be supported, although the integration has been teste
 The integration provides a user-friendly interface to control your inverter settings. It allows you to:
 
 * ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid" (hybrid inverters only)
-* 🛠️ Access "Battery Reserve" and "Allow Grid Charging" options as Storage Mode attributes (hybrid inverters only)
 * ⏱️ Schedule charge and discharge slots (hybrid inverters only)
+* 🛠️ "Battery Reserve" and "Allow Grid Charging" switches (hybrid inverters only)
 * ⚖️ Set maximum export power
 * 🔌 Switch the inverter on or off
 

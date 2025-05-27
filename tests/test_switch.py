@@ -1,7 +1,12 @@
 import pytest
 from homeassistant.components.switch import SwitchEntityDescription
 
-from custom_components.solis_cloud_control.switch import OnOffSwitch, SlotSwitch
+from custom_components.solis_cloud_control.switch import (
+    AllowGridChargingSwitch,
+    BatteryReserveSwitch,
+    OnOffSwitch,
+    SlotSwitch,
+)
 
 
 @pytest.fixture
@@ -82,3 +87,117 @@ class TestSlotSwitch:
         slot_switch.coordinator.data = {slot_switch.charge_discharge_slot.switch_cid: "1"}
         await slot_switch.async_turn_off()
         slot_switch.coordinator.control.assert_awaited_once_with(slot_switch.charge_discharge_slot.switch_cid, "0", "1")
+
+
+@pytest.fixture
+def battery_reserve_switch(mock_coordinator, any_inverter):
+    return BatteryReserveSwitch(
+        coordinator=mock_coordinator,
+        entity_description=SwitchEntityDescription(
+            key="battery_reserve",
+            name="Battery Reserve",
+            icon="mdi:battery-heart-outline",
+        ),
+        storage_mode=any_inverter.storage_mode,
+    )
+
+
+class TestBatteryReserveSwitch:
+    def test_is_on_when_none(self, battery_reserve_switch):
+        battery_reserve_switch.coordinator.data = {battery_reserve_switch.storage_mode.cid: None}
+        assert battery_reserve_switch.is_on is None
+
+    def test_is_on_when_on(self, battery_reserve_switch):
+        bit = battery_reserve_switch.storage_mode.bit_backup_mode
+        battery_reserve_switch.coordinator.data = {battery_reserve_switch.storage_mode.cid: str(1 << bit)}
+        assert battery_reserve_switch.is_on is True
+
+    def test_is_on_when_off(self, battery_reserve_switch):
+        battery_reserve_switch.coordinator.data = {battery_reserve_switch.storage_mode.cid: str(0)}
+        assert battery_reserve_switch.is_on is False
+
+    async def test_turn_on(self, battery_reserve_switch):
+        bit = battery_reserve_switch.storage_mode.bit_backup_mode
+        battery_reserve_switch.coordinator.data = {battery_reserve_switch.storage_mode.cid: str(0)}
+        await battery_reserve_switch.async_turn_on()
+        battery_reserve_switch.coordinator.control.assert_awaited_once_with(
+            battery_reserve_switch.storage_mode.cid, str(1 << bit)
+        )
+
+    async def test_turn_off(self, battery_reserve_switch):
+        bit = battery_reserve_switch.storage_mode.bit_backup_mode
+        battery_reserve_switch.coordinator.data = {battery_reserve_switch.storage_mode.cid: str(1 << bit)}
+        await battery_reserve_switch.async_turn_off()
+        battery_reserve_switch.coordinator.control.assert_awaited_once_with(
+            battery_reserve_switch.storage_mode.cid, str(0)
+        )
+
+    @pytest.mark.parametrize(
+        "initial_value",
+        [
+            "not a number",
+            None,
+        ],
+    )
+    async def test_async_turn_on_off_invalid_initial(self, battery_reserve_switch, initial_value):
+        battery_reserve_switch.coordinator.data = {battery_reserve_switch.storage_mode.cid: initial_value}
+        await battery_reserve_switch.async_turn_on()
+        await battery_reserve_switch.async_turn_off()
+        battery_reserve_switch.coordinator.control.assert_not_awaited()
+
+
+@pytest.fixture
+def allow_grid_charging_switch(mock_coordinator, any_inverter):
+    return AllowGridChargingSwitch(
+        coordinator=mock_coordinator,
+        entity_description=SwitchEntityDescription(
+            key="allow_grid_charging",
+            name="Allow Grid Charging",
+            icon="mdi:battery-charging-outline",
+        ),
+        storage_mode=any_inverter.storage_mode,
+    )
+
+
+class TestAllowGridChargingSwitch:
+    def test_is_on_when_none(self, allow_grid_charging_switch):
+        allow_grid_charging_switch.coordinator.data = {allow_grid_charging_switch.storage_mode.cid: None}
+        assert allow_grid_charging_switch.is_on is None
+
+    def test_is_on_when_on(self, allow_grid_charging_switch):
+        bit = allow_grid_charging_switch.storage_mode.bit_grid_charging
+        allow_grid_charging_switch.coordinator.data = {allow_grid_charging_switch.storage_mode.cid: str(1 << bit)}
+        assert allow_grid_charging_switch.is_on is True
+
+    def test_is_on_when_off(self, allow_grid_charging_switch):
+        allow_grid_charging_switch.coordinator.data = {allow_grid_charging_switch.storage_mode.cid: str(0)}
+        assert allow_grid_charging_switch.is_on is False
+
+    async def test_turn_on(self, allow_grid_charging_switch):
+        bit = allow_grid_charging_switch.storage_mode.bit_grid_charging
+        allow_grid_charging_switch.coordinator.data = {allow_grid_charging_switch.storage_mode.cid: str(0)}
+        await allow_grid_charging_switch.async_turn_on()
+        allow_grid_charging_switch.coordinator.control.assert_awaited_once_with(
+            allow_grid_charging_switch.storage_mode.cid, str(1 << bit)
+        )
+
+    async def test_turn_off(self, allow_grid_charging_switch):
+        bit = allow_grid_charging_switch.storage_mode.bit_grid_charging
+        allow_grid_charging_switch.coordinator.data = {allow_grid_charging_switch.storage_mode.cid: str(1 << bit)}
+        await allow_grid_charging_switch.async_turn_off()
+        allow_grid_charging_switch.coordinator.control.assert_awaited_once_with(
+            allow_grid_charging_switch.storage_mode.cid, str(0)
+        )
+
+    @pytest.mark.parametrize(
+        "initial_value",
+        [
+            "not a number",
+            None,
+        ],
+    )
+    async def test_async_turn_on_off_invalid_initial(self, allow_grid_charging_switch, initial_value):
+        allow_grid_charging_switch.coordinator.data = {allow_grid_charging_switch.storage_mode.cid: initial_value}
+        await allow_grid_charging_switch.async_turn_on()
+        await allow_grid_charging_switch.async_turn_off()
+        allow_grid_charging_switch.coordinator.control.assert_not_awaited()

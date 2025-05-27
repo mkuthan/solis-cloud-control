@@ -62,7 +62,7 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
     assert platform_counts[Platform.NUMBER] == 26
     assert platform_counts[Platform.SELECT] == 1
     assert platform_counts[Platform.SENSOR] == 7
-    assert platform_counts[Platform.SWITCH] == 13
+    assert platform_counts[Platform.SWITCH] == 15
     assert platform_counts[Platform.TEXT] == 13
 
 
