@@ -42,24 +42,6 @@ class TestStorageModeSelect:
         storage_mode_entity.coordinator.data = {storage_mode_entity.storage_mode.cid: value}
         assert storage_mode_entity.current_option == expected_mode
 
-    async def test_extra_state_attributes_on(self, storage_mode_entity):
-        value = (1 << InverterStorageMode.bit_backup_mode) | (1 << InverterStorageMode.bit_grid_charging)
-        storage_mode_entity.coordinator.data = {storage_mode_entity.storage_mode.cid: str(value)}
-
-        assert storage_mode_entity.extra_state_attributes == {
-            "battery_reserve": "ON",
-            "allow_grid_charging": "ON",
-        }
-
-    async def test_extra_state_attributes_off(self, storage_mode_entity):
-        value = 0
-        storage_mode_entity.coordinator.data = {storage_mode_entity.storage_mode.cid: str(value)}
-
-        assert storage_mode_entity.extra_state_attributes == {
-            "battery_reserve": "OFF",
-            "allow_grid_charging": "OFF",
-        }
-
     @pytest.mark.parametrize(
         ("option", "expected_value"),
         [
@@ -73,6 +55,32 @@ class TestStorageModeSelect:
         await storage_mode_entity.async_select_option(option)
         storage_mode_entity.coordinator.control.assert_awaited_once_with(
             storage_mode_entity.storage_mode.cid, expected_value
+        )
+
+    @pytest.mark.parametrize(
+        "mode,bit",
+        [
+            (InverterStorageMode.mode_self_use, InverterStorageMode.bit_self_use),
+            (InverterStorageMode.mode_feed_in_priority, InverterStorageMode.bit_feed_in_priority),
+            (InverterStorageMode.mode_off_grid, InverterStorageMode.bit_off_grid),
+        ],
+    )
+    async def test_async_select_option_preserves_other_bits(self, storage_mode_entity, mode, bit):
+        other_bits = 0b10111010
+
+        # set initial value with storage mode bits cleared
+        initial_value = other_bits & ~(
+            (1 << InverterStorageMode.bit_self_use)
+            | (1 << InverterStorageMode.bit_feed_in_priority)
+            | (1 << InverterStorageMode.bit_off_grid)
+        )
+        storage_mode_entity.coordinator.data = {storage_mode_entity.storage_mode.cid: initial_value}
+
+        await storage_mode_entity.async_select_option(mode)
+
+        expected_value = initial_value | (1 << bit)
+        storage_mode_entity.coordinator.control.assert_awaited_once_with(
+            storage_mode_entity.storage_mode.cid, str(expected_value)
         )
 
     @pytest.mark.parametrize(

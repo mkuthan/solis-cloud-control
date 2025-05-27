@@ -72,38 +72,26 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
 
         return None
 
-    @property
-    def extra_state_attributes(self) -> dict[str, str]:
-        value_str = self.coordinator.data.get(self.storage_mode.cid)
-        value = safe_get_int_value(value_str)
-
-        attributes = {}
-        if value is not None:
-            battery_reserve = "ON" if value & (1 << self.storage_mode.bit_backup_mode) else "OFF"
-            allow_grid_charging = "ON" if value & (1 << self.storage_mode.bit_grid_charging) else "OFF"
-
-            attributes["battery_reserve"] = battery_reserve
-            attributes["allow_grid_charging"] = allow_grid_charging
-
-        return attributes
-
     async def async_select_option(self, option: str) -> None:
         value_str = self.coordinator.data.get(self.storage_mode.cid)
         value = safe_get_int_value(value_str)
         if value is None:
             return
 
-        value &= ~(1 << self.storage_mode.bit_self_use)
-        value &= ~(1 << self.storage_mode.bit_feed_in_priority)
-        value &= ~(1 << self.storage_mode.bit_off_grid)
+        # clear the bits for the storage mode options
+        new_value = value & ~(
+            (1 << self.storage_mode.bit_self_use)
+            | (1 << self.storage_mode.bit_feed_in_priority)
+            | (1 << self.storage_mode.bit_off_grid)
+        )
 
         if option == self.storage_mode.mode_self_use:
-            value |= 1 << self.storage_mode.bit_self_use
+            new_value |= 1 << self.storage_mode.bit_self_use
         elif option == self.storage_mode.mode_feed_in_priority:
-            value |= 1 << self.storage_mode.bit_feed_in_priority
+            new_value |= 1 << self.storage_mode.bit_feed_in_priority
         elif option == self.storage_mode.mode_off_grid:
-            value |= 1 << self.storage_mode.bit_off_grid
+            new_value |= 1 << self.storage_mode.bit_off_grid
 
-        _LOGGER.info("Setting storage mode to %s (value: %s)", option, value)
+        _LOGGER.info("Setting storage mode to %s (value: %s)", option, new_value)
 
-        await self.coordinator.control(self.storage_mode.cid, str(value))
+        await self.coordinator.control(self.storage_mode.cid, str(new_value))
