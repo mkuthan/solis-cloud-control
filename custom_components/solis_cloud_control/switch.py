@@ -110,6 +110,13 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
         self._attr_is_on = True
         self._attr_assumed_state = True
 
+    @property
+    def available(self) -> bool:
+        if not self.coordinator.last_update_success:
+            return False
+        # CIDs for on-off are write only, skip availability check based on coordinator data
+        return True
+
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
         _LOGGER.info("Turning on inverter")
         await self.coordinator.control_no_check(self.on_off.on_cid, self.on_off.on_value)

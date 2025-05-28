@@ -34,7 +34,7 @@ class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
 
     @property
     def available(self) -> bool:
-        if not super().available:
+        if not self.coordinator.last_update_success:
             return False
 
         for cid in self.cids:
