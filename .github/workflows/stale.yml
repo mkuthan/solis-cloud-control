@@ -17,7 +17,7 @@ jobs:
       - uses: actions/stale@v9
         with:
           # Issue settings
-          days-before-stale: 60
+          days-before-stale: 30
           days-before-close: 7
           stale-issue-message: "This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs. Thank you for your contributions."
           close-issue-message: "This issue was closed because it has been stale for 7 days with no activity."
