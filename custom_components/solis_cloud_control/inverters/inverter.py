@@ -247,6 +247,11 @@ class InverterChargeDischargeSlots:
 
 
 @dataclass(frozen=True)
+class InverterMaxOutputPower:
+    cid: int = 376
+
+
+@dataclass(frozen=True)
 class InverterMaxExportPower:
     cid: int = 499
     min_value: float = 0
@@ -302,6 +307,7 @@ class Inverter:
     storage_mode: InverterStorageMode | None = None
     charge_discharge_settings: InverterChargeDischargeSettings | None = None
     charge_discharge_slots: InverterChargeDischargeSlots | None = None
+    max_output_power: InverterMaxOutputPower | None = None
     max_export_power: InverterMaxExportPower | None = None
     power_limit: InverterPowerLimit | None = None
     battery_reserve_soc: InverterBatteryReserveSOC | None = None
@@ -332,6 +338,7 @@ class Inverter:
             storage_mode=InverterStorageMode(),
             charge_discharge_settings=InverterChargeDischargeSettings(),
             charge_discharge_slots=InverterChargeDischargeSlots(),
+            max_output_power=InverterMaxOutputPower(),
             max_export_power=InverterMaxExportPower(),
             battery_reserve_soc=InverterBatteryReserveSOC(),
             battery_over_discharge_soc=InverterBatteryOverDischargeSOC(),
@@ -355,6 +362,8 @@ class Inverter:
             cids.append(self.charge_discharge_settings.cid)
         if self.charge_discharge_slots:
             cids.extend(self.charge_discharge_slots.all_cids)
+        if self.max_output_power:
+            cids.append(self.max_output_power.cid)
         if self.max_export_power:
             cids.append(self.max_export_power.cid)
         if self.power_limit:

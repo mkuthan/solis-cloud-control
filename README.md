@@ -42,13 +42,13 @@ After successful configuration, the integration creates a new entity for your in
 
 All Solis inverters should be supported, although the integration has been tested with the following models:
 
-| Model Name               | Model Id | Hybrid |
+| Model Name               | Model Id | Type   |
 | ------------------------ | -------- | ------ |
-| S6-EH3P(8-15)K02-NV-YD-L | 3331     | ✅ |
-| S6-EH3P(5-10)K-H         | 3306     | ✅ |
-| RHI-3P(3-10)K-HVES-5G    | CA       | ✅ |
-| S6-GR1P(2.5-6)K          | 0200     | ❌ |
-| S5-GR3P(3-20)K           | 0507     | ❌ |
+| S6-EH3P(8-15)K02-NV-YD-L | 3331     | hybrid |
+| S6-EH3P(5-10)K-H         | 3306     | hybrid |
+| RHI-3P(3-10)K-HVES-5G    | CA       | hybrid |
+| S6-GR1P(2.5-6)K          | 0200     | string |
+| S5-GR3P(3-20)K           | 0507     | string |
 
 > [!NOTE]
 > If your inverter is not listed above, please open a GitHub issue using the "New Solis Inverter Support Request" template.
@@ -58,11 +58,17 @@ All Solis inverters should be supported, although the integration has been teste
 
 The integration provides a user-friendly interface to control your inverter settings. It allows you to:
 
-* ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid" (hybrid inverters only)
-* ⏱️ Schedule charge and discharge slots (hybrid inverters only)
-* 🛠️ "Battery Reserve" and "Allow Grid Charging" switches (hybrid inverters only)
-* ⚖️ Set maximum export power
-* 🔌 Switch the inverter on or off
+* ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid" 🟢
+* ⏱️ Schedule charge and discharge slots 🟢
+* Switch the inverter on or off 🟢 ⚪️
+* Toggle "Battery Reserve" 🟢
+* Toggle "Allow Grid Charging" 🟢
+* Set maximum output power 🟢
+* Set maximum export power 🟢
+* Set power limit ⚪️
+
+🟢 - Hybrid inverter  
+⚪️ - String inverter
 
 ![Inverter Controls](inverter_controls.png)
 

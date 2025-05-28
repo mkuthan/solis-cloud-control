@@ -8,6 +8,7 @@ from custom_components.solis_cloud_control.number import (
     BatteryCurrent,
     BatterySoc,
     MaxExportPower,
+    MaxOutputPower,
     PowerLimit,
 )
 
@@ -124,6 +125,54 @@ class TestBatterySoc:
         await battery_soc_entity.async_set_native_value(value)
         battery_soc_entity.coordinator.control.assert_awaited_once_with(
             battery_soc_entity.charge_discharge_slot.soc_cid, expected_str
+        )
+
+
+@pytest.fixture
+def max_output_power_entity(mock_coordinator, any_inverter):
+    return MaxOutputPower(
+        coordinator=mock_coordinator,
+        entity_description=NumberEntityDescription(
+            key="any_key",
+            name="any name",
+        ),
+        max_output_power=any_inverter.max_output_power,
+    )
+
+
+class TestMaxOutputPower:
+    def test_attributes(self, max_output_power_entity):
+        assert max_output_power_entity.native_min_value == 0
+        assert max_output_power_entity.native_max_value == 100
+        assert max_output_power_entity.native_step == 1
+        assert max_output_power_entity.native_unit_of_measurement == PERCENTAGE
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("0", 0.0),
+            ("50", 50.0),
+            ("100", 100.0),
+            ("not a number", None),
+            (None, None),
+        ],
+    )
+    def test_native_value(self, max_output_power_entity, value, expected):
+        max_output_power_entity.coordinator.data = {max_output_power_entity.max_output_power.cid: value}
+        assert max_output_power_entity.native_value == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (0.1, "0"),
+            (50.4, "50"),
+            (99.9, "100"),
+        ],
+    )
+    async def test_set_native_value(self, max_output_power_entity, value, expected_str):
+        await max_output_power_entity.async_set_native_value(value)
+        max_output_power_entity.coordinator.control.assert_awaited_once_with(
+            max_output_power_entity.max_output_power.cid, expected_str
         )
 
 

@@ -13,6 +13,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterBatteryOverDischargeSOC,
     InverterChargeDischargeSlot,
     InverterMaxExportPower,
+    InverterMaxOutputPower,
     InverterPowerLimit,
 )
 from custom_components.solis_cloud_control.utils.safe_converters import safe_get_float_value
@@ -83,6 +84,19 @@ async def async_setup_entry(
                     ),
                 ]
             )
+
+    if inverter.max_output_power is not None:
+        entities.append(
+            MaxOutputPower(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="max_output_power",
+                    name="Max Output Power",
+                    icon="mdi:lightning-bolt-outline",
+                ),
+                max_output_power=inverter.max_output_power,
+            )
+        )
 
     if inverter.max_export_power is not None:
         entities.append(
@@ -208,6 +222,32 @@ class BatterySoc(SolisCloudControlEntity, NumberEntity):
         value_str = str(int(round(value)))
         _LOGGER.info("Setting SOC to %f (value: %s)", value, value_str)
         await self.coordinator.control(self.charge_discharge_slot.soc_cid, value_str)
+
+
+class MaxOutputPower(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        max_output_power: InverterMaxOutputPower,
+    ) -> None:
+        super().__init__(coordinator, entity_description, max_output_power.cid)
+        self.max_output_power = max_output_power
+
+        self._attr_native_min_value = 0
+        self._attr_native_max_value = 100
+        self._attr_native_step = 1
+        self._attr_native_unit_of_measurement = PERCENTAGE
+
+    @property
+    def native_value(self) -> float | None:
+        value_str = self.coordinator.data.get(self.max_output_power.cid)
+        return safe_get_float_value(value_str)
+
+    async def async_set_native_value(self, value: float) -> None:
+        value_str = str(int(round(value)))
+        _LOGGER.info("Setting max output power to %f (value: %s)", value, value_str)
+        await self.coordinator.control(self.max_output_power.cid, value_str)
 
 
 class MaxExportPower(SolisCloudControlEntity, NumberEntity):
