@@ -16,19 +16,6 @@ See my blog post for inspiration how to use this integration: [Home Assistant So
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mkuthan&repository=solis-cloud-control)
 
-or install it manually:
-
-1. Open HACS in Home Assistant
-2. Go to "Integrations"
-3. Click on the three dots menu in the top right corner
-4. Select "Custom repositories"
-5. Add `https://github.com/mkuthan/solis-cloud-control` as an Integration
-6. Click "Add"
-7. Go back to the Integrations page
-8. Click on the "+" button in the bottom right corner
-9. Search for "Solis Cloud Control"
-10. Click on "Install" to add the integration to your Home Assistant instance
-
 After installation restart Home Assistant.
 
 ## Configuration
