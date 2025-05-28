@@ -45,3 +45,13 @@ class TestSolisCloudControlEntity:
         )
         mock_coordinator.data = coordinator_data
         assert entity.available == expected_available
+
+    def test_available_when_coordinator_unavailable(self, mock_coordinator):
+        entity = SolisCloudControlEntity(
+            coordinator=mock_coordinator,
+            entity_description=EntityDescription(key="any_key", name="any name"),
+            cids=1,
+        )
+
+        entity.coordinator.last_update_success = False
+        assert entity.available is False

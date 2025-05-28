@@ -27,6 +27,13 @@ class TestOnOffSwitch:
         assert on_off_switch.is_on is True
         assert on_off_switch.assumed_state is True
 
+    def test_available(self, on_off_switch):
+        assert on_off_switch.available is True
+
+    def test_available_when_coordinator_unavailable(self, on_off_switch):
+        on_off_switch.coordinator.last_update_success = False
+        assert on_off_switch.available is False
+
     async def test_turn_on(self, on_off_switch):
         await on_off_switch.async_turn_on()
         on_off_switch.coordinator.control_no_check.assert_awaited_once_with(

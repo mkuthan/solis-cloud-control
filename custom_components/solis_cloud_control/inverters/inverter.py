@@ -346,9 +346,7 @@ class Inverter:
     def all_cids(self) -> list[int]:
         cids: list[int] = []
 
-        if self.on_off:
-            cids.append(self.on_off.on_cid)
-            cids.append(self.on_off.off_cid)
+        # CIDs for on-off are write-only, so they are not included
         if self.storage_mode:
             cids.append(self.storage_mode.cid)
         if self.charge_discharge_settings:
