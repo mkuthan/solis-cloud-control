@@ -49,6 +49,7 @@ def mock_coordinator():
     coordinator.control = AsyncMock()
     coordinator.control_no_check = AsyncMock()
     coordinator.data = {}
+    coordinator.last_update_success = True
     coordinator.config_entry = Mock()
     coordinator.config_entry.entry_id = "any_entry_id"
     coordinator.config_entry.domain = "any_domain"

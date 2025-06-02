@@ -5,6 +5,17 @@ from custom_components.solis_cloud_control.entity import SolisCloudControlEntity
 
 
 class TestSolisCloudControlEntity:
+    def test_available_when_coordinator_last_update_failed(self, mock_coordinator):
+        mock_coordinator.last_update_success = False
+
+        entity = SolisCloudControlEntity(
+            coordinator=mock_coordinator,
+            entity_description=EntityDescription(key="any_key", name="any name"),
+            cids=1,
+        )
+
+        assert entity.available is False
+
     @pytest.mark.parametrize(
         ("coordinator_data", "expected_available"),
         [
