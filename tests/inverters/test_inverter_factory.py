@@ -73,9 +73,16 @@ async def test_create_inverter_unknown_string_model(mock_api_client, any_inverte
 
 
 @pytest.mark.asyncio
-async def test_create_inverter_3331(mock_api_client, any_inverter_info):
+async def test_create_inverter_specific_hybrid_model(mock_api_client, any_inverter_info):
     inverter_info = replace(any_inverter_info, model="3331")
     result = await create_inverter(mock_api_client, inverter_info)
 
-    assert result != Inverter.create_hybrid_inverter(inverter_info)
     assert result != Inverter.create_string_inverter(inverter_info)
+
+
+@pytest.mark.asyncio
+async def test_create_inverter_specific_string_model(mock_api_client, any_inverter_info):
+    inverter_info = replace(any_inverter_info, model="0200")
+    result = await create_inverter(mock_api_client, inverter_info)
+
+    assert result != Inverter.create_hybrid_inverter(inverter_info)
