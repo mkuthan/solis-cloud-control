@@ -18,6 +18,7 @@ async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_
         energy_storage_control=_get_inverter_detail(inverter_details, "energyStorageControl"),
         smart_support=_get_inverter_detail(inverter_details, "smartSupport"),
         generator_support=_get_inverter_detail(inverter_details, "generatorSupport"),
+        collector_model=_get_inverter_detail(inverter_details, "collectorModel"),
         power=_get_inverter_detail(inverter_details, "power"),
         power_unit=_get_inverter_detail(inverter_details, "powerStr"),
     )

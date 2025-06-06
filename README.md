@@ -38,7 +38,19 @@ After successful configuration, the integration creates a new entity for your in
 
 ![Device Information](device_info.png)
 
-## Supported devices
+## Supported data loggers
+
+| Data logger Model | Supported |
+| ---------------- | :-------: |
+| S2-WL-ST         |     ✅     |
+| DLS-W            |     ❌     |
+| DLS-L            |     ❓     |
+| S3-WiFi-ST       |     ❓     |
+
+> [!NOTE]
+> Please let me know if you have a different data logger model and it works with this integration.
+
+## Supported inverters
 
 All Solis inverters should be supported, although the integration has been tested with the following models:
 
@@ -89,7 +101,7 @@ The integration also meets several non-functional requirements:
 * ✅ After changing an inverter setting, the integration reads back the updated value from the inverter to verify that the change was applied successfully.
 * 🏡 Follows Home Assistant best practices for integration development to ensure a seamless and reliable user experience.
 
-## Local Development
+## Local development
 
 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) tool.
 2. Install project dependencies using `uv sync` command.

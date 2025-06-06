@@ -82,6 +82,7 @@ def any_inverter_info():
         energy_storage_control="any_energy_storage_control",
         smart_support="any_smart_support",
         generator_support="any_generator_support",
+        collector_model="any_collector_model",
         power="any_power",
         power_unit="any_power_unit",
     )

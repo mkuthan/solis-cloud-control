@@ -20,6 +20,7 @@ async def test_create_inverter_info(mock_api_client):
         "energyStorageControl": "any energy storage control",
         "smartSupport": "any smart support",
         "generatorSupport": "any generator support",
+        "collectorModel": "any collector model",
         "power": 10,
         "powerStr": "kW",
     }
@@ -34,6 +35,7 @@ async def test_create_inverter_info(mock_api_client):
     assert result.energy_storage_control == "any energy storage control"
     assert result.smart_support == "any smart support"
     assert result.generator_support == "any generator support"
+    assert result.collector_model == "any collector model"
     assert result.power == "10"
     assert result.power_unit == "kW"
 
@@ -52,6 +54,7 @@ async def test_create_inverter_info_missing_fields(mock_api_client):
     assert result.energy_storage_control is None
     assert result.smart_support is None
     assert result.generator_support is None
+    assert result.collector_model is None
     assert result.power is None
     assert result.power_unit is None
 

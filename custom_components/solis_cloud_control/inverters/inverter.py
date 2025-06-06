@@ -12,6 +12,7 @@ class InverterInfo:
     energy_storage_control: str | None
     smart_support: str | None
     generator_support: str | None
+    collector_model: str | None
     power: str | None
     power_unit: str | None
 
