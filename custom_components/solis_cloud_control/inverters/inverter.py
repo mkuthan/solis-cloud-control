@@ -32,6 +32,9 @@ class InverterOnOff:
     on_value: str = "190"
     off_value: str = "222"
 
+    def is_valid_value(self, value: str | None) -> bool:
+        return value in (self.on_value, self.off_value)
+
 
 @dataclass(frozen=True)
 class InverterStorageMode:

@@ -2,6 +2,8 @@ from dataclasses import replace
 
 import pytest
 
+from custom_components.solis_cloud_control.inverters.inverter import InverterOnOff
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
@@ -36,3 +38,19 @@ async def test_inverter_info_power_watts(mock_api_client, any_inverter_info, pow
 def test_inverter_info_is_string_inverter(any_inverter_info, energy_storage_control, expected):
     inverter = replace(any_inverter_info, energy_storage_control=energy_storage_control)
     assert inverter.is_string_inverter == expected
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("190", True),
+        ("222", True),
+        ("0", False),
+        ("", False),
+        ("invalid", False),
+        (None, False),
+    ],
+)
+def test_inverter_on_off_is_valid_value(value, expected):
+    inverter_on_off = InverterOnOff()
+    assert inverter_on_off.is_valid_value(value) == expected
