@@ -23,23 +23,77 @@ def on_off_switch(mock_coordinator, any_inverter):
 
 
 class TestOnOffSwitch:
-    def test_init(self, on_off_switch):
+    def test_is_on_when_valid_on_values(self, on_off_switch):
+        on_off_switch.coordinator.data = {
+            on_off_switch.on_off.on_cid: "190",
+            on_off_switch.on_off.off_cid: "190",
+        }
         assert on_off_switch.is_on is True
+        assert on_off_switch.assumed_state is False
+
+    def test_is_on_when_valid_off_values(self, on_off_switch):
+        on_off_switch.coordinator.data = {
+            on_off_switch.on_off.on_cid: "222",
+            on_off_switch.on_off.off_cid: "222",
+        }
+        assert on_off_switch.is_on is False
+        assert on_off_switch.assumed_state is False
+
+    def test_is_on_when_mixed_valid_values(self, on_off_switch):
+        on_off_switch.coordinator.data = {
+            on_off_switch.on_off.on_cid: "190",
+            on_off_switch.on_off.off_cid: "222",
+        }
+        assert on_off_switch.is_on is None
         assert on_off_switch.assumed_state is True
 
-    async def test_turn_on(self, on_off_switch):
+    def test_is_on_when_invalid_values(self, on_off_switch):
+        on_off_switch.coordinator.data = {
+            on_off_switch.on_off.on_cid: "0",
+            on_off_switch.on_off.off_cid: "0",
+        }
+        assert on_off_switch.is_on is None
+        assert on_off_switch.assumed_state is True
+
+    async def test_turn_on_with_assumed_state(self, on_off_switch):
+        on_off_switch.coordinator.data = {
+            on_off_switch.on_off.on_cid: "0",
+            on_off_switch.on_off.off_cid: "0",
+        }
         await on_off_switch.async_turn_on()
         on_off_switch.coordinator.control_no_check.assert_awaited_once_with(
             on_off_switch.on_off.on_cid, on_off_switch.on_off.on_value
         )
-        assert on_off_switch.is_on is True
 
-    async def test_turn_off(self, on_off_switch):
+    async def test_turn_on_with_valid_state(self, on_off_switch):
+        on_off_switch.coordinator.data = {
+            on_off_switch.on_off.on_cid: "222",
+            on_off_switch.on_off.off_cid: "222",
+        }
+        await on_off_switch.async_turn_on()
+        on_off_switch.coordinator.control.assert_awaited_once_with(
+            on_off_switch.on_off.on_cid, on_off_switch.on_off.on_value
+        )
+
+    async def test_turn_off_with_assumed_state(self, on_off_switch):
+        on_off_switch.coordinator.data = {
+            on_off_switch.on_off.on_cid: "0",
+            on_off_switch.on_off.off_cid: "0",
+        }
         await on_off_switch.async_turn_off()
         on_off_switch.coordinator.control_no_check.assert_awaited_once_with(
             on_off_switch.on_off.off_cid, on_off_switch.on_off.off_value
         )
-        assert on_off_switch.is_on is False
+
+    async def test_turn_off_with_valid_state(self, on_off_switch):
+        on_off_switch.coordinator.data = {
+            on_off_switch.on_off.on_cid: "190",
+            on_off_switch.on_off.off_cid: "190",
+        }
+        await on_off_switch.async_turn_off()
+        on_off_switch.coordinator.control.assert_awaited_once_with(
+            on_off_switch.on_off.off_cid, on_off_switch.on_off.off_value
+        )
 
 
 @pytest.fixture

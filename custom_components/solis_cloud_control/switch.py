@@ -107,18 +107,43 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
     ) -> None:
         super().__init__(coordinator, entity_description, [on_off.on_cid, on_off.off_cid])
         self.on_off = on_off
-        self._attr_is_on = True
-        self._attr_assumed_state = True
+
+    @property
+    def assumed_state(self) -> bool:
+        on_value = self.coordinator.data.get(self.on_off.on_cid)
+        off_value = self.coordinator.data.get(self.on_off.off_cid)
+
+        same_values = on_value == off_value
+        valid_values = self.on_off.is_valid_value(on_value) and self.on_off.is_valid_value(off_value)
+
+        return not (same_values and valid_values)
+
+    @property
+    def is_on(self) -> bool | None:
+        on_value = self.coordinator.data.get(self.on_off.on_cid)
+        off_value = self.coordinator.data.get(self.on_off.off_cid)
+
+        same_values = on_value == off_value
+        valid_values = self.on_off.is_valid_value(on_value) and self.on_off.is_valid_value(off_value)
+
+        if same_values and valid_values:
+            return on_value == self.on_off.on_value
+
+        return None
 
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
         _LOGGER.info("Turning on inverter")
-        await self.coordinator.control_no_check(self.on_off.on_cid, self.on_off.on_value)
-        self._attr_is_on = True
+        if self.assumed_state:
+            await self.coordinator.control_no_check(self.on_off.on_cid, self.on_off.on_value)
+        else:
+            await self.coordinator.control(self.on_off.on_cid, self.on_off.on_value)
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
         _LOGGER.info("Turning off inverter")
-        await self.coordinator.control_no_check(self.on_off.off_cid, self.on_off.off_value)
-        self._attr_is_on = False
+        if self.assumed_state:
+            await self.coordinator.control_no_check(self.on_off.off_cid, self.on_off.off_value)
+        else:
+            await self.coordinator.control(self.on_off.off_cid, self.on_off.off_value)
 
 
 class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
