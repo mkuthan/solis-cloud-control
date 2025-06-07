@@ -36,5 +36,3 @@ Please provide any other relevant information that might help us add support for
 - What specific features or sensors are you hoping to see?
 - Screenshots of the inverter's web interface or app with settings you would like to control
 - Logs or error messages from the integration that you have encountered
-
-We appreciate you taking the time to provide this information. Adding support for new hardware can be complex, and your detailed input is crucial for success!
