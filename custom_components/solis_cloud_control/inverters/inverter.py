@@ -267,6 +267,8 @@ class InverterMaxExportPower:
 @dataclass(frozen=True)
 class InverterPowerLimit:
     cid: int = 15
+    min_value: float = 0
+    max_value: float = 110
 
 
 @dataclass(frozen=True)

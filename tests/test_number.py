@@ -282,8 +282,8 @@ def power_limit_entity(mock_coordinator, any_inverter):
 
 class TestPowerLimit:
     def test_attributes(self, power_limit_entity):
-        assert power_limit_entity.native_min_value == 0
-        assert power_limit_entity.native_max_value == 100
+        assert power_limit_entity.native_min_value == power_limit_entity.power_limit.min_value
+        assert power_limit_entity.native_max_value == power_limit_entity.power_limit.max_value
         assert power_limit_entity.native_step == 1
         assert power_limit_entity.native_unit_of_measurement == PERCENTAGE
 
