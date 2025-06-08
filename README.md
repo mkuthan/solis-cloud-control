@@ -40,12 +40,12 @@ After successful configuration, the integration creates a new entity for your in
 
 ## Supported data loggers
 
-| Data logger Model | Supported |
-| ----------------- | :-------: |
-| S2-WL-ST          |     ✅     |
-| DLS-W             |     ❌     |
-| DLS-L             |     ❓     |
-| S3-WiFi-ST        |     ❓     |
+| Data logger model | Model Id | Supported |
+| ----------------- | -------- | :-------: |
+| S2-WL-ST          | WL       |     ✅     |
+| S3-WiFi-ST        | WIFI     |     ✅     |
+| DLS-W             | ❓        |     ❌     |
+| DLS-L             | ❓        |     ❓     |
 
 > [!NOTE]
 > Please let me know if you have a different data logger model and it works with this integration.
@@ -54,7 +54,7 @@ After successful configuration, the integration creates a new entity for your in
 
 All Solis inverters should be supported, although the integration has been tested with the following models:
 
-| Model Name               | Model Id  | Type   |
+| Model name               | Model id  | Type   |
 | ------------------------ | --------- | ------ |
 | S6-EH3P(8-15)K02-NV-YD-L | 3331      | hybrid |
 | S6-EH3P(5-10)K-H         | 3306      | hybrid |
