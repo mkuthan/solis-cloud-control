@@ -82,6 +82,9 @@ class InverterChargeDischargeSlot:
 @dataclass(frozen=True)
 class InverterChargeDischargeSlots:
     SLOTS_COUNT: int = 6
+    TOU_V2: str = "43605"  # 0xAA55
+
+    tou_v2_cid: int = 6798
 
     charge_slot1: InverterChargeDischargeSlot = field(
         default_factory=lambda: InverterChargeDischargeSlot(
@@ -200,6 +203,8 @@ class InverterChargeDischargeSlots:
     @property
     def all_cids(self) -> list[int]:
         cids = []
+        cids.append(self.tou_v2_cid)
+
         for slot in [
             self.charge_slot1,
             self.charge_slot2,
@@ -248,6 +253,9 @@ class InverterChargeDischargeSlots:
             return self.discharge_slot6
         else:
             return None
+
+    def is_tou_v2_enabled(self, value: str | None) -> bool:
+        return value == self.TOU_V2
 
 
 @dataclass(frozen=True)

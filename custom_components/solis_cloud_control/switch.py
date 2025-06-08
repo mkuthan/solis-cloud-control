@@ -45,31 +45,36 @@ async def async_setup_entry(
     slots = inverter.charge_discharge_slots
 
     if slots is not None:
-        for i in range(1, slots.SLOTS_COUNT + 1):
-            entities.append(
-                SlotSwitch(
-                    coordinator=coordinator,
-                    entity_description=SwitchEntityDescription(
-                        key=f"slot{i}_charge_switch",
-                        name=f"Slot{i} Charge",
-                        icon="mdi:battery-plus-outline",
-                    ),
-                    charge_discharge_slot=slots.get_charge_slot(i),
-                    charge_discharge_slots=slots,
+        tou_v2 = coordinator.data.get(slots.tou_v2_cid)
+
+        if not slots.is_tou_v2_enabled(tou_v2):
+            _LOGGER.info("Charge Discharge Slots not available, skip on/off entities creation")
+        else:
+            for i in range(1, slots.SLOTS_COUNT + 1):
+                entities.append(
+                    SlotSwitch(
+                        coordinator=coordinator,
+                        entity_description=SwitchEntityDescription(
+                            key=f"slot{i}_charge_switch",
+                            name=f"Slot{i} Charge",
+                            icon="mdi:battery-plus-outline",
+                        ),
+                        charge_discharge_slot=slots.get_charge_slot(i),
+                        charge_discharge_slots=slots,
+                    )
                 )
-            )
-            entities.append(
-                SlotSwitch(
-                    coordinator=coordinator,
-                    entity_description=SwitchEntityDescription(
-                        key=f"slot{i}_discharge_switch",
-                        name=f"Slot{i} Discharge",
-                        icon="mdi:battery-minus-outline",
-                    ),
-                    charge_discharge_slot=slots.get_discharge_slot(i),
-                    charge_discharge_slots=slots,
+                entities.append(
+                    SlotSwitch(
+                        coordinator=coordinator,
+                        entity_description=SwitchEntityDescription(
+                            key=f"slot{i}_discharge_switch",
+                            name=f"Slot{i} Discharge",
+                            icon="mdi:battery-minus-outline",
+                        ),
+                        charge_discharge_slot=slots.get_discharge_slot(i),
+                        charge_discharge_slots=slots,
+                    )
                 )
-            )
 
     if inverter.storage_mode is not None:
         entities.append(
