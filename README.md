@@ -90,7 +90,7 @@ It also provides battery related sensors:
 ![Inverter Sensors](inverter_sensors.png)
 
 > [!NOTE]
-> If the inverter doesn't support a specific feature, the integration disables the corresponding controls in the UI.
+> If the inverter doesn't support a specific feature, the integration don't create the corresponding control or sensor entities.
 
 ## Non-functional features
 
@@ -100,6 +100,19 @@ The integration also meets several non-functional requirements:
 * 🔄 Retry logic for API requests to mitigate API stability issues.
 * ✅ After changing an inverter setting, the integration reads back the updated value from the inverter to verify that the change was applied successfully.
 * 🏡 Follows Home Assistant best practices for integration development to ensure a seamless and reliable user experience.
+
+## FAQ
+
+### Why are discharge and charge slots not available in the UI?
+
+The integration supports only the new charge/discharge slots feature, which provides six configurable charge/discharge slots with adjustable charging/discharging current and battery SOC settings for each slot.
+If these options are missing in your UI, your inverter may not have this feature enabled.
+To enable it, contact Solis support and request activation of the new charge and discharge slots feature for your inverter.
+
+### What if the integration reports "B0115" error during initialization?
+
+Most likely, your data logger is not supported by the integration, for example the "DLS-W" model.
+Replace your data logger with a supported model, such as "S2-WL-ST" or "S3-WiFi-ST", to use the integration.
 
 ## Local development
 
@@ -135,5 +148,5 @@ To release a new alpha version, create a new tag with the `alpha`, `beta` or `rc
 
 ```bash
 git tag v1.0.1-alpha.1
-git push origin v1.0.1-alpha
+git push origin v1.0.1-alpha.1
 ```
