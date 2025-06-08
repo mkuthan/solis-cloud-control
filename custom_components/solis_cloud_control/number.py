@@ -288,8 +288,8 @@ class PowerLimit(SolisCloudControlEntity, NumberEntity):
         super().__init__(coordinator, entity_description, power_limit.cid)
         self.power_limit = power_limit
 
-        self._attr_native_min_value = 0
-        self._attr_native_max_value = 100
+        self._attr_native_min_value = power_limit.min_value
+        self._attr_native_max_value = power_limit.max_value
         self._attr_native_step = 1
         self._attr_native_unit_of_measurement = PERCENTAGE
 

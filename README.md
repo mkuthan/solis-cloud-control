@@ -41,11 +41,11 @@ After successful configuration, the integration creates a new entity for your in
 ## Supported data loggers
 
 | Data logger Model | Supported |
-| ---------------- | :-------: |
-| S2-WL-ST         |     ✅     |
-| DLS-W            |     ❌     |
-| DLS-L            |     ❓     |
-| S3-WiFi-ST       |     ❓     |
+| ----------------- | :-------: |
+| S2-WL-ST          |     ✅     |
+| DLS-W             |     ❌     |
+| DLS-L             |     ❓     |
+| S3-WiFi-ST        |     ❓     |
 
 > [!NOTE]
 > Please let me know if you have a different data logger model and it works with this integration.
@@ -54,14 +54,14 @@ After successful configuration, the integration creates a new entity for your in
 
 All Solis inverters should be supported, although the integration has been tested with the following models:
 
-| Model Name               | Model Id | Type   |
-| ------------------------ | -------- | ------ |
-| S6-EH3P(8-15)K02-NV-YD-L | 3331     | hybrid |
-| S6-EH3P(5-10)K-H         | 3306     | hybrid |
-| S5-EH1P(3-6)K-L          | 3102     | hybrid |
-| RHI-3P(3-10)K-HVES-5G    | CA       | hybrid |
-| S6-GR1P(2.5-6)K          | 0200     | string |
-| S5-GR3P(3-20)K           | 0507     | string |
+| Model Name               | Model Id  | Type   |
+| ------------------------ | --------- | ------ |
+| S6-EH3P(8-15)K02-NV-YD-L | 3331      | hybrid |
+| S6-EH3P(5-10)K-H         | 3306      | hybrid |
+| S5-EH1P(3-6)K-L          | 3102      | hybrid |
+| RHI-3P(3-10)K-HVES-5G    | CA        | hybrid |
+| S6-GR1P(2.5-6)K          | 0200,0205 | string |
+| S5-GR3P(3-20)K           | 0507      | string |
 
 > [!NOTE]
 > If your inverter is not listed above, please open a GitHub issue using the "New Solis Inverter Support Request" template.

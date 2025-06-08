@@ -6,6 +6,16 @@ from custom_components.solis_cloud_control.inverters.inverter import Inverter, I
 
 _LOGGER = logging.getLogger(__name__)
 
+_INVERTER_REGISTRY = {
+    "0200": "s6_gr1p_2_5_6_k",
+    "0205": "s6_gr1p_2_5_6_k",
+    "0507": "s5_gr3p_3_20_k",
+    "3102": "s5_eh1p_3_6_k_l",
+    "3306": "s6_eh3p_5_10_k_h",
+    "3331": "s6_eh3p_8_15_k02_nv_yd_l",
+    "ca": "rhi_3p_3_10_k_hves_5g",
+}
+
 
 async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_sn: str) -> InverterInfo:
     inverter_details = await api_client.inverter_details(inverter_sn)
@@ -25,13 +35,15 @@ async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_
 
 
 async def create_inverter(api_client: SolisCloudControlApiClient, inverter_info: InverterInfo) -> Inverter:
-    try:
-        inverter_model = inverter_info.model.lower()
+    inverter_model_id = inverter_info.model.lower()
+    inverter_model = _INVERTER_REGISTRY.get(inverter_model_id)
+
+    if inverter_model is not None:
+        _LOGGER.info("Supported inverter model '%s' found", inverter_model.upper())
         module_name = f"custom_components.solis_cloud_control.inverters.model_{inverter_model}"
         model_module = importlib.import_module(module_name)
-        _LOGGER.info("Supported inverter model '%s' found", inverter_info.model)
         return await model_module.create_inverter(inverter_info, api_client)
-    except ImportError:
+    else:
         if inverter_info.is_string_inverter:
             _LOGGER.warning("Unknown inverter model '%s', fallback to generic string inverter", inverter_info.model)
             return Inverter.create_string_inverter(inverter_info)

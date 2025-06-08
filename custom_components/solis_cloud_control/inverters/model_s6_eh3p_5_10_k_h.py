@@ -4,7 +4,6 @@ from custom_components.solis_cloud_control.api.solis_api import SolisCloudContro
 from custom_components.solis_cloud_control.inverters.inverter import Inverter, InverterInfo, InverterMaxExportPower
 
 
-# S6-EH3P(5-10)K-H
 async def create_inverter(
     inverter_info: InverterInfo,
     api_client: SolisCloudControlApiClient,  # noqa: ARG001
