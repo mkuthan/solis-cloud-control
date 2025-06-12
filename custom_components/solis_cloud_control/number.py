@@ -37,58 +37,53 @@ async def async_setup_entry(
     slots = inverter.charge_discharge_slots
 
     if slots is not None:
-        tou_v2 = coordinator.data.get(slots.tou_v2_cid)
-
-        if not slots.is_tou_v2_enabled(tou_v2):
-            _LOGGER.info("Charge Discharge Slots not available, skip battery current and SOC entities creation")
-        else:
-            for i in range(1, slots.SLOTS_COUNT + 1):
-                entities.extend(
-                    [
-                        BatteryCurrent(
-                            coordinator=coordinator,
-                            entity_description=NumberEntityDescription(
-                                key=f"slot{i}_charge_current",
-                                name=f"Slot{i} Charge Current",
-                                icon="mdi:battery-plus-outline",
-                            ),
-                            charge_discharge_slot=slots.get_charge_slot(i),
-                            battery_max_charge_discharge_current=inverter.battery_max_charge_current,
+        for i in range(1, slots.SLOTS_COUNT + 1):
+            entities.extend(
+                [
+                    BatteryCurrent(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_charge_current",
+                            name=f"Slot{i} Charge Current",
+                            icon="mdi:battery-plus-outline",
                         ),
-                        BatteryCurrent(
-                            coordinator=coordinator,
-                            entity_description=NumberEntityDescription(
-                                key=f"slot{i}_discharge_current",
-                                name=f"Slot{i} Discharge Current",
-                                icon="mdi:battery-minus-outline",
-                            ),
-                            charge_discharge_slot=slots.get_discharge_slot(i),
-                            battery_max_charge_discharge_current=inverter.battery_max_discharge_current,
+                        charge_discharge_slot=slots.get_charge_slot(i),
+                        battery_max_charge_discharge_current=inverter.battery_max_charge_current,
+                    ),
+                    BatteryCurrent(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_discharge_current",
+                            name=f"Slot{i} Discharge Current",
+                            icon="mdi:battery-minus-outline",
                         ),
-                        BatterySoc(
-                            coordinator=coordinator,
-                            entity_description=NumberEntityDescription(
-                                key=f"slot{i}_charge_soc",
-                                name=f"Slot{i} Charge SOC",
-                                icon="mdi:battery-plus-outline",
-                            ),
-                            charge_discharge_slot=slots.get_charge_slot(i),
-                            battery_over_discharge_soc=inverter.battery_over_discharge_soc,
-                            battery_max_charge_soc=inverter.battery_max_charge_soc,
+                        charge_discharge_slot=slots.get_discharge_slot(i),
+                        battery_max_charge_discharge_current=inverter.battery_max_discharge_current,
+                    ),
+                    BatterySoc(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_charge_soc",
+                            name=f"Slot{i} Charge SOC",
+                            icon="mdi:battery-plus-outline",
                         ),
-                        BatterySoc(
-                            coordinator=coordinator,
-                            entity_description=NumberEntityDescription(
-                                key=f"slot{i}_discharge_soc",
-                                name=f"Slot{i} Discharge SOC",
-                                icon="mdi:battery-minus-outline",
-                            ),
-                            charge_discharge_slot=slots.get_discharge_slot(i),
-                            battery_over_discharge_soc=inverter.battery_over_discharge_soc,
-                            battery_max_charge_soc=inverter.battery_max_charge_soc,
+                        charge_discharge_slot=slots.get_charge_slot(i),
+                        battery_over_discharge_soc=inverter.battery_over_discharge_soc,
+                        battery_max_charge_soc=inverter.battery_max_charge_soc,
+                    ),
+                    BatterySoc(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_discharge_soc",
+                            name=f"Slot{i} Discharge SOC",
+                            icon="mdi:battery-minus-outline",
                         ),
-                    ]
-                )
+                        charge_discharge_slot=slots.get_discharge_slot(i),
+                        battery_over_discharge_soc=inverter.battery_over_discharge_soc,
+                        battery_max_charge_soc=inverter.battery_max_charge_soc,
+                    ),
+                ]
+            )
 
     if inverter.max_output_power is not None:
         entities.append(

@@ -10,19 +10,13 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.solis_cloud_control import async_migrate_entry
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
-from custom_components.solis_cloud_control.inverters.inverter import (
-    Inverter,
-    InverterChargeDischargeSettings,
-    InverterChargeDischargeSlots,
-)
+from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter):
-    all_cids = dict.fromkeys(any_inverter.all_cids, None)
-    all_cids[InverterChargeDischargeSettings.cid] = "any value"
-    all_cids[InverterChargeDischargeSlots.tou_v2_cid] = InverterChargeDischargeSlots.TOU_V2
+    read_batch_cids = dict.fromkeys(any_inverter.all_cids, None)
 
-    mock_api_client.read_batch.return_value = all_cids
+    mock_api_client.read_batch.return_value = read_batch_cids
 
     with (
         patch(
@@ -76,8 +70,6 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
 
 async def test_async_setup_entry_undefined_inverter(hass, mock_api_client, mock_config_entry, any_inverter_info):
     undefined_inverter = Inverter(info=any_inverter_info)
-
-    mock_api_client.read_batch.return_value = dict.fromkeys(undefined_inverter.all_cids, None)
 
     with (
         patch(

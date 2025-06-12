@@ -1,5 +1,6 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
 from custom_components.solis_cloud_control.utils.safe_converters import safe_convert_power_to_watts
 
 
@@ -82,9 +83,6 @@ class InverterChargeDischargeSlot:
 @dataclass(frozen=True)
 class InverterChargeDischargeSlots:
     SLOTS_COUNT: int = 6
-    TOU_V2: str = "43605"  # 0xAA55
-
-    tou_v2_cid: int = 6798
 
     charge_slot1: InverterChargeDischargeSlot = field(
         default_factory=lambda: InverterChargeDischargeSlot(
@@ -203,7 +201,6 @@ class InverterChargeDischargeSlots:
     @property
     def all_cids(self) -> list[int]:
         cids = []
-        cids.append(self.tou_v2_cid)
 
         for slot in [
             self.charge_slot1,
@@ -253,9 +250,6 @@ class InverterChargeDischargeSlots:
             return self.discharge_slot6
         else:
             return None
-
-    def is_tou_v2_enabled(self, value: str | None) -> bool:
-        return value == self.TOU_V2
 
 
 @dataclass(frozen=True)
@@ -333,8 +327,9 @@ class Inverter:
     battery_max_discharge_current: InverterBatteryMaxDischargeCurrent | None = None
 
     @staticmethod
-    def create_string_inverter(
+    async def create_string_inverter(
         inverter_info: InverterInfo,
+        api_client: SolisCloudControlApiClient,  # noqa: ARG004
     ) -> "Inverter":
         return Inverter(
             info=inverter_info,
@@ -343,15 +338,14 @@ class Inverter:
         )
 
     @staticmethod
-    def create_hybrid_inverter(
+    async def create_hybrid_inverter(
         inverter_info: InverterInfo,
+        api_client: SolisCloudControlApiClient,
     ) -> "Inverter":
-        return Inverter(
+        inverter = Inverter(
             info=inverter_info,
             on_off=InverterOnOff(on_cid=52, off_cid=54),
             storage_mode=InverterStorageMode(),
-            charge_discharge_settings=InverterChargeDischargeSettings(),
-            charge_discharge_slots=InverterChargeDischargeSlots(),
             max_output_power=InverterMaxOutputPower(),
             max_export_power=InverterMaxExportPower(),
             battery_reserve_soc=InverterBatteryReserveSOC(),
@@ -363,8 +357,17 @@ class Inverter:
             battery_max_discharge_current=InverterBatteryMaxDischargeCurrent(),
         )
 
+        tou_v2_mode = await api_client.read(inverter_info.serial_number, 6798)
+
+        if tou_v2_mode is not None and tou_v2_mode == "43605":  # 0xAA55
+            inverter = replace(inverter, charge_discharge_slots=InverterChargeDischargeSlots())
+        else:
+            inverter = replace(inverter, charge_discharge_settings=InverterChargeDischargeSettings())
+
+        return inverter
+
     @property
-    def all_cids(self) -> list[int]:
+    def read_batch_cids(self) -> list[int]:
         cids: list[int] = []
 
         if self.on_off:
@@ -372,8 +375,6 @@ class Inverter:
             cids.append(self.on_off.off_cid)
         if self.storage_mode:
             cids.append(self.storage_mode.cid)
-        if self.charge_discharge_settings:
-            cids.append(self.charge_discharge_settings.cid)
         if self.charge_discharge_slots:
             cids.extend(self.charge_discharge_slots.all_cids)
         if self.max_output_power:
@@ -398,3 +399,16 @@ class Inverter:
             cids.append(self.battery_max_discharge_current.cid)
 
         return cids
+
+    @property
+    def read_cids(self) -> list[int]:
+        cids = []
+
+        if self.charge_discharge_settings:
+            cids.append(self.charge_discharge_settings.cid)
+
+        return cids
+
+    @property
+    def all_cids(self) -> list[int]:
+        return [*self.read_batch_cids, *self.read_cids]

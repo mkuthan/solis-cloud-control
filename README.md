@@ -58,7 +58,7 @@ All Solis inverters should be supported, although the integration has been teste
 | ------------------------ | --------- | ------ |
 | S6-EH3P(8-15)K02-NV-YD-L | 3331      | hybrid |
 | S6-EH3P(5-10)K-H         | 3306      | hybrid |
-| S5-EH1P(3-6)K-L          | 3102      | hybrid |
+| S5-EH1P(3-6)K-L          | 3101,3102 | hybrid |
 | RHI-3P(3-10)K-HVES-5G    | CA        | hybrid |
 | S6-GR1P(2.5-6)K          | 0200,0205 | string |
 | S5-GR3P(3-20)K           | 0507      | string |
@@ -102,12 +102,6 @@ The integration also meets several non-functional requirements:
 * 🏡 Follows Home Assistant best practices for integration development to ensure a seamless and reliable user experience.
 
 ## FAQ
-
-### Why are discharge and charge slots not available in the UI?
-
-The integration supports only the new charge/discharge slots feature, which provides six configurable charge/discharge slots with adjustable charging/discharging current and battery SOC settings for each slot.
-If these options are missing in your UI, your inverter may not have this feature enabled.
-To enable it, contact Solis support and request activation of the new charge and discharge slots feature for your inverter.
 
 ### What if the integration reports "B0115" error during initialization?
 

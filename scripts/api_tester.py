@@ -10,7 +10,7 @@ from custom_components.solis_cloud_control.const import API_BASE_URL
 
 
 async def read_batch(client: SolisCloudControlApiClient, inverter_sn: str) -> None:
-    cids_to_read = [56, 636]
+    cids_to_read = [636, 103]
 
     result = await client.read_batch(inverter_sn, cids_to_read)
     sorted_items = sorted(result.items(), key=lambda item: int(str(item[0])))
@@ -18,11 +18,18 @@ async def read_batch(client: SolisCloudControlApiClient, inverter_sn: str) -> No
     print(json.dumps(sorted_result_for_json, indent=2))
 
 
+async def read(client: SolisCloudControlApiClient, inverter_sn: str) -> None:
+    cids_to_read = 103
+
+    result = await client.read(inverter_sn, cids_to_read)
+    print(json.dumps(result, indent=2))
+
+
 #
 # uv run -m scripts.api_tester
 #
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
 
     api_key = os.environ.get("SOLIS_API_KEY", "your_api_key")
     api_secret = os.environ.get("SOLIS_API_SECRET", "your_api_secret")
@@ -36,6 +43,7 @@ if __name__ == "__main__":
                 api_token=api_secret,
                 session=session,
             )
-            await read_batch(client, inverter_sn)
+            # await read_batch(client, inverter_sn)
+            await read(client, inverter_sn)
 
     asyncio.run(_run_script())

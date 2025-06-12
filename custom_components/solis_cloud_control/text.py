@@ -29,52 +29,44 @@ async def async_setup_entry(
     entities = []
 
     if inverter.charge_discharge_settings is not None:
-        if coordinator.data.get(inverter.charge_discharge_settings.cid) is None:
-            _LOGGER.info("Charge Discharge Settings not available, skip entity creation")
-        else:
-            entities.append(
-                ChargeDischargeSettingsText(
-                    coordinator=coordinator,
-                    entity_description=TextEntityDescription(
-                        key="charge_discharge_settings",
-                        name="Charge Discharge Settings",
-                        icon="mdi:timer-outline",
-                    ),
-                    charge_discharge_settings=inverter.charge_discharge_settings,
-                )
+        entities.append(
+            ChargeDischargeSettingsText(
+                coordinator=coordinator,
+                entity_description=TextEntityDescription(
+                    key="charge_discharge_settings",
+                    name="Charge Discharge Settings",
+                    icon="mdi:timer-outline",
+                ),
+                charge_discharge_settings=inverter.charge_discharge_settings,
             )
+        )
 
     slots = inverter.charge_discharge_slots
 
     if slots is not None:
-        tou_v2 = coordinator.data.get(slots.tou_v2_cid)
-
-        if not slots.is_tou_v2_enabled(tou_v2):
-            _LOGGER.info("Charge Discharge Slots not available, skip time entities creation")
-        else:
-            for i in range(1, slots.SLOTS_COUNT + 1):
-                entities.append(
-                    TimeSlotText(
-                        coordinator=coordinator,
-                        entity_description=TextEntityDescription(
-                            key=f"slot{i}_charge_time",
-                            name=f"Slot{i} Charge Time",
-                            icon="mdi:timer-plus-outline",
-                        ),
-                        charge_discharge_slot=slots.get_charge_slot(i),
-                    )
+        for i in range(1, slots.SLOTS_COUNT + 1):
+            entities.append(
+                TimeSlotText(
+                    coordinator=coordinator,
+                    entity_description=TextEntityDescription(
+                        key=f"slot{i}_charge_time",
+                        name=f"Slot{i} Charge Time",
+                        icon="mdi:timer-plus-outline",
+                    ),
+                    charge_discharge_slot=slots.get_charge_slot(i),
                 )
-                entities.append(
-                    TimeSlotText(
-                        coordinator=coordinator,
-                        entity_description=TextEntityDescription(
-                            key=f"slot{i}_discharge_time",
-                            name=f"Slot{i} Discharge Time",
-                            icon="mdi:timer-minus-outline",
-                        ),
-                        charge_discharge_slot=slots.get_discharge_slot(i),
-                    )
+            )
+            entities.append(
+                TimeSlotText(
+                    coordinator=coordinator,
+                    entity_description=TextEntityDescription(
+                        key=f"slot{i}_discharge_time",
+                        name=f"Slot{i} Discharge Time",
+                        icon="mdi:timer-minus-outline",
+                    ),
+                    charge_discharge_slot=slots.get_discharge_slot(i),
                 )
+            )
 
     async_add_entities(entities)
 
