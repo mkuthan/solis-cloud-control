@@ -98,9 +98,16 @@ class ChargeDischargeSettingsText(SolisCloudControlEntity, TextEntity):
 
         values = value.split(",")
         if len(values) == 18:
+            # separate start/end times
             for i in range(1, self.charge_discharge_settings.SLOTS_COUNT + 1):
                 base_idx = (i - 1) * 6
-                slot_attributes = self._create_attributes_for_slot(values, base_idx, i)
+                slot_attributes = self._create_attributes_for_slot_variant1(values, base_idx, i)
+                attributes.update(slot_attributes)
+        elif len(values) == 12:
+            # time ranges
+            for i in range(1, self.charge_discharge_settings.SLOTS_COUNT + 1):
+                base_idx = (i - 1) * 4
+                slot_attributes = self._create_attributes_for_slot_variant2(values, base_idx, i)
                 attributes.update(slot_attributes)
 
         return attributes
@@ -112,7 +119,9 @@ class ChargeDischargeSettingsText(SolisCloudControlEntity, TextEntity):
         _LOGGER.info("Setting '%s' to %s", self.name, value)
         await self.coordinator.control(self.charge_discharge_settings.cid, value)
 
-    def _create_attributes_for_slot(self, values: list[str], base_idx: int, slot_number: int) -> dict[str, str]:
+    def _create_attributes_for_slot_variant1(
+        self, values: list[str], base_idx: int, slot_number: int
+    ) -> dict[str, str]:
         attributes = {}
 
         charge_current = values[base_idx]
@@ -131,11 +140,38 @@ class ChargeDischargeSettingsText(SolisCloudControlEntity, TextEntity):
 
         return attributes
 
+    def _create_attributes_for_slot_variant2(
+        self, values: list[str], base_idx: int, slot_number: int
+    ) -> dict[str, str]:
+        attributes = {}
+
+        charge_current = values[base_idx]
+        attributes[f"slot{slot_number}_charge_current"] = f"{charge_current}"
+
+        discharge_current = values[base_idx + 1]
+        attributes[f"slot{slot_number}_discharge_current"] = f"{discharge_current}"
+
+        charge_time = values[base_idx + 2]
+        attributes[f"slot{slot_number}_charge_time"] = charge_time
+
+        discharge_time = values[base_idx + 3]
+        attributes[f"slot{slot_number}_discharge_time"] = discharge_time
+
+        return attributes
+
     def _validate_settings(self, value: str) -> bool:
         values = value.split(",")
-        if len(values) != 18:
-            return False
 
+        if len(values) == 18:
+            # separate start/end times
+            return self._validate_variant1(values)
+        elif len(values) == 12:
+            # time ranges
+            return self._validate_variant2(values)
+
+        return False
+
+    def _validate_variant1(self, values: list[str]) -> bool:
         try:
             for i in range(0, len(values), 6):
                 int(values[i])  # charge_current
@@ -147,6 +183,26 @@ class ChargeDischargeSettingsText(SolisCloudControlEntity, TextEntity):
             return True
         except ValueError:
             return False
+
+    def _validate_variant2(self, values: list[str]) -> bool:
+        try:
+            for i in range(0, len(values), 4):
+                int(values[i])  # charge_current
+                int(values[i + 1])  # discharge_current
+                self._validate_time_range(values[i + 2])  # charge_time_range
+                self._validate_time_range(values[i + 3])  # discharge_time_range
+            return True
+        except ValueError:
+            return False
+
+    def _validate_time_range(self, time_range: str) -> bool:
+        if time_range.count("-") != 1:
+            return False
+
+        from_str, to_str = time_range.split("-")
+        datetime.strptime(from_str, "%H:%M")
+        datetime.strptime(to_str, "%H:%M")
+        return True
 
 
 class TimeSlotText(SolisCloudControlEntity, TextEntity):
