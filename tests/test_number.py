@@ -5,8 +5,8 @@ from homeassistant.components.number import NumberEntityDescription
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
 
 from custom_components.solis_cloud_control.number import (
-    BatteryCurrent,
-    BatterySoc,
+    BatteryCurrentV2,
+    BatterySocV2,
     MaxExportPower,
     MaxOutputPower,
     PowerLimit,
@@ -15,7 +15,7 @@ from custom_components.solis_cloud_control.number import (
 
 @pytest.fixture
 def battery_current_entity(mock_coordinator, any_inverter):
-    return BatteryCurrent(
+    return BatteryCurrentV2(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(
             key="any_key",
@@ -71,7 +71,7 @@ class TestBatteryCurrent:
 
 @pytest.fixture
 def battery_soc_entity(mock_coordinator, any_inverter):
-    return BatterySoc(
+    return BatterySocV2(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(
             key="any_key",

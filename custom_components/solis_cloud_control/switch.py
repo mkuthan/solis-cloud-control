@@ -47,7 +47,7 @@ async def async_setup_entry(
     if slots is not None:
         for i in range(1, slots.SLOTS_COUNT + 1):
             entities.append(
-                SlotSwitch(
+                SlotV2Switch(
                     coordinator=coordinator,
                     entity_description=SwitchEntityDescription(
                         key=f"slot{i}_charge_switch",
@@ -59,7 +59,7 @@ async def async_setup_entry(
                 )
             )
             entities.append(
-                SlotSwitch(
+                SlotV2Switch(
                     coordinator=coordinator,
                     entity_description=SwitchEntityDescription(
                         key=f"slot{i}_discharge_switch",
@@ -146,7 +146,7 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
             await self.coordinator.control(self.on_off.off_cid, self.on_off.off_value)
 
 
-class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
+class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):
     def __init__(
         self,
         coordinator: SolisCloudControlCoordinator,

@@ -40,7 +40,7 @@ async def async_setup_entry(
         for i in range(1, slots.SLOTS_COUNT + 1):
             entities.extend(
                 [
-                    BatteryCurrent(
+                    BatteryCurrentV2(
                         coordinator=coordinator,
                         entity_description=NumberEntityDescription(
                             key=f"slot{i}_charge_current",
@@ -50,7 +50,7 @@ async def async_setup_entry(
                         charge_discharge_slot=slots.get_charge_slot(i),
                         battery_max_charge_discharge_current=inverter.battery_max_charge_current,
                     ),
-                    BatteryCurrent(
+                    BatteryCurrentV2(
                         coordinator=coordinator,
                         entity_description=NumberEntityDescription(
                             key=f"slot{i}_discharge_current",
@@ -60,7 +60,7 @@ async def async_setup_entry(
                         charge_discharge_slot=slots.get_discharge_slot(i),
                         battery_max_charge_discharge_current=inverter.battery_max_discharge_current,
                     ),
-                    BatterySoc(
+                    BatterySocV2(
                         coordinator=coordinator,
                         entity_description=NumberEntityDescription(
                             key=f"slot{i}_charge_soc",
@@ -71,7 +71,7 @@ async def async_setup_entry(
                         battery_over_discharge_soc=inverter.battery_over_discharge_soc,
                         battery_max_charge_soc=inverter.battery_max_charge_soc,
                     ),
-                    BatterySoc(
+                    BatterySocV2(
                         coordinator=coordinator,
                         entity_description=NumberEntityDescription(
                             key=f"slot{i}_discharge_soc",
@@ -127,7 +127,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
+class BatteryCurrentV2(SolisCloudControlEntity, NumberEntity):
     def __init__(
         self,
         coordinator: SolisCloudControlCoordinator,
@@ -170,7 +170,7 @@ class BatteryCurrent(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.charge_discharge_slot.current_cid, value_str)
 
 
-class BatterySoc(SolisCloudControlEntity, NumberEntity):
+class BatterySocV2(SolisCloudControlEntity, NumberEntity):
     def __init__(
         self,
         coordinator: SolisCloudControlCoordinator,

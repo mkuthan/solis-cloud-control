@@ -5,7 +5,7 @@ from custom_components.solis_cloud_control.switch import (
     AllowGridChargingSwitch,
     BatteryReserveSwitch,
     OnOffSwitch,
-    SlotSwitch,
+    SlotV2Switch,
 )
 
 
@@ -98,7 +98,7 @@ class TestOnOffSwitch:
 
 @pytest.fixture
 def slot_switch(mock_coordinator, any_inverter):
-    return SlotSwitch(
+    return SlotV2Switch(
         coordinator=mock_coordinator,
         entity_description=SwitchEntityDescription(
             key="slot1_charge_switch",

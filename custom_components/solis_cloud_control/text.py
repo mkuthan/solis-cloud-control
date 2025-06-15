@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Literal
 
 from homeassistant.components.text import TextEntity, TextEntityDescription
 from homeassistant.core import HomeAssistant
@@ -7,10 +8,12 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+from custom_components.solis_cloud_control.domain.charge_discharge_settings import ChargeDischargeSettings
 from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSettings,
     InverterChargeDischargeSlot,
 )
+from custom_components.solis_cloud_control.utils.time_validator import validate_time_range
 
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
@@ -28,7 +31,10 @@ async def async_setup_entry(
 
     entities = []
 
-    if inverter.charge_discharge_settings is not None:
+    charge_discharge_settings = inverter.charge_discharge_settings
+
+    if charge_discharge_settings is not None:
+        # TODO: remove generic charge/discharge settings entity
         entities.append(
             ChargeDischargeSettingsText(
                 coordinator=coordinator,
@@ -37,16 +43,44 @@ async def async_setup_entry(
                     name="Charge Discharge Settings",
                     icon="mdi:timer-outline",
                 ),
-                charge_discharge_settings=inverter.charge_discharge_settings,
+                charge_discharge_settings=charge_discharge_settings,
             )
         )
+
+        for i in range(1, charge_discharge_settings.SLOTS_COUNT + 1):
+            entities.append(
+                TimeSlotV1Text(
+                    coordinator=coordinator,
+                    entity_description=TextEntityDescription(
+                        key=f"slot{i}_charge_time_v1",
+                        name=f"Slot{i} Charge Time",
+                        icon="mdi:timer-plus-outline",
+                    ),
+                    charge_discharge_settings=charge_discharge_settings,
+                    slot_number=i,
+                    slot_type="charge",
+                )
+            )
+            entities.append(
+                TimeSlotV1Text(
+                    coordinator=coordinator,
+                    entity_description=TextEntityDescription(
+                        key=f"slot{i}_discharge_time_v1",
+                        name=f"Slot{i} Discharge Time",
+                        icon="mdi:timer-minus-outline",
+                    ),
+                    charge_discharge_settings=charge_discharge_settings,
+                    slot_number=i,
+                    slot_type="discharge",
+                )
+            )
 
     slots = inverter.charge_discharge_slots
 
     if slots is not None:
         for i in range(1, slots.SLOTS_COUNT + 1):
             entities.append(
-                TimeSlotText(
+                TimeSlotV2Text(
                     coordinator=coordinator,
                     entity_description=TextEntityDescription(
                         key=f"slot{i}_charge_time",
@@ -57,7 +91,7 @@ async def async_setup_entry(
                 )
             )
             entities.append(
-                TimeSlotText(
+                TimeSlotV2Text(
                     coordinator=coordinator,
                     entity_description=TextEntityDescription(
                         key=f"slot{i}_discharge_time",
@@ -69,6 +103,105 @@ async def async_setup_entry(
             )
 
     async_add_entities(entities)
+
+
+class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
+    _TEXT_LENGTH = len("HH:MM-HH:MM")
+    _TEXT_PATTERN = r"^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$"
+
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: TextEntityDescription,
+        charge_discharge_settings: InverterChargeDischargeSettings,
+        slot_number: int,
+        slot_type: Literal["charge", "discharge"],
+    ) -> None:
+        super().__init__(coordinator, entity_description, charge_discharge_settings.cid)
+        self._attr_native_min = self._TEXT_LENGTH
+        self._attr_native_max = self._TEXT_LENGTH
+        self._attr_pattern = self._TEXT_PATTERN
+
+        self.charge_discharge_settings = charge_discharge_settings
+        self.slot_number = slot_number
+        self.slot_type = slot_type
+
+    @property
+    def native_value(self) -> str | None:
+        value = self.coordinator.data.get(self.charge_discharge_settings.cid)
+
+        settings = ChargeDischargeSettings.create(value)
+        if settings is None:
+            return None
+
+        if self.slot_type == "charge":
+            time_slot = settings.get_charge_time_slot(self.slot_number)
+        else:
+            time_slot = settings.get_discharge_time_slot(self.slot_number)
+
+        if not validate_time_range(time_slot):
+            _LOGGER.warning("Invalid '%s': %s", self.name, time_slot)
+            return None
+
+        return time_slot
+
+    async def async_set_value(self, value: str) -> None:
+        if not validate_time_range(value):
+            raise HomeAssistantError(f"Invalid '{self.name}': {value}")
+
+        settings_value = self.coordinator.data.get(self.charge_discharge_settings.cid)
+        settings = ChargeDischargeSettings.create(settings_value)
+
+        if settings is None:
+            return None
+
+        if self.slot_type == "charge":
+            settings.set_charge_time_slot(self.slot_number, value)
+        else:
+            settings.set_discharge_time_slot(self.slot_number, value)
+
+        new_settings_value = str(settings)
+
+        _LOGGER.info("Setting '%s' to %s", self.name, new_settings_value)
+        await self.coordinator.control(self.charge_discharge_settings.cid, new_settings_value)
+
+
+class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
+    _TEXT_LENGTH = len("HH:MM-HH:MM")
+    _TEXT_PATTERN = r"^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$"
+
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: TextEntityDescription,
+        charge_discharge_slot: InverterChargeDischargeSlot,
+    ) -> None:
+        super().__init__(coordinator, entity_description, charge_discharge_slot.time_cid)
+        self._attr_native_min = self._TEXT_LENGTH
+        self._attr_native_max = self._TEXT_LENGTH
+        self._attr_pattern = self._TEXT_PATTERN
+
+        self.charge_discharge_slot = charge_discharge_slot
+
+    @property
+    def native_value(self) -> str | None:
+        value = self.coordinator.data.get(self.charge_discharge_slot.time_cid)
+
+        if value is None:
+            return None
+
+        if not validate_time_range(value):
+            _LOGGER.warning("Invalid '%s': %s", self.name, value)
+            return None
+
+        return value
+
+    async def async_set_value(self, value: str) -> None:
+        if not validate_time_range(value):
+            raise HomeAssistantError(f"Invalid '{self.name}': {value}")
+
+        _LOGGER.info("Setting '%s' to %s", self.name, value)
+        await self.coordinator.control(self.charge_discharge_slot.time_cid, value)
 
 
 class ChargeDischargeSettingsText(SolisCloudControlEntity, TextEntity):
@@ -203,53 +336,3 @@ class ChargeDischargeSettingsText(SolisCloudControlEntity, TextEntity):
         datetime.strptime(from_str, "%H:%M")
         datetime.strptime(to_str, "%H:%M")
         return True
-
-
-class TimeSlotText(SolisCloudControlEntity, TextEntity):
-    _TEXT_LENGTH = len("HH:MM-HH:MM")
-    _TEXT_PATTERN = r"^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$"
-
-    def __init__(
-        self,
-        coordinator: SolisCloudControlCoordinator,
-        entity_description: TextEntityDescription,
-        charge_discharge_slot: InverterChargeDischargeSlot,
-    ) -> None:
-        super().__init__(coordinator, entity_description, charge_discharge_slot.time_cid)
-        self._attr_native_min = self._TEXT_LENGTH
-        self._attr_native_max = self._TEXT_LENGTH
-        self._attr_pattern = self._TEXT_PATTERN
-
-        self.charge_discharge_slot = charge_discharge_slot
-
-    @property
-    def native_value(self) -> str | None:
-        value = self.coordinator.data.get(self.charge_discharge_slot.time_cid)
-
-        if value is None:
-            return None
-
-        if not self._validate_time_range(value):
-            _LOGGER.warning("Invalid '%s': %s", self.name, value)
-            return None
-
-        return value
-
-    async def async_set_value(self, value: str) -> None:
-        if not self._validate_time_range(value):
-            raise HomeAssistantError(f"Invalid '{self.name}': {value}")
-
-        _LOGGER.info("Setting '%s' to %s", self.name, value)
-        await self.coordinator.control(self.charge_discharge_slot.time_cid, value)
-
-    def _validate_time_range(self, value: str) -> bool:
-        if len(value) != self._TEXT_LENGTH or value.count("-") != 1:
-            return False
-
-        try:
-            from_str, to_str = value.split("-")
-            from_time = datetime.strptime(from_str, "%H:%M")
-            to_time = datetime.strptime(to_str, "%H:%M")
-            return to_time >= from_time
-        except ValueError:
-            return False
