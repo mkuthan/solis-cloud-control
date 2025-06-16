@@ -256,7 +256,7 @@ def max_output_power_entity(mock_coordinator, any_inverter):
     return MaxOutputPower(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(key="any_key", name="any name"),
-        max_output_power=any_inverter.max_output_power,
+        inverter_max_output_power=any_inverter.max_output_power,
     )
 
 
@@ -278,7 +278,7 @@ class TestMaxOutputPower:
         ],
     )
     def test_native_value(self, max_output_power_entity, value, expected):
-        max_output_power_entity.coordinator.data = {max_output_power_entity.max_output_power.cid: value}
+        max_output_power_entity.coordinator.data = {max_output_power_entity.inverter_max_output_power.cid: value}
         assert max_output_power_entity.native_value == expected
 
     @pytest.mark.parametrize(
@@ -292,7 +292,7 @@ class TestMaxOutputPower:
     async def test_set_native_value(self, max_output_power_entity, value, expected_str):
         await max_output_power_entity.async_set_native_value(value)
         max_output_power_entity.coordinator.control.assert_awaited_once_with(
-            max_output_power_entity.max_output_power.cid, expected_str
+            max_output_power_entity.inverter_max_output_power.cid, expected_str
         )
 
 
@@ -301,7 +301,7 @@ def max_export_power_entity(mock_coordinator, any_inverter):
     return MaxExportPower(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(key="any_key", name="any name"),
-        max_export_power=any_inverter.max_export_power,
+        inverter_max_export_power=any_inverter.max_export_power,
     )
 
 
@@ -311,13 +311,13 @@ def max_export_power_entity_scaled_0_1(mock_coordinator, any_inverter):
     return MaxExportPower(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(key="any_key", name="any name"),
-        max_export_power=max_export_power,
+        inverter_max_export_power=max_export_power,
     )
 
 
 class TestMaxExportPower:
     def test_attributes(self, max_export_power_entity):
-        max_export_power = max_export_power_entity.max_export_power
+        max_export_power = max_export_power_entity.inverter_max_export_power
         assert max_export_power_entity.native_min_value == max_export_power.min_value
         assert max_export_power_entity.native_max_value == max_export_power.max_value
         assert max_export_power_entity.native_step == max_export_power.step
@@ -334,7 +334,7 @@ class TestMaxExportPower:
         ],
     )
     def test_native_value(self, max_export_power_entity, value, expected):
-        max_export_power_entity.coordinator.data = {max_export_power_entity.max_export_power.cid: value}
+        max_export_power_entity.coordinator.data = {max_export_power_entity.inverter_max_export_power.cid: value}
         assert max_export_power_entity.native_value == expected
 
     @pytest.mark.parametrize(
@@ -349,7 +349,7 @@ class TestMaxExportPower:
     )
     def test_native_value_scaled_0_1(self, max_export_power_entity_scaled_0_1, value, expected):
         max_export_power_entity_scaled_0_1.coordinator.data = {
-            max_export_power_entity_scaled_0_1.max_export_power.cid: value
+            max_export_power_entity_scaled_0_1.inverter_max_export_power.cid: value
         }
         assert max_export_power_entity_scaled_0_1.native_value == expected
 
@@ -364,7 +364,7 @@ class TestMaxExportPower:
     async def test_set_native_value(self, max_export_power_entity, value, expected_str):
         await max_export_power_entity.async_set_native_value(value)
         max_export_power_entity.coordinator.control.assert_awaited_once_with(
-            max_export_power_entity.max_export_power.cid, expected_str
+            max_export_power_entity.inverter_max_export_power.cid, expected_str
         )
 
     @pytest.mark.parametrize(
@@ -378,7 +378,7 @@ class TestMaxExportPower:
     async def test_set_native_value_scaled_0_1(self, max_export_power_entity_scaled_0_1, value, expected_str):
         await max_export_power_entity_scaled_0_1.async_set_native_value(value)
         max_export_power_entity_scaled_0_1.coordinator.control.assert_awaited_once_with(
-            max_export_power_entity_scaled_0_1.max_export_power.cid, expected_str
+            max_export_power_entity_scaled_0_1.inverter_max_export_power.cid, expected_str
         )
 
 
@@ -387,14 +387,14 @@ def power_limit_entity(mock_coordinator, any_inverter):
     return PowerLimit(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(key="any_key", name="any name"),
-        power_limit=any_inverter.power_limit,
+        inverter_power_limit=any_inverter.power_limit,
     )
 
 
 class TestPowerLimit:
     def test_attributes(self, power_limit_entity):
-        assert power_limit_entity.native_min_value == power_limit_entity.power_limit.min_value
-        assert power_limit_entity.native_max_value == power_limit_entity.power_limit.max_value
+        assert power_limit_entity.native_min_value == power_limit_entity.inverter_power_limit.min_value
+        assert power_limit_entity.native_max_value == power_limit_entity.inverter_power_limit.max_value
         assert power_limit_entity.native_step == 1
         assert power_limit_entity.native_unit_of_measurement == PERCENTAGE
 
@@ -409,7 +409,7 @@ class TestPowerLimit:
         ],
     )
     def test_native_value(self, power_limit_entity, value, expected):
-        power_limit_entity.coordinator.data = {power_limit_entity.power_limit.cid: value}
+        power_limit_entity.coordinator.data = {power_limit_entity.inverter_power_limit.cid: value}
         assert power_limit_entity.native_value == expected
 
     @pytest.mark.parametrize(
@@ -423,5 +423,5 @@ class TestPowerLimit:
     async def test_set_native_value(self, power_limit_entity, value, expected_str):
         await power_limit_entity.async_set_native_value(value)
         power_limit_entity.coordinator.control.assert_awaited_once_with(
-            power_limit_entity.power_limit.cid, expected_str
+            power_limit_entity.inverter_power_limit.cid, expected_str
         )

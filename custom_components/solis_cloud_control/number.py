@@ -130,7 +130,7 @@ async def async_setup_entry(
                     name="Max Output Power",
                     icon="mdi:lightning-bolt-outline",
                 ),
-                max_output_power=inverter.max_output_power,
+                inverter_max_output_power=inverter.max_output_power,
             )
         )
 
@@ -143,7 +143,7 @@ async def async_setup_entry(
                     name="Max Export Power",
                     icon="mdi:transmission-tower-export",
                 ),
-                max_export_power=inverter.max_export_power,
+                inverter_max_export_power=inverter.max_export_power,
             )
         )
 
@@ -156,7 +156,7 @@ async def async_setup_entry(
                     name="Power Limit",
                     icon="mdi:transmission-tower-export",
                 ),
-                power_limit=inverter.power_limit,
+                inverter_power_limit=inverter.power_limit,
             )
         )
 
@@ -336,10 +336,10 @@ class MaxOutputPower(SolisCloudControlEntity, NumberEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: NumberEntityDescription,
-        max_output_power: InverterMaxOutputPower,
+        inverter_max_output_power: InverterMaxOutputPower,
     ) -> None:
-        super().__init__(coordinator, entity_description, max_output_power.cid)
-        self.max_output_power = max_output_power
+        super().__init__(coordinator, entity_description, inverter_max_output_power.cid)
+        self.inverter_max_output_power = inverter_max_output_power
 
         self._attr_native_min_value = 0
         self._attr_native_max_value = 100
@@ -348,13 +348,13 @@ class MaxOutputPower(SolisCloudControlEntity, NumberEntity):
 
     @property
     def native_value(self) -> float | None:
-        value_str = self.coordinator.data.get(self.max_output_power.cid)
+        value_str = self.coordinator.data.get(self.inverter_max_output_power.cid)
         return safe_get_float_value(value_str)
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
         _LOGGER.info("Setting max output power to %f (value: %s)", value, value_str)
-        await self.coordinator.control(self.max_output_power.cid, value_str)
+        await self.coordinator.control(self.inverter_max_output_power.cid, value_str)
 
 
 class MaxExportPower(SolisCloudControlEntity, NumberEntity):
@@ -362,27 +362,27 @@ class MaxExportPower(SolisCloudControlEntity, NumberEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: NumberEntityDescription,
-        max_export_power: InverterMaxExportPower,
+        inverter_max_export_power: InverterMaxExportPower,
     ) -> None:
-        super().__init__(coordinator, entity_description, max_export_power.cid)
-        self.max_export_power = max_export_power
+        super().__init__(coordinator, entity_description, inverter_max_export_power.cid)
+        self.inverter_max_export_power = inverter_max_export_power
 
-        self._attr_native_min_value = max_export_power.min_value
-        self._attr_native_max_value = max_export_power.max_value
-        self._attr_native_step = max_export_power.step
+        self._attr_native_min_value = inverter_max_export_power.min_value
+        self._attr_native_max_value = inverter_max_export_power.max_value
+        self._attr_native_step = inverter_max_export_power.step
         self._attr_device_class = NumberDeviceClass.POWER
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
 
     @property
     def native_value(self) -> float | None:
-        value_str = self.coordinator.data.get(self.max_export_power.cid)
+        value_str = self.coordinator.data.get(self.inverter_max_export_power.cid)
         value = safe_get_float_value(value_str)
-        return value / self.max_export_power.scale if value is not None else None
+        return value / self.inverter_max_export_power.scale if value is not None else None
 
     async def async_set_native_value(self, value: float) -> None:
-        value_str = str(int(round(value * self.max_export_power.scale)))
+        value_str = str(int(round(value * self.inverter_max_export_power.scale)))
         _LOGGER.info("Setting max export power to %f (value: %s)", value, value_str)
-        await self.coordinator.control(self.max_export_power.cid, value_str)
+        await self.coordinator.control(self.inverter_max_export_power.cid, value_str)
 
 
 class PowerLimit(SolisCloudControlEntity, NumberEntity):
@@ -390,22 +390,22 @@ class PowerLimit(SolisCloudControlEntity, NumberEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: NumberEntityDescription,
-        power_limit: InverterPowerLimit,
+        inverter_power_limit: InverterPowerLimit,
     ) -> None:
-        super().__init__(coordinator, entity_description, power_limit.cid)
-        self.power_limit = power_limit
+        super().__init__(coordinator, entity_description, inverter_power_limit.cid)
+        self.inverter_power_limit = inverter_power_limit
 
-        self._attr_native_min_value = power_limit.min_value
-        self._attr_native_max_value = power_limit.max_value
+        self._attr_native_min_value = inverter_power_limit.min_value
+        self._attr_native_max_value = inverter_power_limit.max_value
         self._attr_native_step = 1
         self._attr_native_unit_of_measurement = PERCENTAGE
 
     @property
     def native_value(self) -> float | None:
-        value_str = self.coordinator.data.get(self.power_limit.cid)
+        value_str = self.coordinator.data.get(self.inverter_power_limit.cid)
         return safe_get_float_value(value_str)
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
         _LOGGER.info("Setting power limit to %f (value: %s)", value, value_str)
-        await self.coordinator.control(self.power_limit.cid, value_str)
+        await self.coordinator.control(self.inverter_power_limit.cid, value_str)
