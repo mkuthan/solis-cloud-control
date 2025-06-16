@@ -74,7 +74,7 @@ async def async_setup_entry(
                             name=f"Slot{i} Charge Time",
                             icon="mdi:timer-plus-outline",
                         ),
-                        charge_discharge_slot=charge_discharge_slots.get_charge_slot(i),
+                        inverter_charge_discharge_slot=charge_discharge_slots.get_charge_slot(i),
                     ),
                     TimeSlotV2Text(
                         coordinator=coordinator,
@@ -83,7 +83,7 @@ async def async_setup_entry(
                             name=f"Slot{i} Discharge Time",
                             icon="mdi:timer-minus-outline",
                         ),
-                        charge_discharge_slot=charge_discharge_slots.get_discharge_slot(i),
+                        inverter_charge_discharge_slot=charge_discharge_slots.get_discharge_slot(i),
                     ),
                 ]
             )
@@ -165,18 +165,18 @@ class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: TextEntityDescription,
-        charge_discharge_slot: InverterChargeDischargeSlot,
+        inverter_charge_discharge_slot: InverterChargeDischargeSlot,
     ) -> None:
-        super().__init__(coordinator, entity_description, charge_discharge_slot.time_cid)
+        super().__init__(coordinator, entity_description, inverter_charge_discharge_slot.time_cid)
         self._attr_native_min = self._TEXT_LENGTH
         self._attr_native_max = self._TEXT_LENGTH
         self._attr_pattern = self._TEXT_PATTERN
 
-        self.charge_discharge_slot = charge_discharge_slot
+        self.inverter_charge_discharge_slot = inverter_charge_discharge_slot
 
     @property
     def native_value(self) -> str | None:
-        value = self.coordinator.data.get(self.charge_discharge_slot.time_cid)
+        value = self.coordinator.data.get(self.inverter_charge_discharge_slot.time_cid)
 
         if value is None:
             return None
@@ -192,4 +192,4 @@ class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
             raise HomeAssistantError(f"Invalid '{self.name}': {value}")
 
         _LOGGER.info("Setting '%s' to %s", self.name, value)
-        await self.coordinator.control(self.charge_discharge_slot.time_cid, value)
+        await self.coordinator.control(self.inverter_charge_discharge_slot.time_cid, value)

@@ -13,9 +13,8 @@ def time_slot_v1_charge_entity(mock_coordinator, any_inverter):
     return TimeSlotV1Text(
         coordinator=mock_coordinator,
         entity_description=TextEntityDescription(
-            key="slot1_charge_time_v1",
-            name="Slot1 Charge Time V1",
-            icon="mdi:timer-plus-outline",
+            key="any_key",
+            name="any name",
         ),
         inverter_charge_discharge_settings=any_inverter.charge_discharge_settings,
         slot_number=1,
@@ -28,9 +27,8 @@ def time_slot_v1_discharge_entity(mock_coordinator, any_inverter):
     return TimeSlotV1Text(
         coordinator=mock_coordinator,
         entity_description=TextEntityDescription(
-            key="slot1_discharge_time_v1",
-            name="Slot1 Discharge Time V1",
-            icon="mdi:timer-minus-outline",
+            key="any_key",
+            name="any name",
         ),
         inverter_charge_discharge_settings=any_inverter.charge_discharge_settings,
         slot_number=1,
@@ -118,7 +116,7 @@ class TestTimeSlotV1Text:
         time_slot_v1_charge_entity.coordinator.data = {
             time_slot_v1_charge_entity.inverter_charge_discharge_settings.cid: self.VARIANT1_VALUE
         }
-        with pytest.raises(HomeAssistantError, match="Invalid 'Slot1 Charge Time V1': 25:00-26:00"):
+        with pytest.raises(HomeAssistantError, match="25:00-26:00"):
             await time_slot_v1_charge_entity.async_set_value("25:00-26:00")
 
     async def test_async_set_value_no_current_settings(self, time_slot_v1_charge_entity):
@@ -142,11 +140,10 @@ def time_slot_v2_entity(mock_coordinator, any_inverter):
     return TimeSlotV2Text(
         coordinator=mock_coordinator,
         entity_description=TextEntityDescription(
-            key="slot1_charge_time",
-            name="Slot1 Charge Time",
-            icon="mdi:timer-plus-outline",
+            key="any_key",
+            name="any name",
         ),
-        charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
+        inverter_charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
     )
 
 
@@ -157,23 +154,27 @@ class TestTimeSlotV2Text:
         assert time_slot_v2_entity.pattern == TimeSlotV2Text._TEXT_PATTERN
 
     def test_native_value(self, time_slot_v2_entity):
-        time_slot_v2_entity.coordinator.data = {time_slot_v2_entity.charge_discharge_slot.time_cid: "10:00-12:00"}
+        time_slot_v2_entity.coordinator.data = {
+            time_slot_v2_entity.inverter_charge_discharge_slot.time_cid: "10:00-12:00"
+        }
         assert time_slot_v2_entity.native_value == "10:00-12:00"
 
     def test_native_value_no_data(self, time_slot_v2_entity):
-        time_slot_v2_entity.coordinator.data = {time_slot_v2_entity.charge_discharge_slot.time_cid: None}
+        time_slot_v2_entity.coordinator.data = {time_slot_v2_entity.inverter_charge_discharge_slot.time_cid: None}
         assert time_slot_v2_entity.native_value is None
 
     def test_native_value_invalid_format(self, time_slot_v2_entity):
-        time_slot_v2_entity.coordinator.data = {time_slot_v2_entity.charge_discharge_slot.time_cid: "00:01-2300:5000"}
+        time_slot_v2_entity.coordinator.data = {
+            time_slot_v2_entity.inverter_charge_discharge_slot.time_cid: "00:01-2300:5000"
+        }
         assert time_slot_v2_entity.native_value is None
 
     async def test_async_set_value_valid(self, time_slot_v2_entity):
         await time_slot_v2_entity.async_set_value("09:00-17:00")
         time_slot_v2_entity.coordinator.control.assert_awaited_once_with(
-            time_slot_v2_entity.charge_discharge_slot.time_cid, "09:00-17:00"
+            time_slot_v2_entity.inverter_charge_discharge_slot.time_cid, "09:00-17:00"
         )
 
     async def test_async_set_value_invalid(self, time_slot_v2_entity):
-        with pytest.raises(HomeAssistantError, match="Invalid 'Slot1 Charge Time': 25:00-26:00"):
+        with pytest.raises(HomeAssistantError, match="25:00-26:00"):
             await time_slot_v2_entity.async_set_value("25:00-26:00")
