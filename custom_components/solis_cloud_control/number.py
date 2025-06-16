@@ -79,7 +79,7 @@ async def async_setup_entry(
                     BatteryCurrentV2(
                         coordinator=coordinator,
                         entity_description=NumberEntityDescription(
-                            key=f"slot{i}_charge_current",
+                            key=f"slot{i}_charge_current",  # don't use _v2 suffix for backwards compatibility
                             name=f"Slot{i} Charge Current",
                             icon="mdi:battery-plus-outline",
                         ),
@@ -89,7 +89,7 @@ async def async_setup_entry(
                     BatteryCurrentV2(
                         coordinator=coordinator,
                         entity_description=NumberEntityDescription(
-                            key=f"slot{i}_discharge_current",
+                            key=f"slot{i}_discharge_current",  # don't use _v2 suffix for backwards compatibility
                             name=f"Slot{i} Discharge Current",
                             icon="mdi:battery-minus-outline",
                         ),
@@ -99,7 +99,7 @@ async def async_setup_entry(
                     BatterySocV2(
                         coordinator=coordinator,
                         entity_description=NumberEntityDescription(
-                            key=f"slot{i}_charge_soc",
+                            key=f"slot{i}_charge_soc",  # don't use _v2 suffix for backwards compatibility
                             name=f"Slot{i} Charge SOC",
                             icon="mdi:battery-plus-outline",
                         ),
@@ -110,7 +110,7 @@ async def async_setup_entry(
                     BatterySocV2(
                         coordinator=coordinator,
                         entity_description=NumberEntityDescription(
-                            key=f"slot{i}_discharge_soc",
+                            key=f"slot{i}_discharge_soc",  # don't use _v2 suffix for backwards compatibility
                             name=f"Slot{i} Discharge SOC",
                             icon="mdi:battery-minus-outline",
                         ),

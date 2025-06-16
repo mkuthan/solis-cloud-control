@@ -70,7 +70,7 @@ async def async_setup_entry(
                     TimeSlotV2Text(
                         coordinator=coordinator,
                         entity_description=TextEntityDescription(
-                            key=f"slot{i}_charge_time",
+                            key=f"slot{i}_charge_time",  # don't use _v2 suffix for backwards compatibility
                             name=f"Slot{i} Charge Time",
                             icon="mdi:timer-plus-outline",
                         ),
@@ -79,7 +79,7 @@ async def async_setup_entry(
                     TimeSlotV2Text(
                         coordinator=coordinator,
                         entity_description=TextEntityDescription(
-                            key=f"slot{i}_discharge_time",
+                            key=f"slot{i}_discharge_time",  # don't use _v2 suffix for backwards compatibility
                             name=f"Slot{i} Discharge Time",
                             icon="mdi:timer-minus-outline",
                         ),
