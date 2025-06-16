@@ -145,22 +145,22 @@ def battery_current_v2_entity(mock_coordinator, any_inverter):
     return BatteryCurrentV2(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(key="any_key", name="any name"),
-        charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
-        battery_max_charge_discharge_current=any_inverter.battery_max_charge_current,
+        inverter_charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
+        inverter_battery_max_charge_discharge_current=any_inverter.battery_max_charge_current,
     )
 
 
 class TestBatteryCurrentV2:
     def test_attributes(self, battery_current_v2_entity):
-        charge_discharge_slot = battery_current_v2_entity.charge_discharge_slot
-        assert battery_current_v2_entity.native_min_value == charge_discharge_slot.current_min_value
-        assert battery_current_v2_entity.native_max_value == charge_discharge_slot.current_max_value
-        assert battery_current_v2_entity.native_step == charge_discharge_slot.current_step
+        inverter_charge_discharge_slot = battery_current_v2_entity.inverter_charge_discharge_slot
+        assert battery_current_v2_entity.native_min_value == inverter_charge_discharge_slot.current_min_value
+        assert battery_current_v2_entity.native_max_value == inverter_charge_discharge_slot.current_max_value
+        assert battery_current_v2_entity.native_step == inverter_charge_discharge_slot.current_step
         assert battery_current_v2_entity.native_unit_of_measurement == UnitOfElectricCurrent.AMPERE
 
     def test_native_max_value(self, battery_current_v2_entity):
         battery_current_v2_entity.coordinator.data = {
-            battery_current_v2_entity.battery_max_charge_discharge_current.cid: "50"
+            battery_current_v2_entity.inverter_battery_max_charge_discharge_current.cid: "50"
         }
         assert battery_current_v2_entity.native_max_value == 50
 
@@ -176,7 +176,7 @@ class TestBatteryCurrentV2:
     )
     def test_native_value(self, battery_current_v2_entity, value, expected):
         battery_current_v2_entity.coordinator.data = {
-            battery_current_v2_entity.charge_discharge_slot.current_cid: value
+            battery_current_v2_entity.inverter_charge_discharge_slot.current_cid: value
         }
         assert battery_current_v2_entity.native_value == expected
 
@@ -191,7 +191,7 @@ class TestBatteryCurrentV2:
     async def test_set_native_value(self, battery_current_v2_entity, value, expected_str):
         await battery_current_v2_entity.async_set_native_value(value)
         battery_current_v2_entity.coordinator.control.assert_awaited_once_with(
-            battery_current_v2_entity.charge_discharge_slot.current_cid, expected_str
+            battery_current_v2_entity.inverter_charge_discharge_slot.current_cid, expected_str
         )
 
 
@@ -200,7 +200,7 @@ def battery_soc_v2_entity(mock_coordinator, any_inverter):
     return BatterySocV2(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(key="any_key", name="any name"),
-        charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
+        inverter_charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
         battery_over_discharge_soc=any_inverter.battery_over_discharge_soc,
         battery_max_charge_soc=any_inverter.battery_max_charge_soc,
     )
@@ -208,10 +208,10 @@ def battery_soc_v2_entity(mock_coordinator, any_inverter):
 
 class TestBatterySocV2:
     def test_attributes(self, battery_soc_v2_entity):
-        charge_discharge_slot = battery_soc_v2_entity.charge_discharge_slot
-        assert battery_soc_v2_entity.native_min_value == charge_discharge_slot.soc_min_value
-        assert battery_soc_v2_entity.native_max_value == charge_discharge_slot.soc_max_value
-        assert battery_soc_v2_entity.native_step == charge_discharge_slot.soc_step
+        inverter_charge_discharge_slot = battery_soc_v2_entity.inverter_charge_discharge_slot
+        assert battery_soc_v2_entity.native_min_value == inverter_charge_discharge_slot.soc_min_value
+        assert battery_soc_v2_entity.native_max_value == inverter_charge_discharge_slot.soc_max_value
+        assert battery_soc_v2_entity.native_step == inverter_charge_discharge_slot.soc_step
         assert battery_soc_v2_entity.native_unit_of_measurement == PERCENTAGE
 
     def test_native_min_value(self, battery_soc_v2_entity):
@@ -233,7 +233,7 @@ class TestBatterySocV2:
         ],
     )
     def test_native_value(self, battery_soc_v2_entity, value, expected):
-        battery_soc_v2_entity.coordinator.data = {battery_soc_v2_entity.charge_discharge_slot.soc_cid: value}
+        battery_soc_v2_entity.coordinator.data = {battery_soc_v2_entity.inverter_charge_discharge_slot.soc_cid: value}
         assert battery_soc_v2_entity.native_value == expected
 
     @pytest.mark.parametrize(
@@ -247,7 +247,7 @@ class TestBatterySocV2:
     async def test_set_native_value(self, battery_soc_v2_entity, value, expected_str):
         await battery_soc_v2_entity.async_set_native_value(value)
         battery_soc_v2_entity.coordinator.control.assert_awaited_once_with(
-            battery_soc_v2_entity.charge_discharge_slot.soc_cid, expected_str
+            battery_soc_v2_entity.inverter_charge_discharge_slot.soc_cid, expected_str
         )
 
 
