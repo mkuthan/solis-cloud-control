@@ -61,11 +61,11 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
     entries = er.async_entries_for_config_entry(entity_registry, mock_config_entry.entry_id)
 
     platform_counts = Counter(entry.domain for entry in entries)
-    assert platform_counts[Platform.NUMBER] == 27
+    assert platform_counts[Platform.NUMBER] == 33
     assert platform_counts[Platform.SELECT] == 1
     assert platform_counts[Platform.SENSOR] == 7
     assert platform_counts[Platform.SWITCH] == 15
-    assert platform_counts[Platform.TEXT] == 19
+    assert platform_counts[Platform.TEXT] == 18
 
 
 async def test_async_setup_entry_undefined_inverter(hass, mock_api_client, mock_config_entry, any_inverter_info):

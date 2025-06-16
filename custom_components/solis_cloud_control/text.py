@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from typing import Literal
 
 from homeassistant.components.text import TextEntity, TextEntityDescription
@@ -34,72 +33,59 @@ async def async_setup_entry(
     charge_discharge_settings = inverter.charge_discharge_settings
 
     if charge_discharge_settings is not None:
-        # TODO: remove generic charge/discharge settings entity
-        entities.append(
-            ChargeDischargeSettingsText(
-                coordinator=coordinator,
-                entity_description=TextEntityDescription(
-                    key="charge_discharge_settings",
-                    name="Charge Discharge Settings",
-                    icon="mdi:timer-outline",
-                ),
-                charge_discharge_settings=charge_discharge_settings,
-            )
-        )
-
         for i in range(1, charge_discharge_settings.SLOTS_COUNT + 1):
-            entities.append(
-                TimeSlotV1Text(
-                    coordinator=coordinator,
-                    entity_description=TextEntityDescription(
-                        key=f"slot{i}_charge_time_v1",
-                        name=f"Slot{i} Charge Time",
-                        icon="mdi:timer-plus-outline",
+            entities.extend(
+                [
+                    TimeSlotV1Text(
+                        coordinator=coordinator,
+                        entity_description=TextEntityDescription(
+                            key=f"slot{i}_charge_time_v1",
+                            name=f"Slot{i} Charge Time",
+                            icon="mdi:timer-plus-outline",
+                        ),
+                        inverter_charge_discharge_settings=charge_discharge_settings,
+                        slot_number=i,
+                        slot_type="charge",
                     ),
-                    charge_discharge_settings=charge_discharge_settings,
-                    slot_number=i,
-                    slot_type="charge",
-                )
-            )
-            entities.append(
-                TimeSlotV1Text(
-                    coordinator=coordinator,
-                    entity_description=TextEntityDescription(
-                        key=f"slot{i}_discharge_time_v1",
-                        name=f"Slot{i} Discharge Time",
-                        icon="mdi:timer-minus-outline",
+                    TimeSlotV1Text(
+                        coordinator=coordinator,
+                        entity_description=TextEntityDescription(
+                            key=f"slot{i}_discharge_time_v1",
+                            name=f"Slot{i} Discharge Time",
+                            icon="mdi:timer-minus-outline",
+                        ),
+                        inverter_charge_discharge_settings=charge_discharge_settings,
+                        slot_number=i,
+                        slot_type="discharge",
                     ),
-                    charge_discharge_settings=charge_discharge_settings,
-                    slot_number=i,
-                    slot_type="discharge",
-                )
+                ]
             )
 
-    slots = inverter.charge_discharge_slots
+    charge_discharge_slots = inverter.charge_discharge_slots
 
-    if slots is not None:
-        for i in range(1, slots.SLOTS_COUNT + 1):
-            entities.append(
-                TimeSlotV2Text(
-                    coordinator=coordinator,
-                    entity_description=TextEntityDescription(
-                        key=f"slot{i}_charge_time",
-                        name=f"Slot{i} Charge Time",
-                        icon="mdi:timer-plus-outline",
+    if charge_discharge_slots is not None:
+        for i in range(1, charge_discharge_slots.SLOTS_COUNT + 1):
+            entities.extend(
+                [
+                    TimeSlotV2Text(
+                        coordinator=coordinator,
+                        entity_description=TextEntityDescription(
+                            key=f"slot{i}_charge_time",
+                            name=f"Slot{i} Charge Time",
+                            icon="mdi:timer-plus-outline",
+                        ),
+                        charge_discharge_slot=charge_discharge_slots.get_charge_slot(i),
                     ),
-                    charge_discharge_slot=slots.get_charge_slot(i),
-                )
-            )
-            entities.append(
-                TimeSlotV2Text(
-                    coordinator=coordinator,
-                    entity_description=TextEntityDescription(
-                        key=f"slot{i}_discharge_time",
-                        name=f"Slot{i} Discharge Time",
-                        icon="mdi:timer-minus-outline",
+                    TimeSlotV2Text(
+                        coordinator=coordinator,
+                        entity_description=TextEntityDescription(
+                            key=f"slot{i}_discharge_time",
+                            name=f"Slot{i} Discharge Time",
+                            icon="mdi:timer-minus-outline",
+                        ),
+                        charge_discharge_slot=charge_discharge_slots.get_discharge_slot(i),
                     ),
-                    charge_discharge_slot=slots.get_discharge_slot(i),
-                )
+                ]
             )
 
     async_add_entities(entities)
@@ -113,31 +99,35 @@ class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: TextEntityDescription,
-        charge_discharge_settings: InverterChargeDischargeSettings,
+        inverter_charge_discharge_settings: InverterChargeDischargeSettings,
         slot_number: int,
         slot_type: Literal["charge", "discharge"],
     ) -> None:
-        super().__init__(coordinator, entity_description, charge_discharge_settings.cid)
+        super().__init__(coordinator, entity_description, inverter_charge_discharge_settings.cid)
         self._attr_native_min = self._TEXT_LENGTH
         self._attr_native_max = self._TEXT_LENGTH
         self._attr_pattern = self._TEXT_PATTERN
 
-        self.charge_discharge_settings = charge_discharge_settings
+        self.inverter_charge_discharge_settings = inverter_charge_discharge_settings
         self.slot_number = slot_number
         self.slot_type = slot_type
 
     @property
     def native_value(self) -> str | None:
-        value = self.coordinator.data.get(self.charge_discharge_settings.cid)
+        value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
 
-        settings = ChargeDischargeSettings.create(value)
-        if settings is None:
+        charge_discharge_settings = ChargeDischargeSettings.create(value)
+        if charge_discharge_settings is None:
+            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, value)
             return None
 
         if self.slot_type == "charge":
-            time_slot = settings.get_charge_time_slot(self.slot_number)
+            time_slot = charge_discharge_settings.get_charge_time_slot(self.slot_number)
         else:
-            time_slot = settings.get_discharge_time_slot(self.slot_number)
+            time_slot = charge_discharge_settings.get_discharge_time_slot(self.slot_number)
+
+        if time_slot is None:
+            return None
 
         if not validate_time_range(time_slot):
             _LOGGER.warning("Invalid '%s': %s", self.name, time_slot)
@@ -149,21 +139,22 @@ class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
         if not validate_time_range(value):
             raise HomeAssistantError(f"Invalid '{self.name}': {value}")
 
-        settings_value = self.coordinator.data.get(self.charge_discharge_settings.cid)
-        settings = ChargeDischargeSettings.create(settings_value)
+        charge_discharge_settings_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        charge_discharge_settings = ChargeDischargeSettings.create(charge_discharge_settings_value)
 
-        if settings is None:
+        if charge_discharge_settings is None:
+            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, value)
             return None
 
         if self.slot_type == "charge":
-            settings.set_charge_time_slot(self.slot_number, value)
+            charge_discharge_settings.set_charge_time_slot(self.slot_number, value)
         else:
-            settings.set_discharge_time_slot(self.slot_number, value)
+            charge_discharge_settings.set_discharge_time_slot(self.slot_number, value)
 
-        new_settings_value = str(settings)
-
-        _LOGGER.info("Setting '%s' to %s", self.name, new_settings_value)
-        await self.coordinator.control(self.charge_discharge_settings.cid, new_settings_value)
+        _LOGGER.info("Setting '%s' to %s", self.name, value)
+        await self.coordinator.control(
+            self.inverter_charge_discharge_settings.cid, charge_discharge_settings.to_value()
+        )
 
 
 class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
@@ -202,137 +193,3 @@ class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
 
         _LOGGER.info("Setting '%s' to %s", self.name, value)
         await self.coordinator.control(self.charge_discharge_slot.time_cid, value)
-
-
-class ChargeDischargeSettingsText(SolisCloudControlEntity, TextEntity):
-    def __init__(
-        self,
-        coordinator: SolisCloudControlCoordinator,
-        entity_description: TextEntityDescription,
-        charge_discharge_settings: InverterChargeDischargeSettings,
-    ) -> None:
-        super().__init__(coordinator, entity_description, charge_discharge_settings.cid)
-
-        self.charge_discharge_settings = charge_discharge_settings
-
-    @property
-    def native_value(self) -> str | None:
-        value = self.coordinator.data.get(self.charge_discharge_settings.cid)
-        return value
-
-    @property
-    def extra_state_attributes(self) -> dict[str, str | int]:
-        value = self.coordinator.data.get(self.charge_discharge_settings.cid)
-
-        attributes = {}
-
-        if value is None:
-            return attributes
-
-        values = value.split(",")
-        if len(values) == 18:
-            # separate start/end times
-            for i in range(1, self.charge_discharge_settings.SLOTS_COUNT + 1):
-                base_idx = (i - 1) * 6
-                slot_attributes = self._create_attributes_for_slot_variant1(values, base_idx, i)
-                attributes.update(slot_attributes)
-        elif len(values) == 12:
-            # time ranges
-            for i in range(1, self.charge_discharge_settings.SLOTS_COUNT + 1):
-                base_idx = (i - 1) * 4
-                slot_attributes = self._create_attributes_for_slot_variant2(values, base_idx, i)
-                attributes.update(slot_attributes)
-
-        return attributes
-
-    async def async_set_value(self, value: str) -> None:
-        if not self._validate_settings(value):
-            raise HomeAssistantError(f"Invalid '{self.name}': {value}")
-
-        _LOGGER.info("Setting '%s' to %s", self.name, value)
-        await self.coordinator.control(self.charge_discharge_settings.cid, value)
-
-    def _create_attributes_for_slot_variant1(
-        self, values: list[str], base_idx: int, slot_number: int
-    ) -> dict[str, str]:
-        attributes = {}
-
-        charge_current = values[base_idx]
-        attributes[f"slot{slot_number}_charge_current"] = f"{charge_current}"
-
-        discharge_current = values[base_idx + 1]
-        attributes[f"slot{slot_number}_discharge_current"] = f"{discharge_current}"
-
-        charge_start = values[base_idx + 2]
-        charge_end = values[base_idx + 3]
-        attributes[f"slot{slot_number}_charge_time"] = f"{charge_start}-{charge_end}"
-
-        discharge_start = values[base_idx + 4]
-        discharge_end = values[base_idx + 5]
-        attributes[f"slot{slot_number}_discharge_time"] = f"{discharge_start}-{discharge_end}"
-
-        return attributes
-
-    def _create_attributes_for_slot_variant2(
-        self, values: list[str], base_idx: int, slot_number: int
-    ) -> dict[str, str]:
-        attributes = {}
-
-        charge_current = values[base_idx]
-        attributes[f"slot{slot_number}_charge_current"] = f"{charge_current}"
-
-        discharge_current = values[base_idx + 1]
-        attributes[f"slot{slot_number}_discharge_current"] = f"{discharge_current}"
-
-        charge_time = values[base_idx + 2]
-        attributes[f"slot{slot_number}_charge_time"] = charge_time
-
-        discharge_time = values[base_idx + 3]
-        attributes[f"slot{slot_number}_discharge_time"] = discharge_time
-
-        return attributes
-
-    def _validate_settings(self, value: str) -> bool:
-        values = value.split(",")
-
-        if len(values) == 18:
-            # separate start/end times
-            return self._validate_variant1(values)
-        elif len(values) == 12:
-            # time ranges
-            return self._validate_variant2(values)
-
-        return False
-
-    def _validate_variant1(self, values: list[str]) -> bool:
-        try:
-            for i in range(0, len(values), 6):
-                int(values[i])  # charge_current
-                int(values[i + 1])  # discharge_current
-                datetime.strptime(values[i + 2], "%H:%M")  # charge_start
-                datetime.strptime(values[i + 3], "%H:%M")  # charge_end
-                datetime.strptime(values[i + 4], "%H:%M")  # discharge_start
-                datetime.strptime(values[i + 5], "%H:%M")  # discharge_end
-            return True
-        except ValueError:
-            return False
-
-    def _validate_variant2(self, values: list[str]) -> bool:
-        try:
-            for i in range(0, len(values), 4):
-                int(values[i])  # charge_current
-                int(values[i + 1])  # discharge_current
-                self._validate_time_range(values[i + 2])  # charge_time_range
-                self._validate_time_range(values[i + 3])  # discharge_time_range
-            return True
-        except ValueError:
-            return False
-
-    def _validate_time_range(self, time_range: str) -> bool:
-        if time_range.count("-") != 1:
-            return False
-
-        from_str, to_str = time_range.split("-")
-        datetime.strptime(from_str, "%H:%M")
-        datetime.strptime(to_str, "%H:%M")
-        return True

@@ -55,6 +55,9 @@ class InverterChargeDischargeSettings:
     SLOTS_COUNT: int = 3
 
     cid: int = 103
+    current_min_value: float = 0
+    current_max_value: float = 1_000
+    current_step: float = 1
 
 
 @dataclass(frozen=True)

@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberEntityDescription
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
@@ -6,11 +7,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+from custom_components.solis_cloud_control.domain.charge_discharge_settings import ChargeDischargeSettings
 from custom_components.solis_cloud_control.inverters.inverter import (
     InverterBatteryMaxChargeCurrent,
     InverterBatteryMaxChargeSOC,
     InverterBatteryMaxDischargeCurrent,
     InverterBatteryOverDischargeSOC,
+    InverterChargeDischargeSettings,
     InverterChargeDischargeSlot,
     InverterMaxExportPower,
     InverterMaxOutputPower,
@@ -34,10 +37,43 @@ async def async_setup_entry(
 
     entities = []
 
-    slots = inverter.charge_discharge_slots
+    charge_discharge_settings = inverter.charge_discharge_settings
 
-    if slots is not None:
-        for i in range(1, slots.SLOTS_COUNT + 1):
+    if charge_discharge_settings is not None:
+        for i in range(1, charge_discharge_settings.SLOTS_COUNT + 1):
+            entities.extend(
+                [
+                    BatteryCurrentV1(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_charge_current_v1",
+                            name=f"Slot{i} Charge Current",
+                            icon="mdi:battery-plus-outline",
+                        ),
+                        inverter_charge_discharge_settings=charge_discharge_settings,
+                        inverter_battery_max_charge_discharge_current=inverter.battery_max_charge_current,
+                        slot_number=i,
+                        slot_type="charge",
+                    ),
+                    BatteryCurrentV1(
+                        coordinator=coordinator,
+                        entity_description=NumberEntityDescription(
+                            key=f"slot{i}_discharge_current_v1",
+                            name=f"Slot{i} Discharge Current",
+                            icon="mdi:battery-minus-outline",
+                        ),
+                        inverter_charge_discharge_settings=charge_discharge_settings,
+                        inverter_battery_max_charge_discharge_current=inverter.battery_max_charge_current,
+                        slot_number=i,
+                        slot_type="discharge",
+                    ),
+                ]
+            )
+
+    charge_discharge_slots = inverter.charge_discharge_slots
+
+    if charge_discharge_slots is not None:
+        for i in range(1, charge_discharge_slots.SLOTS_COUNT + 1):
             entities.extend(
                 [
                     BatteryCurrentV2(
@@ -47,7 +83,7 @@ async def async_setup_entry(
                             name=f"Slot{i} Charge Current",
                             icon="mdi:battery-plus-outline",
                         ),
-                        charge_discharge_slot=slots.get_charge_slot(i),
+                        charge_discharge_slot=charge_discharge_slots.get_charge_slot(i),
                         battery_max_charge_discharge_current=inverter.battery_max_charge_current,
                     ),
                     BatteryCurrentV2(
@@ -57,7 +93,7 @@ async def async_setup_entry(
                             name=f"Slot{i} Discharge Current",
                             icon="mdi:battery-minus-outline",
                         ),
-                        charge_discharge_slot=slots.get_discharge_slot(i),
+                        charge_discharge_slot=charge_discharge_slots.get_discharge_slot(i),
                         battery_max_charge_discharge_current=inverter.battery_max_discharge_current,
                     ),
                     BatterySocV2(
@@ -67,7 +103,7 @@ async def async_setup_entry(
                             name=f"Slot{i} Charge SOC",
                             icon="mdi:battery-plus-outline",
                         ),
-                        charge_discharge_slot=slots.get_charge_slot(i),
+                        charge_discharge_slot=charge_discharge_slots.get_charge_slot(i),
                         battery_over_discharge_soc=inverter.battery_over_discharge_soc,
                         battery_max_charge_soc=inverter.battery_max_charge_soc,
                     ),
@@ -78,7 +114,7 @@ async def async_setup_entry(
                             name=f"Slot{i} Discharge SOC",
                             icon="mdi:battery-minus-outline",
                         ),
-                        charge_discharge_slot=slots.get_discharge_slot(i),
+                        charge_discharge_slot=charge_discharge_slots.get_discharge_slot(i),
                         battery_over_discharge_soc=inverter.battery_over_discharge_soc,
                         battery_max_charge_soc=inverter.battery_max_charge_soc,
                     ),
@@ -125,6 +161,77 @@ async def async_setup_entry(
         )
 
     async_add_entities(entities)
+
+
+class BatteryCurrentV1(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        inverter_charge_discharge_settings: InverterChargeDischargeSettings,
+        inverter_battery_max_charge_discharge_current: InverterBatteryMaxChargeCurrent
+        | InverterBatteryMaxDischargeCurrent
+        | None,
+        slot_number: int,
+        slot_type: Literal["charge", "discharge"],
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_charge_discharge_settings.cid)
+        self._attr_native_min_value = inverter_charge_discharge_settings.current_min_value
+        self._attr_native_step = inverter_charge_discharge_settings.current_step
+        self._attr_device_class = NumberDeviceClass.CURRENT
+        self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+
+        self.inverter_charge_discharge_settings = inverter_charge_discharge_settings
+        self.inverter_battery_max_charge_discharge_current = inverter_battery_max_charge_discharge_current
+        self.slot_number = slot_number
+        self.slot_type = slot_type
+
+    @property
+    def native_max_value(self) -> float:
+        if self.inverter_battery_max_charge_discharge_current is not None:
+            battery_max_charge_discharge_current_str = self.coordinator.data.get(
+                self.inverter_battery_max_charge_discharge_current.cid
+            )
+            battery_max_charge_discharge_current = safe_get_float_value(battery_max_charge_discharge_current_str)
+
+        if battery_max_charge_discharge_current is not None:
+            return battery_max_charge_discharge_current
+        else:
+            return self.inverter_charge_discharge_settings.current_max_value
+
+    @property
+    def native_value(self) -> float | None:
+        value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+
+        charge_discharge_settings = ChargeDischargeSettings.create(value)
+        if charge_discharge_settings is None:
+            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, value)
+            return None
+
+        if self.slot_type == "charge":
+            current = charge_discharge_settings.get_charge_current(self.slot_number)
+        else:
+            current = charge_discharge_settings.get_discharge_current(self.slot_number)
+
+        return current
+
+    async def async_set_native_value(self, value: float) -> None:
+        charge_discharge_settings_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        charge_discharge_settings = ChargeDischargeSettings.create(charge_discharge_settings_value)
+
+        if charge_discharge_settings is None:
+            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, value)
+            return None
+
+        if self.slot_type == "charge":
+            charge_discharge_settings.set_charge_current(self.slot_number, value)
+        else:
+            charge_discharge_settings.set_discharge_current(self.slot_number, value)
+
+        _LOGGER.info("Setting '%s' to %s", self.name, value)
+        await self.coordinator.control(
+            self.inverter_charge_discharge_settings.cid, charge_discharge_settings.to_value()
+        )
 
 
 class BatteryCurrentV2(SolisCloudControlEntity, NumberEntity):
