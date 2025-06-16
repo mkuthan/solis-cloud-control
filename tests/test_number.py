@@ -201,8 +201,8 @@ def battery_soc_v2_entity(mock_coordinator, any_inverter):
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(key="any_key", name="any name"),
         inverter_charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
-        battery_over_discharge_soc=any_inverter.battery_over_discharge_soc,
-        battery_max_charge_soc=any_inverter.battery_max_charge_soc,
+        inverter_battery_over_discharge_soc=any_inverter.battery_over_discharge_soc,
+        inverter_battery_max_charge_soc=any_inverter.battery_max_charge_soc,
     )
 
 
@@ -215,11 +215,11 @@ class TestBatterySocV2:
         assert battery_soc_v2_entity.native_unit_of_measurement == PERCENTAGE
 
     def test_native_min_value(self, battery_soc_v2_entity):
-        battery_soc_v2_entity.coordinator.data = {battery_soc_v2_entity.battery_over_discharge_soc.cid: "10"}
+        battery_soc_v2_entity.coordinator.data = {battery_soc_v2_entity.inverter_battery_over_discharge_soc.cid: "10"}
         assert battery_soc_v2_entity.native_min_value == 11.0
 
     def test_native_max_value(self, battery_soc_v2_entity):
-        battery_soc_v2_entity.coordinator.data = {battery_soc_v2_entity.battery_max_charge_soc.cid: "99"}
+        battery_soc_v2_entity.coordinator.data = {battery_soc_v2_entity.inverter_battery_max_charge_soc.cid: "99"}
         assert battery_soc_v2_entity.native_max_value == 99
 
     @pytest.mark.parametrize(

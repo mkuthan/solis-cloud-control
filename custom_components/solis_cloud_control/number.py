@@ -104,8 +104,8 @@ async def async_setup_entry(
                             icon="mdi:battery-plus-outline",
                         ),
                         inverter_charge_discharge_slot=charge_discharge_slots.get_charge_slot(i),
-                        battery_over_discharge_soc=inverter.battery_over_discharge_soc,
-                        battery_max_charge_soc=inverter.battery_max_charge_soc,
+                        inverter_battery_over_discharge_soc=inverter.battery_over_discharge_soc,
+                        inverter_battery_max_charge_soc=inverter.battery_max_charge_soc,
                     ),
                     BatterySocV2(
                         coordinator=coordinator,
@@ -115,8 +115,8 @@ async def async_setup_entry(
                             icon="mdi:battery-minus-outline",
                         ),
                         inverter_charge_discharge_slot=charge_discharge_slots.get_discharge_slot(i),
-                        battery_over_discharge_soc=inverter.battery_over_discharge_soc,
-                        battery_max_charge_soc=inverter.battery_max_charge_soc,
+                        inverter_battery_over_discharge_soc=inverter.battery_over_discharge_soc,
+                        inverter_battery_max_charge_soc=inverter.battery_max_charge_soc,
                     ),
                 ]
             )
@@ -283,8 +283,8 @@ class BatterySocV2(SolisCloudControlEntity, NumberEntity):
         coordinator: SolisCloudControlCoordinator,
         entity_description: NumberEntityDescription,
         inverter_charge_discharge_slot: InverterChargeDischargeSlot,
-        battery_over_discharge_soc: InverterBatteryOverDischargeSOC | None,
-        battery_max_charge_soc: InverterBatteryMaxChargeSOC | None,
+        inverter_battery_over_discharge_soc: InverterBatteryOverDischargeSOC | None,
+        inverter_battery_max_charge_soc: InverterBatteryMaxChargeSOC | None,
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_charge_discharge_slot.soc_cid)
         self._attr_native_step = inverter_charge_discharge_slot.soc_step
@@ -292,15 +292,15 @@ class BatterySocV2(SolisCloudControlEntity, NumberEntity):
         self._attr_native_unit_of_measurement = PERCENTAGE
 
         self.inverter_charge_discharge_slot = inverter_charge_discharge_slot
-        self.battery_over_discharge_soc = battery_over_discharge_soc
-        self.battery_max_charge_soc = battery_max_charge_soc
+        self.inverter_battery_over_discharge_soc = inverter_battery_over_discharge_soc
+        self.inverter_battery_max_charge_soc = inverter_battery_max_charge_soc
 
     @property
     def native_min_value(self) -> float:
         battery_over_discharge = None
 
-        if self.battery_over_discharge_soc is not None:
-            battery_over_discharge_str = self.coordinator.data.get(self.battery_over_discharge_soc.cid)
+        if self.inverter_battery_over_discharge_soc is not None:
+            battery_over_discharge_str = self.coordinator.data.get(self.inverter_battery_over_discharge_soc.cid)
             battery_over_discharge = safe_get_float_value(battery_over_discharge_str)
 
         if battery_over_discharge is not None:
@@ -311,8 +311,8 @@ class BatterySocV2(SolisCloudControlEntity, NumberEntity):
     @property
     def native_max_value(self) -> float:
         battery_max_charge = None
-        if self.battery_max_charge_soc is not None:
-            battery_max_charge_str = self.coordinator.data.get(self.battery_max_charge_soc.cid)
+        if self.inverter_battery_max_charge_soc is not None:
+            battery_max_charge_str = self.coordinator.data.get(self.inverter_battery_max_charge_soc.cid)
             battery_max_charge = safe_get_float_value(battery_max_charge_str)
 
         if battery_max_charge is not None:
