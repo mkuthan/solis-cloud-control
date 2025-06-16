@@ -12,10 +12,7 @@ from custom_components.solis_cloud_control.text import (
 def time_slot_v1_charge_entity(mock_coordinator, any_inverter):
     return TimeSlotV1Text(
         coordinator=mock_coordinator,
-        entity_description=TextEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=TextEntityDescription(key="any_key", name="any name"),
         inverter_charge_discharge_settings=any_inverter.charge_discharge_settings,
         slot_number=1,
         slot_type="charge",
@@ -26,10 +23,7 @@ def time_slot_v1_charge_entity(mock_coordinator, any_inverter):
 def time_slot_v1_discharge_entity(mock_coordinator, any_inverter):
     return TimeSlotV1Text(
         coordinator=mock_coordinator,
-        entity_description=TextEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=TextEntityDescription(key="any_key", name="any name"),
         inverter_charge_discharge_settings=any_inverter.charge_discharge_settings,
         slot_number=1,
         slot_type="discharge",
@@ -139,10 +133,7 @@ class TestTimeSlotV1Text:
 def time_slot_v2_entity(mock_coordinator, any_inverter):
     return TimeSlotV2Text(
         coordinator=mock_coordinator,
-        entity_description=TextEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=TextEntityDescription(key="any_key", name="any name"),
         inverter_charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
     )
 

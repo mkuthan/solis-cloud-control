@@ -18,10 +18,7 @@ from custom_components.solis_cloud_control.number import (
 def battery_current_v1_charge_entity(mock_coordinator, any_inverter):
     return BatteryCurrentV1(
         coordinator=mock_coordinator,
-        entity_description=NumberEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
         inverter_charge_discharge_settings=any_inverter.charge_discharge_settings,
         inverter_battery_max_charge_discharge_current=any_inverter.battery_max_charge_current,
         slot_number=1,
@@ -33,10 +30,7 @@ def battery_current_v1_charge_entity(mock_coordinator, any_inverter):
 def battery_current_v1_discharge_entity(mock_coordinator, any_inverter):
     return BatteryCurrentV1(
         coordinator=mock_coordinator,
-        entity_description=NumberEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
         inverter_charge_discharge_settings=any_inverter.charge_discharge_settings,
         inverter_battery_max_charge_discharge_current=any_inverter.battery_max_charge_current,
         slot_number=1,
@@ -150,10 +144,7 @@ class TestBatteryCurrentV1:
 def battery_current_v2_entity(mock_coordinator, any_inverter):
     return BatteryCurrentV2(
         coordinator=mock_coordinator,
-        entity_description=NumberEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
         charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
         battery_max_charge_discharge_current=any_inverter.battery_max_charge_current,
     )
@@ -208,10 +199,7 @@ class TestBatteryCurrentV2:
 def battery_soc_v2_entity(mock_coordinator, any_inverter):
     return BatterySocV2(
         coordinator=mock_coordinator,
-        entity_description=NumberEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
         charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
         battery_over_discharge_soc=any_inverter.battery_over_discharge_soc,
         battery_max_charge_soc=any_inverter.battery_max_charge_soc,
@@ -267,10 +255,7 @@ class TestBatterySocV2:
 def max_output_power_entity(mock_coordinator, any_inverter):
     return MaxOutputPower(
         coordinator=mock_coordinator,
-        entity_description=NumberEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
         max_output_power=any_inverter.max_output_power,
     )
 
@@ -315,10 +300,7 @@ class TestMaxOutputPower:
 def max_export_power_entity(mock_coordinator, any_inverter):
     return MaxExportPower(
         coordinator=mock_coordinator,
-        entity_description=NumberEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
         max_export_power=any_inverter.max_export_power,
     )
 
@@ -328,10 +310,7 @@ def max_export_power_entity_scaled_0_1(mock_coordinator, any_inverter):
     max_export_power = replace(any_inverter.max_export_power, scale=0.1)
     return MaxExportPower(
         coordinator=mock_coordinator,
-        entity_description=NumberEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
         max_export_power=max_export_power,
     )
 
@@ -407,10 +386,7 @@ class TestMaxExportPower:
 def power_limit_entity(mock_coordinator, any_inverter):
     return PowerLimit(
         coordinator=mock_coordinator,
-        entity_description=NumberEntityDescription(
-            key="any_key",
-            name="any name",
-        ),
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
         power_limit=any_inverter.power_limit,
     )
 

@@ -12,10 +12,7 @@ from custom_components.solis_cloud_control.sensor import (
 def battery_soc_sensor(mock_coordinator, any_inverter):
     return BatterySocSensor(
         coordinator=mock_coordinator,
-        entity_description=SensorEntityDescription(
-            key="test_battery_soc",
-            name="Test Battery SOC",
-        ),
+        entity_description=SensorEntityDescription(key="any_key", name="any name"),
         battery_soc=any_inverter.battery_force_charge_soc,
     )
 
@@ -24,10 +21,7 @@ def battery_soc_sensor(mock_coordinator, any_inverter):
 def battery_current_sensor(mock_coordinator, any_inverter):
     return BatteryCurrentSensor(
         coordinator=mock_coordinator,
-        entity_description=SensorEntityDescription(
-            key="test_battery_current",
-            name="Test Battery Current",
-        ),
+        entity_description=SensorEntityDescription(key="any_key", name="any name"),
         battery_current=any_inverter.battery_max_charge_current,
     )
 

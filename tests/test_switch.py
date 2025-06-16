@@ -13,11 +13,7 @@ from custom_components.solis_cloud_control.switch import (
 def on_off_switch(mock_coordinator, any_inverter):
     return OnOffSwitch(
         coordinator=mock_coordinator,
-        entity_description=SwitchEntityDescription(
-            key="on_off_switch",
-            name="Inverter On/Off",
-            icon="mdi:power",
-        ),
+        entity_description=SwitchEntityDescription(key="any_key", name="any name"),
         on_off=any_inverter.on_off,
     )
 
@@ -100,11 +96,7 @@ class TestOnOffSwitch:
 def slot_switch(mock_coordinator, any_inverter):
     return SlotV2Switch(
         coordinator=mock_coordinator,
-        entity_description=SwitchEntityDescription(
-            key="slot1_charge_switch",
-            name="Slot1 Charge",
-            icon="mdi:battery-plus-outline",
-        ),
+        entity_description=SwitchEntityDescription(key="any_key", name="any name"),
         charge_discharge_slot=any_inverter.charge_discharge_slots.charge_slot1,
         charge_discharge_slots=any_inverter.charge_discharge_slots,
     )
@@ -147,11 +139,7 @@ class TestSlotSwitch:
 def battery_reserve_switch(mock_coordinator, any_inverter):
     return BatteryReserveSwitch(
         coordinator=mock_coordinator,
-        entity_description=SwitchEntityDescription(
-            key="battery_reserve",
-            name="Battery Reserve",
-            icon="mdi:battery-heart-outline",
-        ),
+        entity_description=SwitchEntityDescription(key="any_key", name="any name"),
         storage_mode=any_inverter.storage_mode,
     )
 
@@ -204,11 +192,7 @@ class TestBatteryReserveSwitch:
 def allow_grid_charging_switch(mock_coordinator, any_inverter):
     return AllowGridChargingSwitch(
         coordinator=mock_coordinator,
-        entity_description=SwitchEntityDescription(
-            key="allow_grid_charging",
-            name="Allow Grid Charging",
-            icon="mdi:battery-charging-outline",
-        ),
+        entity_description=SwitchEntityDescription(key="any_key", name="any name"),
         storage_mode=any_inverter.storage_mode,
     )
 

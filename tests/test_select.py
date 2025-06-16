@@ -9,11 +9,7 @@ from custom_components.solis_cloud_control.select import StorageModeSelect
 def storage_mode_entity(mock_coordinator, any_inverter):
     return StorageModeSelect(
         coordinator=mock_coordinator,
-        entity_description=SelectEntityDescription(
-            key="storage_mode",
-            name="Storage Mode",
-            icon="mdi:solar-power",
-        ),
+        entity_description=SelectEntityDescription(key="any_key", name="any name"),
         storage_mode=any_inverter.storage_mode,
     )
 
