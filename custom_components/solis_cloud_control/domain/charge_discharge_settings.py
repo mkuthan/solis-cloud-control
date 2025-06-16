@@ -21,39 +21,39 @@ class ChargeDischargeSettings(ABC):
 
     @abstractmethod
     def get_charge_current(self, slot: int) -> float | None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_discharge_current(self, slot: int) -> float | None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_charge_time_slot(self, slot: int) -> str | None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_discharge_time_slot(self, slot: int) -> str | None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def set_charge_current(self, slot: int, current: float) -> None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def set_discharge_current(self, slot: int, current: float) -> None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def set_charge_time_slot(self, slot: int, time_slot: str) -> None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def set_discharge_time_slot(self, slot: int, time_slot: str) -> None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def to_value(self) -> str:
-        pass
+        raise NotImplementedError
 
 
 class ChargeDischargeSettingsVariant1(ChargeDischargeSettings):
