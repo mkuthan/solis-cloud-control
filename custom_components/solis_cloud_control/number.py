@@ -201,11 +201,11 @@ class BatteryCurrentV1(SolisCloudControlEntity, NumberEntity):
 
     @property
     def native_value(self) -> float | None:
-        value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
 
-        charge_discharge_settings = ChargeDischargeSettings.create(value)
+        charge_discharge_settings = ChargeDischargeSettings.create(current_value)
         if charge_discharge_settings is None:
-            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, value)
+            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, current_value)
             return None
 
         if self.slot_type == "charge":
@@ -216,11 +216,11 @@ class BatteryCurrentV1(SolisCloudControlEntity, NumberEntity):
         return current
 
     async def async_set_native_value(self, value: float) -> None:
-        charge_discharge_settings_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
-        charge_discharge_settings = ChargeDischargeSettings.create(charge_discharge_settings_value)
+        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        charge_discharge_settings = ChargeDischargeSettings.create(current_value)
 
         if charge_discharge_settings is None:
-            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, value)
+            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, current_value)
             return None
 
         if self.slot_type == "charge":
@@ -228,10 +228,10 @@ class BatteryCurrentV1(SolisCloudControlEntity, NumberEntity):
         else:
             charge_discharge_settings.set_discharge_current(self.slot_number, value)
 
-        _LOGGER.info("Setting '%s' to %s", self.name, value)
-        await self.coordinator.control(
-            self.inverter_charge_discharge_settings.cid, charge_discharge_settings.to_value()
-        )
+        value_str = charge_discharge_settings.to_value()
+
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
+        await self.coordinator.control(self.inverter_charge_discharge_settings.cid, value_str)
 
 
 class BatteryCurrentV2(SolisCloudControlEntity, NumberEntity):
@@ -273,7 +273,7 @@ class BatteryCurrentV2(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
-        _LOGGER.info("Setting current to %f (value: %s)", value, value_str)
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_charge_discharge_slot.current_cid, value_str)
 
 
@@ -327,7 +327,7 @@ class BatterySocV2(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
-        _LOGGER.info("Setting SOC to %f (value: %s)", value, value_str)
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_charge_discharge_slot.soc_cid, value_str)
 
 
@@ -353,7 +353,7 @@ class MaxOutputPower(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
-        _LOGGER.info("Setting max output power to %f (value: %s)", value, value_str)
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_max_output_power.cid, value_str)
 
 
@@ -381,7 +381,7 @@ class MaxExportPower(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value * self.inverter_max_export_power.scale)))
-        _LOGGER.info("Setting max export power to %f (value: %s)", value, value_str)
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_max_export_power.cid, value_str)
 
 
@@ -407,5 +407,5 @@ class PowerLimit(SolisCloudControlEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value_str = str(int(round(value)))
-        _LOGGER.info("Setting power limit to %f (value: %s)", value, value_str)
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_power_limit.cid, value_str)

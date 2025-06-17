@@ -13,7 +13,7 @@ def battery_soc_sensor(mock_coordinator, any_inverter):
     return BatterySocSensor(
         coordinator=mock_coordinator,
         entity_description=SensorEntityDescription(key="any_key", name="any name"),
-        battery_soc=any_inverter.battery_force_charge_soc,
+        inverter_battery_soc=any_inverter.battery_force_charge_soc,
     )
 
 
@@ -22,7 +22,7 @@ def battery_current_sensor(mock_coordinator, any_inverter):
     return BatteryCurrentSensor(
         coordinator=mock_coordinator,
         entity_description=SensorEntityDescription(key="any_key", name="any name"),
-        battery_current=any_inverter.battery_max_charge_current,
+        inverter_battery_current=any_inverter.battery_max_charge_current,
     )
 
 
@@ -41,7 +41,7 @@ class TestBatterySocSensor:
         ],
     )
     def test_native_value(self, battery_soc_sensor, value, expected):
-        battery_soc_sensor.coordinator.data = {battery_soc_sensor.battery_soc.cid: value}
+        battery_soc_sensor.coordinator.data = {battery_soc_sensor.inverter_battery_soc.cid: value}
         assert battery_soc_sensor.native_value == expected
 
 
@@ -60,5 +60,5 @@ class TestBatteryCurrentSensor:
         ],
     )
     def test_native_value(self, battery_current_sensor, value, expected):
-        battery_current_sensor.coordinator.data = {battery_current_sensor.battery_current.cid: value}
+        battery_current_sensor.coordinator.data = {battery_current_sensor.inverter_battery_current.cid: value}
         assert battery_current_sensor.native_value == expected

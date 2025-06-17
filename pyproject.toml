@@ -16,7 +16,7 @@ dev-dependencies = [
 [tool.pytest.ini_options]
 pythonpath = "."
 testpaths = ["tests"]
-addopts = "-rA --cov=custom_components --cov-branch --cov-fail-under=95"
+addopts = "-rA --cov=custom_components --cov-branch --cov-fail-under=98"
 asyncio_mode = "auto"
 
 [tool.ruff]

@@ -20,129 +20,149 @@ class ChargeDischargeSettings(ABC):
             return None
 
     @abstractmethod
-    def get_charge_current(self, slot: int) -> float | None:
+    def get_charge_current(self, slot_index: int) -> float | None:
         raise NotImplementedError
 
     @abstractmethod
-    def get_discharge_current(self, slot: int) -> float | None:
+    def get_discharge_current(self, slot_index: int) -> float | None:
         raise NotImplementedError
 
     @abstractmethod
-    def get_charge_time_slot(self, slot: int) -> str | None:
+    def get_charge_time_slot(self, slot_index: int) -> str | None:
         raise NotImplementedError
 
     @abstractmethod
-    def get_discharge_time_slot(self, slot: int) -> str | None:
+    def get_discharge_time_slot(self, slot_index: int) -> str | None:
         raise NotImplementedError
 
     @abstractmethod
-    def set_charge_current(self, slot: int, current: float) -> None:
+    def set_charge_current(self, slot_index: int, current: float) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def set_discharge_current(self, slot: int, current: float) -> None:
+    def set_discharge_current(self, slot_index: int, current: float) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def set_charge_time_slot(self, slot: int, time_slot: str) -> None:
+    def set_charge_time_slot(self, slot_index: int, time_slot: str) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def set_discharge_time_slot(self, slot: int, time_slot: str) -> None:
+    def set_discharge_time_slot(self, slot_index: int, time_slot: str) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def to_value(self) -> str:
         raise NotImplementedError
+
+    @staticmethod
+    def _format_current(current: float) -> str:
+        return str(int(round(current)))
+
+    @staticmethod
+    def _format_time_slot(start: str, end: str) -> str | None:
+        return f"{start}-{end}" if start and end else None
+
+    @staticmethod
+    def _format_value(fields: list[str]) -> str:
+        return ",".join(fields)
 
 
 class ChargeDischargeSettingsVariant1(ChargeDischargeSettings):
     def __init__(self, fields: list[str]) -> None:
         self._fields = fields
 
-    def get_charge_current(self, slot: int) -> float | None:
-        base_idx = (slot - 1) * 6
+    def get_charge_current(self, slot_index: int) -> float | None:
+        base_idx = (slot_index - 1) * 6
         return safe_get_float_value(self._fields[base_idx])
 
-    def get_discharge_current(self, slot: int) -> float | None:
-        base_idx = (slot - 1) * 6
+    def get_discharge_current(self, slot_index: int) -> float | None:
+        base_idx = (slot_index - 1) * 6
         return safe_get_float_value(self._fields[base_idx + 1])
 
-    def get_charge_time_slot(self, slot: int) -> str | None:
-        base_idx = (slot - 1) * 6
+    def get_charge_time_slot(self, slot_index: int) -> str | None:
+        base_idx = (slot_index - 1) * 6
 
         charge_start = self._fields[base_idx + 2]
         charge_end = self._fields[base_idx + 3]
 
-        return f"{charge_start}-{charge_end}"
+        return ChargeDischargeSettings._format_time_slot(charge_start, charge_end)
 
-    def get_discharge_time_slot(self, slot: int) -> str | None:
-        base_idx = (slot - 1) * 6
+    def get_discharge_time_slot(self, slot_index: int) -> str | None:
+        base_idx = (slot_index - 1) * 6
 
         discharge_start = self._fields[base_idx + 4]
         discharge_end = self._fields[base_idx + 5]
 
-        return f"{discharge_start}-{discharge_end}"
+        return ChargeDischargeSettings._format_time_slot(discharge_start, discharge_end)
 
-    def set_charge_current(self, slot: int, current: float) -> None:
-        base_idx = (slot - 1) * 6
-        self._fields[base_idx] = str(int(round(current)))
+    def set_charge_current(self, slot_index: int, current: float) -> None:
+        base_idx = (slot_index - 1) * 6
+        self._fields[base_idx] = ChargeDischargeSettings._format_current(current)
 
-    def set_discharge_current(self, slot: int, current: float) -> None:
-        base_idx = (slot - 1) * 6
-        self._fields[base_idx + 1] = str(int(round(current)))
+    def set_discharge_current(self, slot_index: int, current: float) -> None:
+        base_idx = (slot_index - 1) * 6
+        self._fields[base_idx + 1] = ChargeDischargeSettings._format_current(current)
 
-    def set_charge_time_slot(self, slot: int, time_slot: str) -> None:
+    def set_charge_time_slot(self, slot_index: int, time_slot: str) -> None:
         start_time, end_time = time_slot.split("-")
-        base_idx = (slot - 1) * 6
+        base_idx = (slot_index - 1) * 6
         self._fields[base_idx + 2] = start_time
         self._fields[base_idx + 3] = end_time
 
-    def set_discharge_time_slot(self, slot: int, time_slot: str) -> None:
+    def set_discharge_time_slot(self, slot_index: int, time_slot: str) -> None:
         start_time, end_time = time_slot.split("-")
-        base_idx = (slot - 1) * 6
+        base_idx = (slot_index - 1) * 6
         self._fields[base_idx + 4] = start_time
         self._fields[base_idx + 5] = end_time
 
     def to_value(self) -> str:
-        return ",".join(self._fields)
+        return ChargeDischargeSettings._format_value(self._fields)
 
 
 class ChargeDischargeSettingsVariant2(ChargeDischargeSettings):
     def __init__(self, fields: list[str]) -> None:
         self._fields = fields
 
-    def get_charge_current(self, slot: int) -> float | None:
-        base_idx = (slot - 1) * 4
+    def get_charge_current(self, slot_index: int) -> float | None:
+        base_idx = (slot_index - 1) * 4
         return safe_get_float_value(self._fields[base_idx])
 
-    def get_discharge_current(self, slot: int) -> float | None:
-        base_idx = (slot - 1) * 4
+    def get_discharge_current(self, slot_index: int) -> float | None:
+        base_idx = (slot_index - 1) * 4
         return safe_get_float_value(self._fields[base_idx + 1])
 
-    def get_charge_time_slot(self, slot: int) -> str | None:
-        base_idx = (slot - 1) * 4
-        return self._fields[base_idx + 2]
+    def get_charge_time_slot(self, slot_index: int) -> str | None:
+        base_idx = (slot_index - 1) * 4
+        time_slot = self._fields[base_idx + 2]
+        if not time_slot:
+            return None
 
-    def get_discharge_time_slot(self, slot: int) -> str | None:
-        base_idx = (slot - 1) * 4
-        return self._fields[base_idx + 3]
+        return time_slot
 
-    def set_charge_current(self, slot: int, current: float) -> None:
-        base_idx = (slot - 1) * 4
-        self._fields[base_idx] = str(int(round(current)))
+    def get_discharge_time_slot(self, slot_index: int) -> str | None:
+        base_idx = (slot_index - 1) * 4
+        time_slot = self._fields[base_idx + 3]
+        if not time_slot:
+            return None
 
-    def set_discharge_current(self, slot: int, current: float) -> None:
-        base_idx = (slot - 1) * 4
-        self._fields[base_idx + 1] = str(int(round(current)))
+        return time_slot
 
-    def set_charge_time_slot(self, slot: int, time_slot: str) -> None:
-        base_idx = (slot - 1) * 4
+    def set_charge_current(self, slot_index: int, current: float) -> None:
+        base_idx = (slot_index - 1) * 4
+        self._fields[base_idx] = ChargeDischargeSettings._format_current(current)
+
+    def set_discharge_current(self, slot_index: int, current: float) -> None:
+        base_idx = (slot_index - 1) * 4
+        self._fields[base_idx + 1] = ChargeDischargeSettings._format_current(current)
+
+    def set_charge_time_slot(self, slot_index: int, time_slot: str) -> None:
+        base_idx = (slot_index - 1) * 4
         self._fields[base_idx + 2] = time_slot
 
-    def set_discharge_time_slot(self, slot: int, time_slot: str) -> None:
-        base_idx = (slot - 1) * 4
+    def set_discharge_time_slot(self, slot_index: int, time_slot: str) -> None:
+        base_idx = (slot_index - 1) * 4
         self._fields[base_idx + 3] = time_slot
 
     def to_value(self) -> str:
-        return ",".join(self._fields)
+        return ChargeDischargeSettings._format_value(self._fields)

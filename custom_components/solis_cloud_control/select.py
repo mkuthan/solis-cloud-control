@@ -33,7 +33,7 @@ async def async_setup_entry(
                     name="Storage Mode",
                     icon="mdi:solar-power",
                 ),
-                storage_mode=inverter.storage_mode,
+                inverter_storage_mode=inverter.storage_mode,
             )
         )
 
@@ -45,53 +45,53 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: SelectEntityDescription,
-        storage_mode: InverterStorageMode,
+        inverter_storage_mode: InverterStorageMode,
     ) -> None:
-        super().__init__(coordinator, entity_description, storage_mode.cid)
+        super().__init__(coordinator, entity_description, inverter_storage_mode.cid)
         self._attr_options = [
-            storage_mode.mode_self_use,
-            storage_mode.mode_feed_in_priority,
-            storage_mode.mode_off_grid,
+            inverter_storage_mode.mode_self_use,
+            inverter_storage_mode.mode_feed_in_priority,
+            inverter_storage_mode.mode_off_grid,
         ]
 
-        self.storage_mode = storage_mode
+        self.inverter_storage_mode = inverter_storage_mode
 
     @property
     def current_option(self) -> str | None:
-        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
         value = safe_get_int_value(value_str)
         if value is None:
             return None
 
-        if value & (1 << self.storage_mode.bit_self_use):
-            return self.storage_mode.mode_self_use
-        elif value & (1 << self.storage_mode.bit_feed_in_priority):
-            return self.storage_mode.mode_feed_in_priority
-        elif value & (1 << self.storage_mode.bit_off_grid):
-            return self.storage_mode.mode_off_grid
+        if value & (1 << self.inverter_storage_mode.bit_self_use):
+            return self.inverter_storage_mode.mode_self_use
+        elif value & (1 << self.inverter_storage_mode.bit_feed_in_priority):
+            return self.inverter_storage_mode.mode_feed_in_priority
+        elif value & (1 << self.inverter_storage_mode.bit_off_grid):
+            return self.inverter_storage_mode.mode_off_grid
 
         return None
 
     async def async_select_option(self, option: str) -> None:
-        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
         value = safe_get_int_value(value_str)
         if value is None:
             return
 
         # clear the bits for the storage mode options
         new_value = value & ~(
-            (1 << self.storage_mode.bit_self_use)
-            | (1 << self.storage_mode.bit_feed_in_priority)
-            | (1 << self.storage_mode.bit_off_grid)
+            (1 << self.inverter_storage_mode.bit_self_use)
+            | (1 << self.inverter_storage_mode.bit_feed_in_priority)
+            | (1 << self.inverter_storage_mode.bit_off_grid)
         )
 
-        if option == self.storage_mode.mode_self_use:
-            new_value |= 1 << self.storage_mode.bit_self_use
-        elif option == self.storage_mode.mode_feed_in_priority:
-            new_value |= 1 << self.storage_mode.bit_feed_in_priority
-        elif option == self.storage_mode.mode_off_grid:
-            new_value |= 1 << self.storage_mode.bit_off_grid
+        if option == self.inverter_storage_mode.mode_self_use:
+            new_value |= 1 << self.inverter_storage_mode.bit_self_use
+        elif option == self.inverter_storage_mode.mode_feed_in_priority:
+            new_value |= 1 << self.inverter_storage_mode.bit_feed_in_priority
+        elif option == self.inverter_storage_mode.mode_off_grid:
+            new_value |= 1 << self.inverter_storage_mode.bit_off_grid
 
-        _LOGGER.info("Setting storage mode to %s (value: %s)", option, new_value)
+        _LOGGER.info("Set '%s' to %s (value: %s)", self.name, option, new_value)
 
-        await self.coordinator.control(self.storage_mode.cid, str(new_value))
+        await self.coordinator.control(self.inverter_storage_mode.cid, str(new_value))

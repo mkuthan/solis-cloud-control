@@ -10,13 +10,13 @@ def storage_mode_entity(mock_coordinator, any_inverter):
     return StorageModeSelect(
         coordinator=mock_coordinator,
         entity_description=SelectEntityDescription(key="any_key", name="any name"),
-        storage_mode=any_inverter.storage_mode,
+        inverter_storage_mode=any_inverter.storage_mode,
     )
 
 
 class TestStorageModeSelect:
     async def test_options(self, storage_mode_entity):
-        storage_mode = storage_mode_entity.storage_mode
+        storage_mode = storage_mode_entity.inverter_storage_mode
         assert storage_mode_entity.options == [
             storage_mode.mode_self_use,
             storage_mode.mode_feed_in_priority,
@@ -35,7 +35,7 @@ class TestStorageModeSelect:
         ],
     )
     async def test_current_option(self, storage_mode_entity, value, expected_mode):
-        storage_mode_entity.coordinator.data = {storage_mode_entity.storage_mode.cid: value}
+        storage_mode_entity.coordinator.data = {storage_mode_entity.inverter_storage_mode.cid: value}
         assert storage_mode_entity.current_option == expected_mode
 
     @pytest.mark.parametrize(
@@ -47,10 +47,10 @@ class TestStorageModeSelect:
         ],
     )
     async def test_async_select_option(self, storage_mode_entity, option, expected_value):
-        storage_mode_entity.coordinator.data = {storage_mode_entity.storage_mode.cid: 0}
+        storage_mode_entity.coordinator.data = {storage_mode_entity.inverter_storage_mode.cid: 0}
         await storage_mode_entity.async_select_option(option)
         storage_mode_entity.coordinator.control.assert_awaited_once_with(
-            storage_mode_entity.storage_mode.cid, expected_value
+            storage_mode_entity.inverter_storage_mode.cid, expected_value
         )
 
     @pytest.mark.parametrize(
@@ -70,13 +70,13 @@ class TestStorageModeSelect:
             | (1 << InverterStorageMode.bit_feed_in_priority)
             | (1 << InverterStorageMode.bit_off_grid)
         )
-        storage_mode_entity.coordinator.data = {storage_mode_entity.storage_mode.cid: initial_value}
+        storage_mode_entity.coordinator.data = {storage_mode_entity.inverter_storage_mode.cid: initial_value}
 
         await storage_mode_entity.async_select_option(mode)
 
         expected_value = initial_value | (1 << bit)
         storage_mode_entity.coordinator.control.assert_awaited_once_with(
-            storage_mode_entity.storage_mode.cid, str(expected_value)
+            storage_mode_entity.inverter_storage_mode.cid, str(expected_value)
         )
 
     @pytest.mark.parametrize(
@@ -87,6 +87,6 @@ class TestStorageModeSelect:
         ],
     )
     async def test_async_select_option_invalid_initial(self, storage_mode_entity, initial_value):
-        storage_mode_entity.coordinator.data = {storage_mode_entity.storage_mode.cid: initial_value}
+        storage_mode_entity.coordinator.data = {storage_mode_entity.inverter_storage_mode.cid: initial_value}
         await storage_mode_entity.async_select_option(InverterStorageMode.mode_self_use)
         storage_mode_entity.coordinator.control.assert_not_awaited()

@@ -3,7 +3,6 @@ from typing import Literal
 
 from homeassistant.components.text import TextEntity, TextEntityDescription
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
@@ -12,7 +11,6 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSettings,
     InverterChargeDischargeSlot,
 )
-from custom_components.solis_cloud_control.utils.time_validator import validate_time_range
 
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
@@ -114,11 +112,11 @@ class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
 
     @property
     def native_value(self) -> str | None:
-        value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
 
-        charge_discharge_settings = ChargeDischargeSettings.create(value)
+        charge_discharge_settings = ChargeDischargeSettings.create(current_value)
         if charge_discharge_settings is None:
-            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, value)
+            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, current_value)
             return None
 
         if self.slot_type == "charge":
@@ -126,24 +124,14 @@ class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
         else:
             time_slot = charge_discharge_settings.get_discharge_time_slot(self.slot_number)
 
-        if time_slot is None:
-            return None
-
-        if not validate_time_range(time_slot):
-            _LOGGER.warning("Invalid '%s': %s", self.name, time_slot)
-            return None
-
         return time_slot
 
     async def async_set_value(self, value: str) -> None:
-        if not validate_time_range(value):
-            raise HomeAssistantError(f"Invalid '{self.name}': {value}")
-
-        charge_discharge_settings_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
-        charge_discharge_settings = ChargeDischargeSettings.create(charge_discharge_settings_value)
+        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        charge_discharge_settings = ChargeDischargeSettings.create(current_value)
 
         if charge_discharge_settings is None:
-            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, value)
+            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, current_value)
             return None
 
         if self.slot_type == "charge":
@@ -151,10 +139,10 @@ class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
         else:
             charge_discharge_settings.set_discharge_time_slot(self.slot_number, value)
 
-        _LOGGER.info("Setting '%s' to %s", self.name, value)
-        await self.coordinator.control(
-            self.inverter_charge_discharge_settings.cid, charge_discharge_settings.to_value()
-        )
+        value_str = charge_discharge_settings.to_value()
+
+        _LOGGER.info("Set '%s' to %s (value: %s)", self.name, value, value_str)
+        await self.coordinator.control(self.inverter_charge_discharge_settings.cid, value_str)
 
 
 class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
@@ -176,20 +164,8 @@ class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
 
     @property
     def native_value(self) -> str | None:
-        value = self.coordinator.data.get(self.inverter_charge_discharge_slot.time_cid)
-
-        if value is None:
-            return None
-
-        if not validate_time_range(value):
-            _LOGGER.warning("Invalid '%s': %s", self.name, value)
-            return None
-
-        return value
+        return self.coordinator.data.get(self.inverter_charge_discharge_slot.time_cid)
 
     async def async_set_value(self, value: str) -> None:
-        if not validate_time_range(value):
-            raise HomeAssistantError(f"Invalid '{self.name}': {value}")
-
-        _LOGGER.info("Setting '%s' to %s", self.name, value)
+        _LOGGER.info("Set '%s' to %s", self.name, value)
         await self.coordinator.control(self.inverter_charge_discharge_slot.time_cid, value)

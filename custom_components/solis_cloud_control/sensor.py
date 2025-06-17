@@ -38,7 +38,7 @@ async def async_setup_entry(
                     name="Battery Force Charge SOC",
                     icon="mdi:battery-alert",
                 ),
-                battery_soc=inverter.battery_force_charge_soc,
+                inverter_battery_soc=inverter.battery_force_charge_soc,
             )
         )
     if inverter.battery_over_discharge_soc:
@@ -50,7 +50,7 @@ async def async_setup_entry(
                     name="Battery Over Discharge SOC",
                     icon="mdi:battery-50",
                 ),
-                battery_soc=inverter.battery_over_discharge_soc,
+                inverter_battery_soc=inverter.battery_over_discharge_soc,
             )
         )
     if inverter.battery_recovery_soc:
@@ -62,7 +62,7 @@ async def async_setup_entry(
                     name="Battery Recovery SOC",
                     icon="mdi:battery-50",
                 ),
-                battery_soc=inverter.battery_recovery_soc,
+                inverter_battery_soc=inverter.battery_recovery_soc,
             )
         )
     if inverter.battery_reserve_soc:
@@ -74,7 +74,7 @@ async def async_setup_entry(
                     name="Battery Reserve SOC",
                     icon="mdi:battery-50",
                 ),
-                battery_soc=inverter.battery_reserve_soc,
+                inverter_battery_soc=inverter.battery_reserve_soc,
             )
         )
     if inverter.battery_max_charge_soc:
@@ -86,7 +86,7 @@ async def async_setup_entry(
                     name="Battery Max Charge SOC",
                     icon="mdi:battery",
                 ),
-                battery_soc=inverter.battery_max_charge_soc,
+                inverter_battery_soc=inverter.battery_max_charge_soc,
             )
         )
     if inverter.battery_max_charge_current:
@@ -98,7 +98,7 @@ async def async_setup_entry(
                     name="Battery Max Charge Current",
                     icon="mdi:battery-arrow-down-outline",
                 ),
-                battery_current=inverter.battery_max_charge_current,
+                inverter_battery_current=inverter.battery_max_charge_current,
             )
         )
     if inverter.battery_max_discharge_current:
@@ -110,7 +110,7 @@ async def async_setup_entry(
                     name="Battery Max Discharge Current",
                     icon="mdi:battery-arrow-up-outline",
                 ),
-                battery_current=inverter.battery_max_discharge_current,
+                inverter_battery_current=inverter.battery_max_discharge_current,
             )
         )
 
@@ -122,20 +122,20 @@ class BatterySocSensor(SolisCloudControlEntity, SensorEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: SensorEntityDescription,
-        battery_soc: InverterBatteryReserveSOC
+        inverter_battery_soc: InverterBatteryReserveSOC
         | InverterBatteryOverDischargeSOC
         | InverterBatteryForceChargeSOC
         | InverterBatteryRecoverySOC
         | InverterBatteryMaxChargeSOC,
     ) -> None:
-        super().__init__(coordinator, entity_description, battery_soc.cid)
+        super().__init__(coordinator, entity_description, inverter_battery_soc.cid)
         self._attr_native_unit_of_measurement = PERCENTAGE
 
-        self.battery_soc = battery_soc
+        self.inverter_battery_soc = inverter_battery_soc
 
     @property
     def native_value(self) -> float | None:
-        value_str = self.coordinator.data.get(self.battery_soc.cid)
+        value_str = self.coordinator.data.get(self.inverter_battery_soc.cid)
         return safe_get_float_value(value_str)
 
 
@@ -144,14 +144,14 @@ class BatteryCurrentSensor(SolisCloudControlEntity, SensorEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: SensorEntityDescription,
-        battery_current: InverterBatteryMaxChargeCurrent | InverterBatteryMaxDischargeCurrent,
+        inverter_battery_current: InverterBatteryMaxChargeCurrent | InverterBatteryMaxDischargeCurrent,
     ) -> None:
-        super().__init__(coordinator, entity_description, battery_current.cid)
+        super().__init__(coordinator, entity_description, inverter_battery_current.cid)
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
 
-        self.battery_current = battery_current
+        self.inverter_battery_current = inverter_battery_current
 
     @property
     def native_value(self) -> float | None:
-        value_str = self.coordinator.data.get(self.battery_current.cid)
+        value_str = self.coordinator.data.get(self.inverter_battery_current.cid)
         return safe_get_float_value(value_str)
