@@ -40,14 +40,6 @@ class InverterOnOff:
 @dataclass(frozen=True)
 class InverterStorageMode:
     cid: int = 636
-    mode_self_use: str = "Self-Use"
-    mode_feed_in_priority: str = "Feed-In Priority"
-    mode_off_grid: str = "Off-Grid"
-    bit_self_use: int = 0
-    bit_off_grid: int = 2
-    bit_backup_mode: int = 4
-    bit_grid_charging: int = 5
-    bit_feed_in_priority: int = 6
 
 
 @dataclass(frozen=True)

@@ -5,8 +5,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
 from custom_components.solis_cloud_control.inverters.inverter import InverterStorageMode
-from custom_components.solis_cloud_control.utils.safe_converters import safe_get_int_value
 
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
@@ -41,6 +41,10 @@ async def async_setup_entry(
 
 
 class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
+    MODE_SELF_USE: str = "Self-Use"
+    MODE_FEED_IN_PRIORITY: str = "Feed-In Priority"
+    MODE_OFF_GRID: str = "Off-Grid"
+
     def __init__(
         self,
         coordinator: SolisCloudControlCoordinator,
@@ -49,49 +53,47 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_storage_mode.cid)
         self._attr_options = [
-            inverter_storage_mode.mode_self_use,
-            inverter_storage_mode.mode_feed_in_priority,
-            inverter_storage_mode.mode_off_grid,
+            self.MODE_SELF_USE,
+            self.MODE_FEED_IN_PRIORITY,
+            self.MODE_OFF_GRID,
         ]
 
         self.inverter_storage_mode = inverter_storage_mode
 
     @property
     def current_option(self) -> str | None:
-        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
-        value = safe_get_int_value(value_str)
-        if value is None:
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
             return None
 
-        if value & (1 << self.inverter_storage_mode.bit_self_use):
-            return self.inverter_storage_mode.mode_self_use
-        elif value & (1 << self.inverter_storage_mode.bit_feed_in_priority):
-            return self.inverter_storage_mode.mode_feed_in_priority
-        elif value & (1 << self.inverter_storage_mode.bit_off_grid):
-            return self.inverter_storage_mode.mode_off_grid
+        if storage_mode.is_self_use():
+            return self.MODE_SELF_USE
+        elif storage_mode.is_feed_in_priority():
+            return self.MODE_FEED_IN_PRIORITY
+        elif storage_mode.is_off_grid():
+            return self.MODE_OFF_GRID
 
         return None
 
     async def async_select_option(self, option: str) -> None:
-        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
-        value = safe_get_int_value(value_str)
-        if value is None:
-            return
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
-        # clear the bits for the storage mode options
-        new_value = value & ~(
-            (1 << self.inverter_storage_mode.bit_self_use)
-            | (1 << self.inverter_storage_mode.bit_feed_in_priority)
-            | (1 << self.inverter_storage_mode.bit_off_grid)
-        )
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
+            return None
 
-        if option == self.inverter_storage_mode.mode_self_use:
-            new_value |= 1 << self.inverter_storage_mode.bit_self_use
-        elif option == self.inverter_storage_mode.mode_feed_in_priority:
-            new_value |= 1 << self.inverter_storage_mode.bit_feed_in_priority
-        elif option == self.inverter_storage_mode.mode_off_grid:
-            new_value |= 1 << self.inverter_storage_mode.bit_off_grid
+        if option == self.MODE_SELF_USE:
+            storage_mode.set_self_use()
+        elif option == self.MODE_FEED_IN_PRIORITY:
+            storage_mode.set_feed_in_priority()
+        elif option == self.MODE_OFF_GRID:
+            storage_mode.set_off_grid()
 
-        _LOGGER.info("Set '%s' to %s (value: %s)", self.name, option, new_value)
+        value_str = storage_mode.to_value()
 
-        await self.coordinator.control(self.inverter_storage_mode.cid, str(new_value))
+        _LOGGER.info("Set '%s' to %s (value: %s)", self.name, option, value_str)
+        await self.coordinator.control(self.inverter_storage_mode.cid, value_str)

@@ -1,6 +1,7 @@
 import pytest
 from homeassistant.components.switch import SwitchEntityDescription
 
+from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
 from custom_components.solis_cloud_control.switch import (
     AllowGridChargingSwitch,
     BatteryReserveSwitch,
@@ -154,7 +155,7 @@ class TestBatteryReserveSwitch:
         assert battery_reserve_switch.is_on is None
 
     def test_is_on_when_on(self, battery_reserve_switch):
-        bit = battery_reserve_switch.inverter_storage_mode.bit_backup_mode
+        bit = StorageMode.BIT_BACKUP_MODE
         battery_reserve_switch.coordinator.data = {battery_reserve_switch.inverter_storage_mode.cid: str(1 << bit)}
         assert battery_reserve_switch.is_on is True
 
@@ -163,7 +164,7 @@ class TestBatteryReserveSwitch:
         assert battery_reserve_switch.is_on is False
 
     async def test_turn_on(self, battery_reserve_switch):
-        bit = battery_reserve_switch.inverter_storage_mode.bit_backup_mode
+        bit = StorageMode.BIT_BACKUP_MODE
         battery_reserve_switch.coordinator.data = {battery_reserve_switch.inverter_storage_mode.cid: str(0)}
         await battery_reserve_switch.async_turn_on()
         battery_reserve_switch.coordinator.control.assert_awaited_once_with(
@@ -171,7 +172,7 @@ class TestBatteryReserveSwitch:
         )
 
     async def test_turn_off(self, battery_reserve_switch):
-        bit = battery_reserve_switch.inverter_storage_mode.bit_backup_mode
+        bit = StorageMode.BIT_BACKUP_MODE
         battery_reserve_switch.coordinator.data = {battery_reserve_switch.inverter_storage_mode.cid: str(1 << bit)}
         await battery_reserve_switch.async_turn_off()
         battery_reserve_switch.coordinator.control.assert_awaited_once_with(
@@ -207,7 +208,7 @@ class TestAllowGridChargingSwitch:
         assert allow_grid_charging_switch.is_on is None
 
     def test_is_on_when_on(self, allow_grid_charging_switch):
-        bit = allow_grid_charging_switch.inverter_storage_mode.bit_grid_charging
+        bit = StorageMode.BIT_GRID_CHARGING
         allow_grid_charging_switch.coordinator.data = {
             allow_grid_charging_switch.inverter_storage_mode.cid: str(1 << bit)
         }
@@ -218,7 +219,7 @@ class TestAllowGridChargingSwitch:
         assert allow_grid_charging_switch.is_on is False
 
     async def test_turn_on(self, allow_grid_charging_switch):
-        bit = allow_grid_charging_switch.inverter_storage_mode.bit_grid_charging
+        bit = StorageMode.BIT_GRID_CHARGING
         allow_grid_charging_switch.coordinator.data = {allow_grid_charging_switch.inverter_storage_mode.cid: str(0)}
         await allow_grid_charging_switch.async_turn_on()
         allow_grid_charging_switch.coordinator.control.assert_awaited_once_with(
@@ -226,7 +227,7 @@ class TestAllowGridChargingSwitch:
         )
 
     async def test_turn_off(self, allow_grid_charging_switch):
-        bit = allow_grid_charging_switch.inverter_storage_mode.bit_grid_charging
+        bit = StorageMode.BIT_GRID_CHARGING
         allow_grid_charging_switch.coordinator.data = {
             allow_grid_charging_switch.inverter_storage_mode.cid: str(1 << bit)
         }
