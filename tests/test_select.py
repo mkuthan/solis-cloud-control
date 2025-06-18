@@ -2,7 +2,6 @@ import pytest
 from homeassistant.components.select import SelectEntityDescription
 
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
-from custom_components.solis_cloud_control.inverters.inverter import InverterStorageMode
 from custom_components.solis_cloud_control.select import StorageModeSelect
 
 
