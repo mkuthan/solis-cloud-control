@@ -6,7 +6,7 @@ from custom_components.solis_cloud_control.utils.safe_converters import safe_get
 class ChargeDischargeSettings(ABC):
     @staticmethod
     def create(value: str | None) -> "ChargeDischargeSettings | None":
-        if not value:
+        if value is None:
             return None
 
         fields = value.split(",")

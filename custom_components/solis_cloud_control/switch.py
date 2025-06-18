@@ -5,13 +5,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
 from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSlot,
     InverterChargeDischargeSlots,
     InverterOnOff,
     InverterStorageMode,
 )
-from custom_components.solis_cloud_control.utils.safe_converters import safe_get_int_value
 
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
@@ -213,32 +213,44 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
 
     @property
     def is_on(self) -> bool | None:
-        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
-        value = safe_get_int_value(value_str)
-        if value is None:
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
             return None
 
-        return bool(value & (1 << self.inverter_storage_mode.bit_backup_mode))
+        return storage_mode.is_battery_reserve_enabled()
 
     async def async_turn_on(self, **kwargs: any) -> None:  # noqa: ARG002
-        await self._async_set_bit(True)
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
+            return None
+
+        storage_mode.enable_battery_reserve()
+
+        value_str = storage_mode.to_value()
+
+        _LOGGER.info("Turn on '%s' (value: %s)", self.name, value_str)
+        await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
     async def async_turn_off(self, **kwargs: any) -> None:  # noqa: ARG002
-        await self._async_set_bit(False)
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
-    async def _async_set_bit(self, state: bool) -> None:
-        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
-        value = safe_get_int_value(value_str)
-        if value is None:
-            return
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
+            return None
 
-        if state:
-            value |= 1 << self.inverter_storage_mode.bit_backup_mode
-        else:
-            value &= ~(1 << self.inverter_storage_mode.bit_backup_mode)
+        storage_mode.disable_battery_reserve()
 
-        _LOGGER.info("Toggle '%s' (state: %s, value: %s)", self.name, state, value)
-        await self.coordinator.control(self.inverter_storage_mode.cid, str(value))
+        value_str = storage_mode.to_value()
+
+        _LOGGER.info("Turn off '%s' (value: %s)", self.name, value_str)
+        await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
 
 class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
@@ -253,29 +265,41 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
 
     @property
     def is_on(self) -> bool | None:
-        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
-        value = safe_get_int_value(value_str)
-        if value is None:
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
             return None
 
-        return bool(value & (1 << self.inverter_storage_mode.bit_grid_charging))
+        return storage_mode.is_allow_grid_charging()
 
     async def async_turn_on(self, **kwargs: any) -> None:  # noqa: ARG002
-        await self._async_set_bit(True)
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
+            return None
+
+        storage_mode.enable_allow_grid_charging()
+
+        value_str = storage_mode.to_value()
+
+        _LOGGER.info("Turn on '%s' (value: %s)", self.name, value_str)
+        await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
     async def async_turn_off(self, **kwargs: any) -> None:  # noqa: ARG002
-        await self._async_set_bit(False)
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
-    async def _async_set_bit(self, state: bool) -> None:
-        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
-        value = safe_get_int_value(value_str)
-        if value is None:
-            return
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
+            return None
 
-        if state:
-            value |= 1 << self.inverter_storage_mode.bit_grid_charging
-        else:
-            value &= ~(1 << self.inverter_storage_mode.bit_grid_charging)
+        storage_mode.disable_allow_grid_charging()
 
-        _LOGGER.info("Toggle '%s' (state: %s, value: %s)", self.name, state, value)
-        await self.coordinator.control(self.inverter_storage_mode.cid, str(value))
+        value_str = storage_mode.to_value()
+
+        _LOGGER.info("Turn off '%s' (value: %s)", self.name, value_str)
+        await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
