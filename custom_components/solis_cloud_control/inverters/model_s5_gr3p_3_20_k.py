@@ -4,6 +4,6 @@ from custom_components.solis_cloud_control.inverters.inverter import Inverter, I
 
 async def create_inverter(
     inverter_info: InverterInfo,
-    api_client: SolisCloudControlApiClient,  # noqa: ARG001
+    api_client: SolisCloudControlApiClient,
 ) -> Inverter:
-    return Inverter.create_string_inverter(inverter_info)
+    return await Inverter.create_string_inverter(inverter_info, api_client)

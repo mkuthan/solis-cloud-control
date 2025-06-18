@@ -64,7 +64,7 @@ async def test_create_inverter_unknown_hybrid_model(mock_api_client, any_inverte
     inverter_info = replace(any_inverter_info, model="unknown model", energy_storage_control="1")
     result = await create_inverter(mock_api_client, inverter_info)
 
-    assert result == Inverter.create_hybrid_inverter(inverter_info)
+    assert result == await Inverter.create_hybrid_inverter(inverter_info, mock_api_client)
 
 
 @pytest.mark.asyncio
@@ -72,20 +72,22 @@ async def test_create_inverter_unknown_string_model(mock_api_client, any_inverte
     inverter_info = replace(any_inverter_info, model="unknown model", energy_storage_control="0")
     result = await create_inverter(mock_api_client, inverter_info)
 
-    assert result == Inverter.create_string_inverter(inverter_info)
+    assert result == await Inverter.create_string_inverter(inverter_info, mock_api_client)
 
 
+@pytest.mark.parametrize("model", ["3101", "3102", "3306", "3331", "ca", "f4"])
 @pytest.mark.asyncio
-async def test_create_inverter_specific_hybrid_model(mock_api_client, any_inverter_info):
-    inverter_info = replace(any_inverter_info, model="3331")
+async def test_create_inverter_specific_hybrid_model(mock_api_client, any_inverter_info, model):
+    inverter_info = replace(any_inverter_info, model=model)
     result = await create_inverter(mock_api_client, inverter_info)
 
-    assert result != Inverter.create_string_inverter(inverter_info)
+    assert result != await Inverter.create_string_inverter(inverter_info, mock_api_client)
 
 
+@pytest.mark.parametrize("model", ["0200", "0205", "0507"])
 @pytest.mark.asyncio
-async def test_create_inverter_specific_string_model(mock_api_client, any_inverter_info):
-    inverter_info = replace(any_inverter_info, model="0200")
+async def test_create_inverter_specific_string_model(mock_api_client, any_inverter_info, model):
+    inverter_info = replace(any_inverter_info, model=model)
     result = await create_inverter(mock_api_client, inverter_info)
 
-    assert result != Inverter.create_hybrid_inverter(inverter_info)
+    assert result != await Inverter.create_hybrid_inverter(inverter_info, mock_api_client)

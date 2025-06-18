@@ -9,9 +9,9 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSlot,
     InverterChargeDischargeSlots,
     InverterOnOff,
-    InverterStorageMode,  # Added import
+    InverterStorageMode,
 )
-from custom_components.solis_cloud_control.utils.safe_converters import safe_get_int_value  # Added import
+from custom_components.solis_cloud_control.utils.safe_converters import safe_get_int_value
 
 from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
@@ -38,43 +38,38 @@ async def async_setup_entry(
                     name="Inverter On/Off",
                     icon="mdi:power",
                 ),
-                on_off=inverter.on_off,
+                inverter_on_off=inverter.on_off,
             )
         )
 
-    slots = inverter.charge_discharge_slots
+    charge_discharge_slots = inverter.charge_discharge_slots
 
-    if slots is not None:
-        tou_v2 = coordinator.data.get(slots.tou_v2_cid)
-
-        if not slots.is_tou_v2_enabled(tou_v2):
-            _LOGGER.info("Charge Discharge Slots not available, skip on/off entities creation")
-        else:
-            for i in range(1, slots.SLOTS_COUNT + 1):
-                entities.append(
-                    SlotSwitch(
-                        coordinator=coordinator,
-                        entity_description=SwitchEntityDescription(
-                            key=f"slot{i}_charge_switch",
-                            name=f"Slot{i} Charge",
-                            icon="mdi:battery-plus-outline",
-                        ),
-                        charge_discharge_slot=slots.get_charge_slot(i),
-                        charge_discharge_slots=slots,
-                    )
+    if charge_discharge_slots is not None:
+        for i in range(1, charge_discharge_slots.SLOTS_COUNT + 1):
+            entities.append(
+                SlotV2Switch(
+                    coordinator=coordinator,
+                    entity_description=SwitchEntityDescription(
+                        key=f"slot{i}_charge_switch",
+                        name=f"Slot{i} Charge",
+                        icon="mdi:battery-plus-outline",
+                    ),
+                    inverter_charge_discharge_slot=charge_discharge_slots.get_charge_slot(i),
+                    inverter_charge_discharge_slots=charge_discharge_slots,
                 )
-                entities.append(
-                    SlotSwitch(
-                        coordinator=coordinator,
-                        entity_description=SwitchEntityDescription(
-                            key=f"slot{i}_discharge_switch",
-                            name=f"Slot{i} Discharge",
-                            icon="mdi:battery-minus-outline",
-                        ),
-                        charge_discharge_slot=slots.get_discharge_slot(i),
-                        charge_discharge_slots=slots,
-                    )
+            )
+            entities.append(
+                SlotV2Switch(
+                    coordinator=coordinator,
+                    entity_description=SwitchEntityDescription(
+                        key=f"slot{i}_discharge_switch",
+                        name=f"Slot{i} Discharge",
+                        icon="mdi:battery-minus-outline",
+                    ),
+                    inverter_charge_discharge_slot=charge_discharge_slots.get_discharge_slot(i),
+                    inverter_charge_discharge_slots=charge_discharge_slots,
                 )
+            )
 
     if inverter.storage_mode is not None:
         entities.append(
@@ -85,7 +80,7 @@ async def async_setup_entry(
                     name="Battery Reserve",
                     icon="mdi:battery-heart-outline",
                 ),
-                storage_mode=inverter.storage_mode,
+                inverter_storage_mode=inverter.storage_mode,
             )
         )
         entities.append(
@@ -96,7 +91,7 @@ async def async_setup_entry(
                     name="Allow Grid Charging",
                     icon="mdi:battery-charging-outline",
                 ),
-                storage_mode=inverter.storage_mode,
+                inverter_storage_mode=inverter.storage_mode,
             )
         )
 
@@ -108,79 +103,79 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: SwitchEntityDescription,
-        on_off: InverterOnOff,
+        inverter_on_off: InverterOnOff,
     ) -> None:
-        super().__init__(coordinator, entity_description, [on_off.on_cid, on_off.off_cid])
-        self.on_off = on_off
+        super().__init__(coordinator, entity_description, [inverter_on_off.on_cid, inverter_on_off.off_cid])
+        self.inverter_on_off = inverter_on_off
 
     @property
     def assumed_state(self) -> bool:
-        on_value = self.coordinator.data.get(self.on_off.on_cid)
-        off_value = self.coordinator.data.get(self.on_off.off_cid)
+        on_value = self.coordinator.data.get(self.inverter_on_off.on_cid)
+        off_value = self.coordinator.data.get(self.inverter_on_off.off_cid)
 
         same_values = on_value == off_value
-        valid_values = self.on_off.is_valid_value(on_value) and self.on_off.is_valid_value(off_value)
+        valid_values = self.inverter_on_off.is_valid_value(on_value) and self.inverter_on_off.is_valid_value(off_value)
 
         return not (same_values and valid_values)
 
     @property
     def is_on(self) -> bool | None:
-        on_value = self.coordinator.data.get(self.on_off.on_cid)
-        off_value = self.coordinator.data.get(self.on_off.off_cid)
+        on_value = self.coordinator.data.get(self.inverter_on_off.on_cid)
+        off_value = self.coordinator.data.get(self.inverter_on_off.off_cid)
 
         same_values = on_value == off_value
-        valid_values = self.on_off.is_valid_value(on_value) and self.on_off.is_valid_value(off_value)
+        valid_values = self.inverter_on_off.is_valid_value(on_value) and self.inverter_on_off.is_valid_value(off_value)
 
         if same_values and valid_values:
-            return on_value == self.on_off.on_value
+            return on_value == self.inverter_on_off.on_value
 
         return None
 
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        _LOGGER.info("Turning on inverter")
+        _LOGGER.info("Turn on '%s'", self.name)
         if self.assumed_state:
-            await self.coordinator.control_no_check(self.on_off.on_cid, self.on_off.on_value)
+            await self.coordinator.control_no_check(self.inverter_on_off.on_cid, self.inverter_on_off.on_value)
         else:
-            await self.coordinator.control(self.on_off.on_cid, self.on_off.on_value)
+            await self.coordinator.control(self.inverter_on_off.on_cid, self.inverter_on_off.on_value)
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        _LOGGER.info("Turning off inverter")
+        _LOGGER.info("Turn off '%s'", self.name)
         if self.assumed_state:
-            await self.coordinator.control_no_check(self.on_off.off_cid, self.on_off.off_value)
+            await self.coordinator.control_no_check(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
         else:
-            await self.coordinator.control(self.on_off.off_cid, self.on_off.off_value)
+            await self.coordinator.control(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
 
 
-class SlotSwitch(SolisCloudControlEntity, SwitchEntity):
+class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):
     def __init__(
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: SwitchEntityDescription,
-        charge_discharge_slot: InverterChargeDischargeSlot,
-        charge_discharge_slots: InverterChargeDischargeSlots,
+        inverter_charge_discharge_slot: InverterChargeDischargeSlot,
+        inverter_charge_discharge_slots: InverterChargeDischargeSlots,
     ) -> None:
-        super().__init__(coordinator, entity_description, charge_discharge_slots.all_cids)
+        super().__init__(coordinator, entity_description, inverter_charge_discharge_slots.all_cids)
 
-        self.charge_discharge_slot = charge_discharge_slot
-        self.charge_discharge_slots = charge_discharge_slots
+        self.inverter_charge_discharge_slot = inverter_charge_discharge_slot
+        self.inverter_charge_discharge_slots = inverter_charge_discharge_slots
 
     @property
     def is_on(self) -> bool | None:
-        value = self.coordinator.data.get(self.charge_discharge_slot.switch_cid)
+        value = self.coordinator.data.get(self.inverter_charge_discharge_slot.switch_cid)
         return value == "1" if value is not None else None
 
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
         old_value = self._calculate_old_value()
-        _LOGGER.info("Turning on slot (old_value: %s)", old_value)
-        await self.coordinator.control(self.charge_discharge_slot.switch_cid, "1", old_value)
+        _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(self.inverter_charge_discharge_slot.switch_cid, "1", old_value)
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
         old_value = self._calculate_old_value()
-        _LOGGER.info("Turning off slot (old_value: %s)", old_value)
-        await self.coordinator.control(self.charge_discharge_slot.switch_cid, "0", old_value)
+        _LOGGER.info("Turn off '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(self.inverter_charge_discharge_slot.switch_cid, "0", old_value)
 
     def _calculate_old_value(self) -> str:
-        slots = self.charge_discharge_slots
+        slots = self.inverter_charge_discharge_slots
         data = self.coordinator.data
 
         slot_states = {
@@ -211,19 +206,19 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: SwitchEntityDescription,
-        storage_mode: InverterStorageMode,
+        inverter_storage_mode: InverterStorageMode,
     ) -> None:
-        super().__init__(coordinator, entity_description, storage_mode.cid)
-        self.storage_mode = storage_mode
+        super().__init__(coordinator, entity_description, inverter_storage_mode.cid)
+        self.inverter_storage_mode = inverter_storage_mode
 
     @property
     def is_on(self) -> bool | None:
-        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
         value = safe_get_int_value(value_str)
         if value is None:
             return None
 
-        return bool(value & (1 << self.storage_mode.bit_backup_mode))
+        return bool(value & (1 << self.inverter_storage_mode.bit_backup_mode))
 
     async def async_turn_on(self, **kwargs: any) -> None:  # noqa: ARG002
         await self._async_set_bit(True)
@@ -232,18 +227,18 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
         await self._async_set_bit(False)
 
     async def _async_set_bit(self, state: bool) -> None:
-        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
         value = safe_get_int_value(value_str)
         if value is None:
             return
 
         if state:
-            value |= 1 << self.storage_mode.bit_backup_mode
+            value |= 1 << self.inverter_storage_mode.bit_backup_mode
         else:
-            value &= ~(1 << self.storage_mode.bit_backup_mode)
+            value &= ~(1 << self.inverter_storage_mode.bit_backup_mode)
 
-        _LOGGER.info("Setting battery reserve to %s (value: %s)", state, value)
-        await self.coordinator.control(self.storage_mode.cid, str(value))
+        _LOGGER.info("Toggle '%s' (state: %s, value: %s)", self.name, state, value)
+        await self.coordinator.control(self.inverter_storage_mode.cid, str(value))
 
 
 class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
@@ -251,19 +246,19 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
         self,
         coordinator: SolisCloudControlCoordinator,
         entity_description: SwitchEntityDescription,
-        storage_mode: InverterStorageMode,
+        inverter_storage_mode: InverterStorageMode,
     ) -> None:
-        super().__init__(coordinator, entity_description, storage_mode.cid)
-        self.storage_mode = storage_mode
+        super().__init__(coordinator, entity_description, inverter_storage_mode.cid)
+        self.inverter_storage_mode = inverter_storage_mode
 
     @property
     def is_on(self) -> bool | None:
-        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
         value = safe_get_int_value(value_str)
         if value is None:
             return None
 
-        return bool(value & (1 << self.storage_mode.bit_grid_charging))
+        return bool(value & (1 << self.inverter_storage_mode.bit_grid_charging))
 
     async def async_turn_on(self, **kwargs: any) -> None:  # noqa: ARG002
         await self._async_set_bit(True)
@@ -272,15 +267,15 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
         await self._async_set_bit(False)
 
     async def _async_set_bit(self, state: bool) -> None:
-        value_str = self.coordinator.data.get(self.storage_mode.cid)
+        value_str = self.coordinator.data.get(self.inverter_storage_mode.cid)
         value = safe_get_int_value(value_str)
         if value is None:
             return
 
         if state:
-            value |= 1 << self.storage_mode.bit_grid_charging
+            value |= 1 << self.inverter_storage_mode.bit_grid_charging
         else:
-            value &= ~(1 << self.storage_mode.bit_grid_charging)
+            value &= ~(1 << self.inverter_storage_mode.bit_grid_charging)
 
-        _LOGGER.info("Setting allow grid charging to %s (value: %s)", state, value)
-        await self.coordinator.control(self.storage_mode.cid, str(value))
+        _LOGGER.info("Toggle '%s' (state: %s, value: %s)", self.name, state, value)
+        await self.coordinator.control(self.inverter_storage_mode.cid, str(value))

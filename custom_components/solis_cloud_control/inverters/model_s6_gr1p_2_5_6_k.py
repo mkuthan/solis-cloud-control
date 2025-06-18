@@ -6,9 +6,9 @@ from custom_components.solis_cloud_control.inverters.inverter import Inverter, I
 
 async def create_inverter(
     inverter_info: InverterInfo,
-    api_client: SolisCloudControlApiClient,  # noqa: ARG001
+    api_client: SolisCloudControlApiClient,
 ) -> Inverter:
-    inverter = Inverter.create_string_inverter(inverter_info)
+    inverter = await Inverter.create_string_inverter(inverter_info, api_client)
 
     inverter = replace(inverter, power_limit=InverterPowerLimit(max_value=110))
 

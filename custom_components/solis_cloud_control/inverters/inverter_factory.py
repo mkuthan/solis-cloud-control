@@ -10,10 +10,12 @@ _INVERTER_REGISTRY = {
     "0200": "s6_gr1p_2_5_6_k",
     "0205": "s6_gr1p_2_5_6_k",
     "0507": "s5_gr3p_3_20_k",
+    "3101": "s5_eh1p_3_6_k_l",
     "3102": "s5_eh1p_3_6_k_l",
     "3306": "s6_eh3p_5_10_k_h",
     "3331": "s6_eh3p_8_15_k02_nv_yd_l",
     "ca": "rhi_3p_3_10_k_hves_5g",
+    "f4": "rhi_3_6_k_48es_5g",
 }
 
 
@@ -46,10 +48,10 @@ async def create_inverter(api_client: SolisCloudControlApiClient, inverter_info:
     else:
         if inverter_info.is_string_inverter:
             _LOGGER.warning("Unknown inverter model '%s', fallback to generic string inverter", inverter_info.model)
-            return Inverter.create_string_inverter(inverter_info)
+            return await Inverter.create_string_inverter(inverter_info, api_client)
         else:
             _LOGGER.warning("Unknown inverter model '%s', fallback to generic hybrid inverter", inverter_info.model)
-            return Inverter.create_hybrid_inverter(inverter_info)
+            return await Inverter.create_hybrid_inverter(inverter_info, api_client)
 
 
 def _get_inverter_detail(inverter_details: dict[str, any], field: str) -> str | None:

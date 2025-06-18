@@ -20,21 +20,33 @@ def coordinator(hass: HomeAssistant, mock_config_entry, mock_api_client, any_inv
 
 
 async def test_async_update_data(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
-    all_cids = any_inverter.all_cids
+    read_batch_cids = any_inverter.read_batch_cids
+    read_cids = any_inverter.read_cids
 
-    any_data = {cid: f"value_{cid}" for cid in all_cids}
-    mock_api_client.read_batch.return_value = any_data
+    read_batch_data = {cid: f"value_{cid}" for cid in read_batch_cids}
+    mock_api_client.read_batch.return_value = read_batch_data
+
+    for read_cid in read_cids:
+        mock_api_client.read.side_effect = lambda serial_number, read_cid, **kwargs: f"value_{read_cid}"  # noqa: ARG005
 
     data = await coordinator._async_update_data()
 
     mock_api_client.read_batch.assert_called_once_with(
         any_inverter.info.serial_number,
-        all_cids,
+        read_batch_cids,
         retry_count=5,
         retry_delay=10,
     )
 
-    assert data == {cid: any_data.get(cid) for cid in all_cids}
+    for read_cid in read_cids:
+        mock_api_client.read.assert_called_once_with(
+            any_inverter.info.serial_number,
+            read_cid,
+            retry_count=5,
+            retry_delay=10,
+        )
+
+    assert data == {cid: f"value_{cid}" for cid in any_inverter.all_cids}
 
 
 async def test_async_update_data_api_error(hass: HomeAssistant, coordinator, mock_api_client):
@@ -48,7 +60,7 @@ async def test_async_update_data_api_error(hass: HomeAssistant, coordinator, moc
 
     mock_api_client.read_batch.assert_called_once_with(
         coordinator._inverter.info.serial_number,
-        coordinator._inverter.all_cids,
+        coordinator._inverter.read_batch_cids,
         retry_count=5,
         retry_delay=10,
     )
