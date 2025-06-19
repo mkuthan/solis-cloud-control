@@ -75,7 +75,7 @@ async def test_create_inverter_unknown_string_model(mock_api_client, any_inverte
     assert result == await Inverter.create_string_inverter(inverter_info, mock_api_client)
 
 
-@pytest.mark.parametrize("model", ["3101", "3102", "3306", "3331", "ca", "f4"])
+@pytest.mark.parametrize("model", ["3101", "3102", "3306", "3315", "3331", "ca", "f4"])
 @pytest.mark.asyncio
 async def test_create_inverter_specific_hybrid_model(mock_api_client, any_inverter_info, model):
     inverter_info = replace(any_inverter_info, model=model)

@@ -1,3 +1,6 @@
+from custom_components.solis_cloud_control.utils.safe_converters import safe_get_int_value
+
+
 class StorageMode:
     BIT_SELF_USE: int = 0
     BIT_OFF_GRID: int = 2
@@ -7,14 +10,8 @@ class StorageMode:
 
     @staticmethod
     def create(value: str | None) -> "StorageMode | None":
-        if value is None:
-            return None
-
-        try:
-            mode = int(value)
-            return StorageMode(mode)
-        except ValueError:
-            return None
+        mode = safe_get_int_value(value)
+        return StorageMode(mode) if mode is not None else None
 
     def __init__(self, mode: int) -> None:
         self.mode = mode

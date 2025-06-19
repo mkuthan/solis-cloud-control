@@ -13,6 +13,7 @@ _INVERTER_REGISTRY = {
     "3101": "s5_eh1p_3_6_k_l",
     "3102": "s5_eh1p_3_6_k_l",
     "3306": "s6_eh3p_5_10_k_h",
+    "3315": "s6_eh3p_12_20_k_h",
     "3331": "s6_eh3p_8_15_k02_nv_yd_l",
     "ca": "rhi_3p_3_10_k_hves_5g",
     "f4": "rhi_3_6_k_48es_5g",
