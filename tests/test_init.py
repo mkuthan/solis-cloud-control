@@ -14,9 +14,10 @@ from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter):
-    read_batch_cids = dict.fromkeys(any_inverter.all_cids, None)
+    read_batch_cids = dict.fromkeys(any_inverter.read_batch_cids, "any value")
 
     mock_api_client.read_batch.return_value = read_batch_cids
+    mock_api_client.read.return_value = "any value"
 
     with (
         patch(

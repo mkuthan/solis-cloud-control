@@ -85,6 +85,9 @@ def any_inverter_info():
         collector_model="any_collector_model",
         power="any_power",
         power_unit="any_power_unit",
+        parallel_number="any_parallel_number",
+        parallel_battery="any_parallel_battery",
+        tou_v2_mode="any_tou_v2_mode",
     )
 
 

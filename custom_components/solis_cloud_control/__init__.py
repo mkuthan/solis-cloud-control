@@ -26,7 +26,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: SolisCloudControl
 
     # create inverter
     inverter_info = await create_inverter_info(api_client, inverter_sn)
-    inverter = await create_inverter(api_client, inverter_info)
+    inverter = create_inverter(inverter_info)
 
     # register the inverter in the device registry
     device_registry = dr.async_get(hass)

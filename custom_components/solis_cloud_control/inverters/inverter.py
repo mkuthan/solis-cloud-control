@@ -1,11 +1,21 @@
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
+from typing import ClassVar
 
-from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
-from custom_components.solis_cloud_control.utils.safe_converters import safe_convert_power_to_watts
+from custom_components.solis_cloud_control.utils.safe_converters import (
+    safe_convert_power_to_watts,
+    safe_get_float_value,
+)
 
 
 @dataclass(frozen=True)
 class InverterInfo:
+    ENERGY_STORAGE_CONTROL_DISABLED: ClassVar[str] = "0"
+    TOU_V2_MODE: ClassVar[str] = "43605"  # 0xAA55
+    MAX_EXPORT_POWER_DEFAULT: ClassVar[float] = 1_000_000
+    MAX_EXPORT_POWER_SCALE_DEFAULT: ClassVar[float] = 1.0
+    PARALLEL_INVERTER_COUNT_DEFAULT: ClassVar[int] = 1
+    PARALLEL_BATTERY_COUNT_DEFAULT: ClassVar[int] = 1
+
     serial_number: str
     model: str | None
     version: str | None
@@ -16,14 +26,51 @@ class InverterInfo:
     collector_model: str | None
     power: str | None
     power_unit: str | None
-
-    @property
-    def power_watts(self) -> float | None:
-        return safe_convert_power_to_watts(self.power, self.power_unit)
+    parallel_number: str | None
+    parallel_battery: str | None
+    tou_v2_mode: str | None = None
 
     @property
     def is_string_inverter(self) -> bool:
-        return self.energy_storage_control is not None and self.energy_storage_control == "0"
+        return (
+            self.energy_storage_control is not None
+            and self.energy_storage_control == self.ENERGY_STORAGE_CONTROL_DISABLED
+        )
+
+    @property
+    def is_tou_v2_enabled(self) -> bool:
+        return self.tou_v2_mode is not None and self.tou_v2_mode == self.TOU_V2_MODE
+
+    @property
+    def max_export_power(self) -> float:
+        power = safe_convert_power_to_watts(self.power, self.power_unit)
+        if power is not None:
+            return power * self.parallel_inverter_count
+        else:
+            return self.MAX_EXPORT_POWER_DEFAULT
+
+    @property
+    def max_export_power_scale(self) -> float:
+        if self.model and self.model.lower() in ["3315", "3331"]:
+            return 0.01
+        else:
+            return self.MAX_EXPORT_POWER_SCALE_DEFAULT
+
+    @property
+    def parallel_inverter_count(self) -> int:
+        parallel_inverter_count = safe_get_float_value(self.parallel_number)
+        if parallel_inverter_count is None or not parallel_inverter_count.is_integer() or parallel_inverter_count < 1:
+            return self.PARALLEL_INVERTER_COUNT_DEFAULT
+        else:
+            return int(parallel_inverter_count)
+
+    @property
+    def parallel_battery_count(self) -> int:
+        parallel_battery_count = safe_get_float_value(self.parallel_battery)
+        if parallel_battery_count is None or not parallel_battery_count.is_integer() or parallel_battery_count < 0:
+            return self.PARALLEL_BATTERY_COUNT_DEFAULT
+        else:
+            return int(parallel_battery_count) + 1
 
 
 @dataclass(frozen=True)
@@ -44,7 +91,7 @@ class InverterStorageMode:
 
 @dataclass(frozen=True)
 class InverterChargeDischargeSettings:
-    SLOTS_COUNT: int = 3
+    SLOTS_COUNT: ClassVar[int] = 3
 
     cid: int = 103
     current_min_value: float = 0
@@ -77,7 +124,7 @@ class InverterChargeDischargeSlot:
 
 @dataclass(frozen=True)
 class InverterChargeDischargeSlots:
-    SLOTS_COUNT: int = 6
+    SLOTS_COUNT: ClassVar[int] = 6
 
     charge_slot1: InverterChargeDischargeSlot = field(
         default_factory=lambda: InverterChargeDischargeSlot(
@@ -256,9 +303,9 @@ class InverterMaxOutputPower:
 class InverterMaxExportPower:
     cid: int = 499
     min_value: float = 0
-    max_value: float = 1_000_000
-    step: float = 1
-    scale: float = 1
+    max_value: float = InverterInfo.MAX_EXPORT_POWER_DEFAULT
+    step: float = 100
+    scale: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -296,11 +343,13 @@ class InverterBatteryMaxChargeSOC:
 @dataclass(frozen=True)
 class InverterBatteryMaxChargeCurrent:
     cid: int = 7224
+    parallel_battery_count: int = InverterInfo.PARALLEL_BATTERY_COUNT_DEFAULT
 
 
 @dataclass(frozen=True)
 class InverterBatteryMaxDischargeCurrent:
     cid: int = 7226
+    parallel_battery_count: int = InverterInfo.PARALLEL_BATTERY_COUNT_DEFAULT
 
 
 @dataclass(frozen=True)
@@ -320,46 +369,6 @@ class Inverter:
     battery_max_charge_soc: InverterBatteryMaxChargeSOC | None = None
     battery_max_charge_current: InverterBatteryMaxChargeCurrent | None = None
     battery_max_discharge_current: InverterBatteryMaxDischargeCurrent | None = None
-
-    @staticmethod
-    async def create_string_inverter(
-        inverter_info: InverterInfo,
-        api_client: SolisCloudControlApiClient,  # noqa: ARG004
-    ) -> "Inverter":
-        return Inverter(
-            info=inverter_info,
-            on_off=InverterOnOff(on_cid=48, off_cid=53),
-            power_limit=InverterPowerLimit(),
-        )
-
-    @staticmethod
-    async def create_hybrid_inverter(
-        inverter_info: InverterInfo,
-        api_client: SolisCloudControlApiClient,
-    ) -> "Inverter":
-        inverter = Inverter(
-            info=inverter_info,
-            on_off=InverterOnOff(on_cid=52, off_cid=54),
-            storage_mode=InverterStorageMode(),
-            max_output_power=InverterMaxOutputPower(),
-            max_export_power=InverterMaxExportPower(),
-            battery_reserve_soc=InverterBatteryReserveSOC(),
-            battery_over_discharge_soc=InverterBatteryOverDischargeSOC(),
-            battery_force_charge_soc=InverterBatteryForceChargeSOC(),
-            battery_recovery_soc=InverterBatteryRecoverySOC(),
-            battery_max_charge_soc=InverterBatteryMaxChargeSOC(),
-            battery_max_charge_current=InverterBatteryMaxChargeCurrent(),
-            battery_max_discharge_current=InverterBatteryMaxDischargeCurrent(),
-        )
-
-        tou_v2_mode = await api_client.read(inverter_info.serial_number, 6798)
-
-        if tou_v2_mode is not None and tou_v2_mode == "43605":  # 0xAA55
-            inverter = replace(inverter, charge_discharge_slots=InverterChargeDischargeSlots())
-        else:
-            inverter = replace(inverter, charge_discharge_settings=InverterChargeDischargeSettings())
-
-        return inverter
 
     @property
     def read_batch_cids(self) -> list[int]:

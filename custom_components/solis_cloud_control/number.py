@@ -195,7 +195,8 @@ class BatteryCurrentV1(SolisCloudControlEntity, NumberEntity):
             battery_max_charge_discharge_current = safe_get_float_value(battery_max_charge_discharge_current_str)
 
         if battery_max_charge_discharge_current is not None:
-            return battery_max_charge_discharge_current
+            parallel_battery_count = self.inverter_battery_max_charge_discharge_current.parallel_battery_count
+            return battery_max_charge_discharge_current * parallel_battery_count
         else:
             return self.inverter_charge_discharge_settings.current_max_value
 
@@ -262,7 +263,8 @@ class BatteryCurrentV2(SolisCloudControlEntity, NumberEntity):
             battery_max_charge_discharge_current = safe_get_float_value(battery_max_charge_discharge_current_str)
 
         if battery_max_charge_discharge_current is not None:
-            return battery_max_charge_discharge_current
+            parallel_battery_count = self.inverter_battery_max_charge_discharge_current.parallel_battery_count
+            return battery_max_charge_discharge_current * parallel_battery_count
         else:
             return self.inverter_charge_discharge_slot.current_max_value
 

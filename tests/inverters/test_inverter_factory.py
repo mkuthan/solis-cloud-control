@@ -4,6 +4,21 @@ import pytest
 
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
+    InverterBatteryForceChargeSOC,
+    InverterBatteryMaxChargeCurrent,
+    InverterBatteryMaxChargeSOC,
+    InverterBatteryMaxDischargeCurrent,
+    InverterBatteryOverDischargeSOC,
+    InverterBatteryRecoverySOC,
+    InverterBatteryReserveSOC,
+    InverterChargeDischargeSettings,
+    InverterChargeDischargeSlots,
+    InverterInfo,
+    InverterMaxExportPower,
+    InverterMaxOutputPower,
+    InverterOnOff,
+    InverterPowerLimit,
+    InverterStorageMode,
 )
 from custom_components.solis_cloud_control.inverters.inverter_factory import (
     create_inverter,
@@ -21,9 +36,13 @@ async def test_create_inverter_info(mock_api_client):
         "smartSupport": "any smart support",
         "generatorSupport": "any generator support",
         "collectorModel": "any collector model",
-        "power": 10,
-        "powerStr": "kW",
+        "power": "any power",
+        "powerStr": "any power str",
+        "parallelNumber": "any parallel number",
+        "parallelBattery": "any parallel battery",
     }
+
+    mock_api_client.read.return_value = "any tou v2 mode"
 
     inverter_sn = "any serial number"
     result = await create_inverter_info(mock_api_client, inverter_sn)
@@ -36,13 +55,17 @@ async def test_create_inverter_info(mock_api_client):
     assert result.smart_support == "any smart support"
     assert result.generator_support == "any generator support"
     assert result.collector_model == "any collector model"
-    assert result.power == "10"
-    assert result.power_unit == "kW"
+    assert result.power == "any power"
+    assert result.power_unit == "any power str"
+    assert result.parallel_number == "any parallel number"
+    assert result.parallel_battery == "any parallel battery"
+    assert result.tou_v2_mode == "any tou v2 mode"
 
 
 @pytest.mark.asyncio
 async def test_create_inverter_info_missing_fields(mock_api_client):
     mock_api_client.inverter_details.return_value = {}
+    mock_api_client.read.return_value = None
     inverter_sn = "any serial number"
 
     result = await create_inverter_info(mock_api_client, inverter_sn)
@@ -57,37 +80,74 @@ async def test_create_inverter_info_missing_fields(mock_api_client):
     assert result.collector_model is None
     assert result.power is None
     assert result.power_unit is None
+    assert result.tou_v2_mode is None
 
 
-@pytest.mark.asyncio
-async def test_create_inverter_unknown_hybrid_model(mock_api_client, any_inverter_info):
-    inverter_info = replace(any_inverter_info, model="unknown model", energy_storage_control="1")
-    result = await create_inverter(mock_api_client, inverter_info)
+def test_create_string_inverter(any_inverter_info):
+    inverter_info = replace(any_inverter_info, energy_storage_control="0")
+    result = create_inverter(inverter_info)
 
-    assert result == await Inverter.create_hybrid_inverter(inverter_info, mock_api_client)
+    expected = Inverter(
+        info=inverter_info,
+        on_off=InverterOnOff(on_cid=48, off_cid=53),
+        power_limit=InverterPowerLimit(),
+    )
 
-
-@pytest.mark.asyncio
-async def test_create_inverter_unknown_string_model(mock_api_client, any_inverter_info):
-    inverter_info = replace(any_inverter_info, model="unknown model", energy_storage_control="0")
-    result = await create_inverter(mock_api_client, inverter_info)
-
-    assert result == await Inverter.create_string_inverter(inverter_info, mock_api_client)
+    assert result == expected
 
 
-@pytest.mark.parametrize("model", ["3101", "3102", "3306", "3315", "3331", "ca", "f4"])
-@pytest.mark.asyncio
-async def test_create_inverter_specific_hybrid_model(mock_api_client, any_inverter_info, model):
-    inverter_info = replace(any_inverter_info, model=model)
-    result = await create_inverter(mock_api_client, inverter_info)
+def test_create_hybrid_inverter(any_inverter_info):
+    inverter_info = replace(any_inverter_info, energy_storage_control="1")
+    result = create_inverter(inverter_info)
 
-    assert result != await Inverter.create_string_inverter(inverter_info, mock_api_client)
+    expected = Inverter(
+        info=inverter_info,
+        on_off=InverterOnOff(),
+        storage_mode=InverterStorageMode(),
+        charge_discharge_slots=None,
+        charge_discharge_settings=InverterChargeDischargeSettings(),
+        max_output_power=InverterMaxOutputPower(),
+        max_export_power=InverterMaxExportPower(),
+        battery_reserve_soc=InverterBatteryReserveSOC(),
+        battery_over_discharge_soc=InverterBatteryOverDischargeSOC(),
+        battery_force_charge_soc=InverterBatteryForceChargeSOC(),
+        battery_recovery_soc=InverterBatteryRecoverySOC(),
+        battery_max_charge_soc=InverterBatteryMaxChargeSOC(),
+        battery_max_charge_current=InverterBatteryMaxChargeCurrent(),
+        battery_max_discharge_current=InverterBatteryMaxDischargeCurrent(),
+    )
+
+    assert result == expected
 
 
-@pytest.mark.parametrize("model", ["0200", "0205", "0507"])
-@pytest.mark.asyncio
-async def test_create_inverter_specific_string_model(mock_api_client, any_inverter_info, model):
-    inverter_info = replace(any_inverter_info, model=model)
-    result = await create_inverter(mock_api_client, inverter_info)
+def test_create_hybrid_inverter_tou_v2_enabled(any_inverter_info):
+    inverter_info = replace(any_inverter_info, energy_storage_control="1", tou_v2_mode=InverterInfo.TOU_V2_MODE)
+    result = create_inverter(inverter_info)
 
-    assert result != await Inverter.create_hybrid_inverter(inverter_info, mock_api_client)
+    assert result.charge_discharge_slots == InverterChargeDischargeSlots()
+    assert result.charge_discharge_settings is None
+
+
+def test_create_hybrid_inverter_max_export_power(any_inverter_info):
+    inverter_info = replace(
+        any_inverter_info, energy_storage_control="1", power="10", power_unit="kW", parallel_number="2.0"
+    )
+    result = create_inverter(inverter_info)
+
+    assert result.max_export_power.max_value == 2 * 10_000
+
+
+@pytest.mark.parametrize("model", ["3315", "3331"])
+def test_create_hybrid_inverter_max_export_power_scale(any_inverter_info, model):
+    inverter_info = replace(any_inverter_info, energy_storage_control="1", model=model)
+    result = create_inverter(inverter_info)
+
+    assert result.max_export_power.scale == 0.01
+
+
+def test_create_hybrid_inverter_battery_max_current(any_inverter_info):
+    inverter_info = replace(any_inverter_info, energy_storage_control="1", parallel_battery="2.0")
+    result = create_inverter(inverter_info)
+
+    assert result.battery_max_charge_current.parallel_battery_count == 3
+    assert result.battery_max_discharge_current.parallel_battery_count == 3

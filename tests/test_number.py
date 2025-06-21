@@ -4,6 +4,7 @@ import pytest
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
 
+from custom_components.solis_cloud_control.inverters.inverter import InverterBatteryMaxChargeCurrent
 from custom_components.solis_cloud_control.number import (
     BatteryCurrentV1,
     BatteryCurrentV2,
@@ -54,6 +55,15 @@ class TestBatteryCurrentV1:
             battery_current_v1_charge_entity.inverter_battery_max_charge_discharge_current.cid: "50"
         }
         assert battery_current_v1_charge_entity.native_max_value == 50
+
+    def test_native_max_value_parallel_batteries(self, battery_current_v1_charge_entity):
+        max_charge_discharge_current = InverterBatteryMaxChargeCurrent(parallel_battery_count=2)
+        battery_current_v1_charge_entity.inverter_battery_max_charge_discharge_current = max_charge_discharge_current
+
+        battery_current_v1_charge_entity.coordinator.data = {
+            battery_current_v1_charge_entity.inverter_battery_max_charge_discharge_current.cid: "50"
+        }
+        assert battery_current_v1_charge_entity.native_max_value == 100
 
     @pytest.mark.parametrize("value", [VARIANT1_VALUE, VARIANT2_VALUE])
     def test_native_value_charge_current(self, battery_current_v1_charge_entity, value):
@@ -163,6 +173,16 @@ class TestBatteryCurrentV2:
             battery_current_v2_entity.inverter_battery_max_charge_discharge_current.cid: "50"
         }
         assert battery_current_v2_entity.native_max_value == 50
+
+    def test_native_max_value_parallel_bateries(self, battery_current_v2_entity):
+        max_charge_discharge_current = InverterBatteryMaxChargeCurrent(parallel_battery_count=2)
+        battery_current_v2_entity.inverter_battery_max_charge_discharge_current = max_charge_discharge_current
+
+        battery_current_v2_entity.coordinator.data = {
+            battery_current_v2_entity.inverter_battery_max_charge_discharge_current.cid: "50"
+        }
+
+        assert battery_current_v2_entity.native_max_value == 100
 
     @pytest.mark.parametrize(
         ("value", "expected"),
