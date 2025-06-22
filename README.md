@@ -31,8 +31,9 @@ or add integration manually:
 
 Follow the configuration steps:
 
-1. Enter your Solis API key and token
-2. Select the inverter you want to control from the list
+1. Enter your Solis API key (KeyID) and token (KeySecret).
+2. Select the inverter you want to control from the list.
+   For parallel connected inverters, select master inverter.
 
 After successful configuration, the integration creates a new entity for your inverter. This entity includes the model name, model identifier, firmware version, and serial number.
 

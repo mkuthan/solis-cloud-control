@@ -12,7 +12,9 @@ class InverterInfo:
     ENERGY_STORAGE_CONTROL_DISABLED: ClassVar[str] = "0"
     TOU_V2_MODE: ClassVar[str] = "43605"  # 0xAA55
     MAX_EXPORT_POWER_DEFAULT: ClassVar[float] = 1_000_000
+    MAX_EXPORT_POWER_STEP_DEFAULT: ClassVar[float] = 100
     MAX_EXPORT_POWER_SCALE_DEFAULT: ClassVar[float] = 1.0
+    POWER_LIMIT_DEFAULT: ClassVar[float] = 110.0
     PARALLEL_INVERTER_COUNT_DEFAULT: ClassVar[int] = 1
     PARALLEL_BATTERY_COUNT_DEFAULT: ClassVar[int] = 1
 
@@ -304,15 +306,15 @@ class InverterMaxExportPower:
     cid: int = 499
     min_value: float = 0
     max_value: float = InverterInfo.MAX_EXPORT_POWER_DEFAULT
-    step: float = 100
-    scale: float = 1.0
+    step: float = InverterInfo.MAX_EXPORT_POWER_STEP_DEFAULT
+    scale: float = InverterInfo.MAX_EXPORT_POWER_SCALE_DEFAULT
 
 
 @dataclass(frozen=True)
 class InverterPowerLimit:
     cid: int = 15
     min_value: float = 0
-    max_value: float = 110
+    max_value: float = InverterInfo.POWER_LIMIT_DEFAULT
 
 
 @dataclass(frozen=True)

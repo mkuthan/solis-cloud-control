@@ -44,12 +44,13 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
                     return await self.async_step_select_inverter()
 
             except SolisCloudControlApiError as error:
+                _LOGGER.warning(error, exc_info=True)
                 if error.response_code == "Z0001":
                     errors["base"] = "invalid_auth"
                 else:
                     errors["base"] = "cannot_connect"
             except Exception as error:
-                _LOGGER.exception(error)
+                _LOGGER.warning(error, exc_info=True)
                 errors["base"] = "unknown"
 
         data_schema = vol.Schema(
