@@ -14,10 +14,34 @@ from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter):
-    read_batch_cids = dict.fromkeys(any_inverter.read_batch_cids, "any value")
+    read_batch_cids = dict.fromkeys(any_inverter.read_batch_cids, "0")
+
+    for cid in [any_inverter.on_off.on_cid, any_inverter.on_off.off_cid]:
+        read_batch_cids[cid] = "190"
+
+    for cid in [
+        any_inverter.charge_discharge_slots.charge_slot1.time_cid,
+        any_inverter.charge_discharge_slots.charge_slot2.time_cid,
+        any_inverter.charge_discharge_slots.charge_slot3.time_cid,
+        any_inverter.charge_discharge_slots.charge_slot4.time_cid,
+        any_inverter.charge_discharge_slots.charge_slot5.time_cid,
+        any_inverter.charge_discharge_slots.charge_slot6.time_cid,
+        any_inverter.charge_discharge_slots.discharge_slot1.time_cid,
+        any_inverter.charge_discharge_slots.discharge_slot2.time_cid,
+        any_inverter.charge_discharge_slots.discharge_slot3.time_cid,
+        any_inverter.charge_discharge_slots.discharge_slot4.time_cid,
+        any_inverter.charge_discharge_slots.discharge_slot5.time_cid,
+        any_inverter.charge_discharge_slots.discharge_slot6.time_cid,
+    ]:
+        read_batch_cids[cid] = "00:00-00:00"
 
     mock_api_client.read_batch.return_value = read_batch_cids
-    mock_api_client.read.return_value = "any value"
+
+    charge_discharge_settings = "0,0,00:00,00:00,00:00,00:00,0,0,00:00,00:00,00:00,00:00,0,0,00:00,00:00,00:00,00:00"
+
+    mock_api_client.read.side_effect = lambda inverter_sn, cid, retry_count, retry_delay: (  # noqa: ARG005
+        charge_discharge_settings if cid == 103 else None
+    )
 
     with (
         patch(
