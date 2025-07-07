@@ -318,6 +318,11 @@ class InverterPowerLimit:
 
 
 @dataclass(frozen=True)
+class InverterAllowExport:
+    cid: int = 6962
+
+
+@dataclass(frozen=True)
 class InverterBatteryReserveSOC:
     cid: int = 157
 
@@ -364,6 +369,7 @@ class Inverter:
     max_output_power: InverterMaxOutputPower | None = None
     max_export_power: InverterMaxExportPower | None = None
     power_limit: InverterPowerLimit | None = None
+    allow_export: InverterAllowExport | None = None
     battery_reserve_soc: InverterBatteryReserveSOC | None = None
     battery_over_discharge_soc: InverterBatteryOverDischargeSOC | None = None
     battery_force_charge_soc: InverterBatteryForceChargeSOC | None = None
@@ -389,6 +395,8 @@ class Inverter:
             cids.append(self.max_export_power.cid)
         if self.power_limit:
             cids.append(self.power_limit.cid)
+        if self.allow_export:
+            cids.append(self.allow_export.cid)
         if self.battery_reserve_soc:
             cids.append(self.battery_reserve_soc.cid)
         if self.battery_over_discharge_soc:

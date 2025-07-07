@@ -3,6 +3,7 @@ from homeassistant.components.switch import SwitchEntityDescription
 
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
 from custom_components.solis_cloud_control.switch import (
+    AllowExportSwitch,
     AllowGridChargingSwitch,
     BatteryReserveSwitch,
     OnOffSwitch,
@@ -90,6 +91,43 @@ class TestOnOffSwitch:
         await on_off_switch.async_turn_off()
         on_off_switch.coordinator.control.assert_awaited_once_with(
             on_off_switch.inverter_on_off.off_cid, on_off_switch.inverter_on_off.off_value
+        )
+
+
+@pytest.fixture
+def allow_export_switch(mock_coordinator, any_inverter):
+    return AllowExportSwitch(
+        coordinator=mock_coordinator,
+        entity_description=SwitchEntityDescription(key="any_key", name="any name"),
+        inverter_allow_export=any_inverter.allow_export,
+    )
+
+
+class TestAllowExportSwitch:
+    def test_is_on_when_none(self, allow_export_switch):
+        allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: None}
+        assert allow_export_switch.is_on is None
+
+    def test_is_on_when_on(self, allow_export_switch):
+        allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: "0"}
+        assert allow_export_switch.is_on is True
+
+    def test_is_on_when_off(self, allow_export_switch):
+        allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: "1"}
+        assert allow_export_switch.is_on is False
+
+    async def test_turn_on(self, allow_export_switch):
+        allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: "1"}
+        await allow_export_switch.async_turn_on()
+        allow_export_switch.coordinator.control.assert_awaited_once_with(
+            allow_export_switch.inverter_allow_export.cid, "0"
+        )
+
+    async def test_turn_off(self, allow_export_switch):
+        allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: "0"}
+        await allow_export_switch.async_turn_off()
+        allow_export_switch.coordinator.control.assert_awaited_once_with(
+            allow_export_switch.inverter_allow_export.cid, "1"
         )
 
 

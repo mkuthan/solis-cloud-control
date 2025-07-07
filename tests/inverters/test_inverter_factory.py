@@ -4,6 +4,7 @@ import pytest
 
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
+    InverterAllowExport,
     InverterBatteryForceChargeSOC,
     InverterBatteryMaxChargeCurrent,
     InverterBatteryMaxChargeSOC,
@@ -108,6 +109,7 @@ def test_create_hybrid_inverter(any_inverter_info):
         charge_discharge_settings=InverterChargeDischargeSettings(),
         max_output_power=InverterMaxOutputPower(),
         max_export_power=InverterMaxExportPower(),
+        allow_export=InverterAllowExport(),
         battery_reserve_soc=InverterBatteryReserveSOC(),
         battery_over_discharge_soc=InverterBatteryOverDischargeSOC(),
         battery_force_charge_soc=InverterBatteryForceChargeSOC(),
