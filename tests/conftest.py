@@ -8,6 +8,7 @@ from pytest_socket import enable_socket, socket_allow_hosts
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
+    InverterAllowExport,
     InverterBatteryForceChargeSOC,
     InverterBatteryMaxChargeCurrent,
     InverterBatteryMaxChargeSOC,
@@ -102,6 +103,7 @@ def any_inverter(any_inverter_info: InverterInfo) -> Inverter:
         max_output_power=InverterMaxOutputPower(),
         max_export_power=InverterMaxExportPower(),
         power_limit=InverterPowerLimit(),
+        allow_export=InverterAllowExport(),
         battery_reserve_soc=InverterBatteryReserveSOC(),
         battery_over_discharge_soc=InverterBatteryOverDischargeSOC(),
         battery_force_charge_soc=InverterBatteryForceChargeSOC(),

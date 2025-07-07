@@ -7,6 +7,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
 from custom_components.solis_cloud_control.inverters.inverter import (
+    InverterAllowExport,
     InverterChargeDischargeSlot,
     InverterChargeDischargeSlots,
     InverterOnOff,
@@ -39,6 +40,19 @@ async def async_setup_entry(
                     icon="mdi:power",
                 ),
                 inverter_on_off=inverter.on_off,
+            )
+        )
+
+    if inverter.allow_export is not None:
+        entities.append(
+            AllowExportSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="allow_export_switch",
+                    name="Allow Export",
+                    icon="mdi:transmission-tower-export",
+                ),
+                inverter_allow_export=inverter.allow_export,
             )
         )
 
@@ -144,6 +158,30 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
             await self.coordinator.control_no_check(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
         else:
             await self.coordinator.control(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
+
+
+class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        inverter_allow_export: InverterAllowExport,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_allow_export.cid)
+        self.inverter_allow_export = inverter_allow_export
+
+    @property
+    def is_on(self) -> bool | None:
+        value = self.coordinator.data.get(self.inverter_allow_export.cid)
+        return value == "0" if value is not None else None
+
+    async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+        _LOGGER.info("Turn on '%s'", self.name)
+        await self.coordinator.control(self.inverter_allow_export.cid, "0")
+
+    async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+        _LOGGER.info("Turn off '%s'", self.name)
+        await self.coordinator.control(self.inverter_allow_export.cid, "1")
 
 
 class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):
