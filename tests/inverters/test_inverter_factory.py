@@ -139,7 +139,7 @@ def test_create_hybrid_inverter_max_export_power(any_inverter_info):
     assert result.max_export_power.max_value == 2 * 10_000
 
 
-@pytest.mark.parametrize("model", ["3315", "3331"])
+@pytest.mark.parametrize("model", ["3315", "3331", "5305"])
 def test_create_hybrid_inverter_max_export_power_scale(any_inverter_info, model):
     inverter_info = replace(any_inverter_info, energy_storage_control="1", model=model)
     result = create_inverter(inverter_info)
