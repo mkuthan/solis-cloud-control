@@ -120,15 +120,25 @@ class TestAllowExportSwitch:
         allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: "1"}
         await allow_export_switch.async_turn_on()
         allow_export_switch.coordinator.control.assert_awaited_once_with(
-            allow_export_switch.inverter_allow_export.cid, "0"
+            allow_export_switch.inverter_allow_export.cid, "0", allow_export_switch.inverter_allow_export.off_value
         )
 
     async def test_turn_off(self, allow_export_switch):
         allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: "0"}
         await allow_export_switch.async_turn_off()
         allow_export_switch.coordinator.control.assert_awaited_once_with(
-            allow_export_switch.inverter_allow_export.cid, "1"
+            allow_export_switch.inverter_allow_export.cid, "1", allow_export_switch.inverter_allow_export.on_value
         )
+
+    async def test_turn_on_when_none(self, allow_export_switch):
+        allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: None}
+        await allow_export_switch.async_turn_on()
+        allow_export_switch.coordinator.control.assert_not_awaited()
+
+    async def test_turn_off_when_none(self, allow_export_switch):
+        allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: None}
+        await allow_export_switch.async_turn_off()
+        allow_export_switch.coordinator.control.assert_not_awaited()
 
 
 @pytest.fixture
