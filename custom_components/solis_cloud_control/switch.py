@@ -176,12 +176,32 @@ class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
         return value == "0" if value is not None else None
 
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        _LOGGER.info("Turn on '%s'", self.name)
-        await self.coordinator.control(self.inverter_allow_export.cid, "0")
+        old_value = self._calculate_old_value()
+        if old_value is None:
+            _LOGGER.warning("Unknown current state of '%s'", self.name)
+            return
+
+        _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(self.inverter_allow_export.cid, "0", old_value)
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        _LOGGER.info("Turn off '%s'", self.name)
-        await self.coordinator.control(self.inverter_allow_export.cid, "1")
+        old_value = self._calculate_old_value()
+        if old_value is None:
+            _LOGGER.warning("Unknown current state of '%s'", self.name)
+            return
+
+        _LOGGER.info("Turn off '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(self.inverter_allow_export.cid, "1", old_value)
+
+    def _calculate_old_value(self) -> str | None:
+        allow_export = self.is_on
+        if allow_export is None:
+            return None
+
+        if allow_export:
+            return self.inverter_allow_export.on_value
+        else:
+            return self.inverter_allow_export.off_value
 
 
 class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):
