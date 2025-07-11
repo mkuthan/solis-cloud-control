@@ -100,6 +100,7 @@ def allow_export_switch(mock_coordinator, any_inverter):
         coordinator=mock_coordinator,
         entity_description=SwitchEntityDescription(key="any_key", name="any name"),
         inverter_allow_export=any_inverter.allow_export,
+        inverter_storage_mode=any_inverter.storage_mode,
     )
 
 
@@ -115,6 +116,41 @@ class TestAllowExportSwitch:
     def test_is_on_when_off(self, allow_export_switch):
         allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: "1"}
         assert allow_export_switch.is_on is False
+
+    def test_available_when_storage_mode_is_self_use(self, allow_export_switch):
+        mode = str(1 << StorageMode.BIT_SELF_USE)
+        allow_export_switch.coordinator.data = {
+            allow_export_switch.inverter_allow_export.cid: "0",
+            allow_export_switch.inverter_storage_mode.cid: mode,
+        }
+        assert allow_export_switch.available is True
+
+    def test_available_when_storage_mode_is_feed_in_priority(self, allow_export_switch):
+        mode = str(1 << StorageMode.BIT_FEED_IN_PRIORITY)
+        allow_export_switch.coordinator.data = {
+            allow_export_switch.inverter_allow_export.cid: "0",
+            allow_export_switch.inverter_storage_mode.cid: mode,
+        }
+        assert allow_export_switch.available is False
+
+    def test_available_when_storage_mode_is_off_grid(self, allow_export_switch):
+        mode = str(1 << StorageMode.BIT_OFF_GRID)
+        allow_export_switch.coordinator.data = {
+            allow_export_switch.inverter_allow_export.cid: "0",
+            allow_export_switch.inverter_storage_mode.cid: mode,
+        }
+        assert allow_export_switch.available is False
+
+    def test_available_when_storage_mode_none(self, allow_export_switch):
+        allow_export_switch.coordinator.data = {
+            allow_export_switch.inverter_allow_export.cid: "0",
+            allow_export_switch.inverter_storage_mode.cid: None,
+        }
+        assert allow_export_switch.available is False
+
+    def test_available_when_super_not_available(self, allow_export_switch):
+        allow_export_switch.coordinator.last_update_success = False
+        assert allow_export_switch.available is False
 
     async def test_turn_on(self, allow_export_switch):
         allow_export_switch.coordinator.data = {allow_export_switch.inverter_allow_export.cid: "1"}
