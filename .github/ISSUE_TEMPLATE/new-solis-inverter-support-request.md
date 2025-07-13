@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-Thank you for your interest in expanding the capabilities of this integration! To help us add support for your new Solis inverter, please provide as much of the following information as possible.
+To help us add support for your new Solis inverter, please provide as much of the following information as possible.
 
 **1. Inverter Model Name/Type:**
 Please provide the exact model name/type of your Solis inverter (e.g., S6-EH3P12K02-NV-YD-L).
