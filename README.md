@@ -80,7 +80,7 @@ The integration provides a user-friendly interface to control your inverter sett
 * Switch the inverter on or off 🟢 ⚪️
 * Toggle "Battery Reserve" 🟢
 * Toggle "Allow Grid Charging" 🟢
-* Toggle "Allow Export" 🟢
+* Toggle "Allow Export" (in "Self-Use" storage mode) 🟢
 * Set maximum output power 🟢
 * Set maximum export power 🟢
 * Set power limit ⚪️
