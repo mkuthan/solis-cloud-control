@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
@@ -22,9 +24,8 @@ from custom_components.solis_cloud_control.inverters.inverter import (
 
 async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_sn: str) -> InverterInfo:
     inverter_details = await api_client.inverter_details(inverter_sn)
-    tou_v2_mode = await api_client.read(inverter_sn, 6798)
 
-    return InverterInfo(
+    inverter_info = InverterInfo(
         serial_number=inverter_sn,
         model=_get_inverter_detail(inverter_details, "model"),
         version=_get_inverter_detail(inverter_details, "version"),
@@ -37,8 +38,14 @@ async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_
         power_unit=_get_inverter_detail(inverter_details, "powerStr"),
         parallel_number=_get_inverter_detail(inverter_details, "parallelNumber"),
         parallel_battery=_get_inverter_detail(inverter_details, "parallelBattery"),
-        tou_v2_mode=tou_v2_mode,
+        tou_v2_mode=None,
     )
+
+    if not inverter_info.is_string_inverter:
+        tou_v2_mode = await api_client.read(inverter_sn, 6798)
+        inverter_info = replace(inverter_info, tou_v2_mode=tou_v2_mode)
+
+    return inverter_info
 
 
 def create_inverter(inverter_info: InverterInfo) -> Inverter:
