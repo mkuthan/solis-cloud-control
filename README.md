@@ -83,6 +83,7 @@ The integration provides a user-friendly interface to control your inverter sett
 * Toggle "Allow Export" 🟢
 * Set maximum output power 🟢
 * Set maximum export power 🟢
+* Control various Battery State of Charge (SOC) levels 🟢
 * Set power limit ⚪️
 
 🟢 - Hybrid inverter  
@@ -90,7 +91,7 @@ The integration provides a user-friendly interface to control your inverter sett
 
 ![Inverter Controls](inverter_controls.png)
 
-It also provides battery related sensors:
+It also provides sensors for battery maximum charge and discharge current:
 
 ![Inverter Sensors](inverter_sensors.png)
 
