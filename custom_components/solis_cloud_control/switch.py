@@ -43,7 +43,7 @@ async def async_setup_entry(
             )
         )
 
-    if inverter.allow_export is not None:
+    if inverter.allow_export is not None and inverter.storage_mode is not None:
         entities.append(
             AllowExportSwitch(
                 coordinator=coordinator,
@@ -53,6 +53,7 @@ async def async_setup_entry(
                     icon="mdi:transmission-tower-export",
                 ),
                 inverter_allow_export=inverter.allow_export,
+                inverter_storage_mode=inverter.storage_mode,
             )
         )
 
@@ -166,22 +167,57 @@ class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
         coordinator: SolisCloudControlCoordinator,
         entity_description: SwitchEntityDescription,
         inverter_allow_export: InverterAllowExport,
+        inverter_storage_mode: InverterStorageMode,
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_allow_export.cid)
         self.inverter_allow_export = inverter_allow_export
+        self.inverter_storage_mode = inverter_storage_mode
 
     @property
     def is_on(self) -> bool | None:
         value = self.coordinator.data.get(self.inverter_allow_export.cid)
         return value == "0" if value is not None else None
 
+    @property
+    def available(self) -> bool:
+        if not super().available:
+            return False
+
+        storage_mode_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        storage_mode = StorageMode.create(storage_mode_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, storage_mode_value)
+            return False
+
+        return storage_mode.is_self_use()
+
     async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        _LOGGER.info("Turn on '%s'", self.name)
-        await self.coordinator.control(self.inverter_allow_export.cid, "0")
+        old_value = self._calculate_old_value()
+        if old_value is None:
+            _LOGGER.warning("Unknown current state of '%s'", self.name)
+            return
+
+        _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(self.inverter_allow_export.cid, "0", old_value)
 
     async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
-        _LOGGER.info("Turn off '%s'", self.name)
-        await self.coordinator.control(self.inverter_allow_export.cid, "1")
+        old_value = self._calculate_old_value()
+        if old_value is None:
+            _LOGGER.warning("Unknown current state of '%s'", self.name)
+            return
+
+        _LOGGER.info("Turn off '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(self.inverter_allow_export.cid, "1", old_value)
+
+    def _calculate_old_value(self) -> str | None:
+        allow_export = self.is_on
+        if allow_export is None:
+            return None
+
+        if allow_export:
+            return self.inverter_allow_export.on_value
+        else:
+            return self.inverter_allow_export.off_value
 
 
 class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):

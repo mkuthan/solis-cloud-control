@@ -33,7 +33,7 @@ async def test_create_inverter_info(mock_api_client):
         "model": "any model",
         "version": "any version",
         "machine": "any machine",
-        "energyStorageControl": "any energy storage control",
+        "energyStorageControl": "1",  # Tou V2 mode is enabled
         "smartSupport": "any smart support",
         "generatorSupport": "any generator support",
         "collectorModel": "any collector model",
@@ -52,7 +52,7 @@ async def test_create_inverter_info(mock_api_client):
     assert result.model == "any model"
     assert result.version == "any version"
     assert result.machine == "any machine"
-    assert result.energy_storage_control == "any energy storage control"
+    assert result.energy_storage_control == "1"
     assert result.smart_support == "any smart support"
     assert result.generator_support == "any generator support"
     assert result.collector_model == "any collector model"
@@ -82,6 +82,22 @@ async def test_create_inverter_info_missing_fields(mock_api_client):
     assert result.power is None
     assert result.power_unit is None
     assert result.tou_v2_mode is None
+
+
+@pytest.mark.asyncio
+async def test_create_inverter_info_string_inverter(mock_api_client):
+    mock_api_client.inverter_details.return_value = {
+        "energyStorageControl": "0",
+    }
+    inverter_sn = "any serial number"
+
+    result = await create_inverter_info(mock_api_client, inverter_sn)
+
+    assert result.serial_number == inverter_sn
+    assert result.energy_storage_control == "0"
+    assert result.tou_v2_mode is None
+
+    mock_api_client.read.assert_not_called()
 
 
 def test_create_string_inverter(any_inverter_info):

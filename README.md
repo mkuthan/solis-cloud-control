@@ -46,7 +46,7 @@ After successful configuration, the integration creates a new entity for your in
 | S2-WL-ST          | WL       |     ✅     |
 | S3-WiFi-ST        | WIFI     |     ✅     |
 | DLS-W             | ❓        |     ❌     |
-| DLS-L             | ❓        |     ❓     |
+| DLS-L             | ❓        |     ❌     |
 
 > [!NOTE]
 > Please let me know if you have a different data logger model and it works with this integration.
@@ -65,7 +65,8 @@ All Solis inverters should be supported, although the integration has been teste
 | RHI-3P(3-10)K-HVES-5G    | CA        | hybrid |
 | RHI-(3-6)K-48ES-5G       | F4        | hybrid |
 | S6-GR1P(2.5-6)K          | 0200,0205 | string |
-| S5-GR3P(3-20)K           | 0507      | string |
+| S6-GR1P(0.7-3.6)K-M      | 0101,0105 | string |
+| S5-GR3P(3-20)K           | 0504,0507 | string |
 
 > [!NOTE]
 > If your inverter is not listed above, please open a GitHub issue using the "New Solis Inverter Support Request" template.
@@ -80,7 +81,7 @@ The integration provides a user-friendly interface to control your inverter sett
 * Switch the inverter on or off 🟢 ⚪️
 * Toggle "Battery Reserve" 🟢
 * Toggle "Allow Grid Charging" 🟢
-* Toggle "Allow Export" 🟢
+* Toggle "Allow Export" (in "Self-Use" storage mode) 🟢
 * Set maximum output power 🟢
 * Set maximum export power 🟢
 * Control various Battery State of Charge (SOC) levels 🟢

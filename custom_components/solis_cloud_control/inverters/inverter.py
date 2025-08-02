@@ -320,6 +320,8 @@ class InverterPowerLimit:
 @dataclass(frozen=True)
 class InverterAllowExport:
     cid: int = 6962
+    on_value: str = "80"
+    off_value: str = "88"
 
 
 @dataclass(frozen=True)
