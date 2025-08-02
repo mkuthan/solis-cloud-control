@@ -35,8 +35,9 @@ async def async_setup_entry(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
                     key="battery_force_charge_soc",
-                    name="Battery Force Charge SOC",
+                    name="Battery Force Charge SOC (deprecated)",
                     icon="mdi:battery-alert",
+                    entity_registry_enabled_default=False,
                 ),
                 inverter_battery_soc=inverter.battery_force_charge_soc,
             )
@@ -47,8 +48,9 @@ async def async_setup_entry(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
                     key="battery_over_discharge_soc",
-                    name="Battery Over Discharge SOC",
+                    name="Battery Over Discharge SOC (deprecated)",
                     icon="mdi:battery-50",
+                    entity_registry_enabled_default=False,
                 ),
                 inverter_battery_soc=inverter.battery_over_discharge_soc,
             )
@@ -59,8 +61,9 @@ async def async_setup_entry(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
                     key="battery_recovery_soc",
-                    name="Battery Recovery SOC",
+                    name="Battery Recovery SOC (deprecated)",
                     icon="mdi:battery-50",
+                    entity_registry_enabled_default=False,
                 ),
                 inverter_battery_soc=inverter.battery_recovery_soc,
             )
@@ -71,8 +74,9 @@ async def async_setup_entry(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
                     key="battery_reserve_soc",
-                    name="Battery Reserve SOC",
+                    name="Battery Reserve SOC (deprecated)",
                     icon="mdi:battery-50",
+                    entity_registry_enabled_default=False,
                 ),
                 inverter_battery_soc=inverter.battery_reserve_soc,
             )
@@ -83,8 +87,9 @@ async def async_setup_entry(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
                     key="battery_max_charge_soc",
-                    name="Battery Max Charge SOC",
+                    name="Battery Max Charge SOC (deprecated)",
                     icon="mdi:battery",
+                    entity_registry_enabled_default=False,
                 ),
                 inverter_battery_soc=inverter.battery_max_charge_soc,
             )
