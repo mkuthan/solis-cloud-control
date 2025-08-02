@@ -9,10 +9,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 from custom_components.solis_cloud_control.domain.charge_discharge_settings import ChargeDischargeSettings
 from custom_components.solis_cloud_control.inverters.inverter import (
+    InverterBatteryForceChargeSOC,
     InverterBatteryMaxChargeCurrent,
     InverterBatteryMaxChargeSOC,
     InverterBatteryMaxDischargeCurrent,
     InverterBatteryOverDischargeSOC,
+    InverterBatteryRecoverySOC,
+    InverterBatteryReserveSOC,
     InverterChargeDischargeSettings,
     InverterChargeDischargeSlot,
     InverterMaxExportPower,
@@ -120,6 +123,67 @@ async def async_setup_entry(
                     ),
                 ]
             )
+
+    if inverter.battery_force_charge_soc:
+        entities.append(
+            BatterySocNumber(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="battery_force_charge_soc",
+                    name="Battery Force Charge SOC",
+                    icon="mdi:battery-alert",
+                ),
+                inverter_battery_soc=inverter.battery_force_charge_soc,
+            )
+        )
+    if inverter.battery_over_discharge_soc:
+        entities.append(
+            BatterySocNumber(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="battery_over_discharge_soc",
+                    name="Battery Over Discharge SOC",
+                    icon="mdi:battery-50",
+                ),
+                inverter_battery_soc=inverter.battery_over_discharge_soc,
+            )
+        )
+    if inverter.battery_recovery_soc:
+        entities.append(
+            BatterySocNumber(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="battery_recovery_soc",
+                    name="Battery Recovery SOC",
+                    icon="mdi:battery-50",
+                ),
+                inverter_battery_soc=inverter.battery_recovery_soc,
+            )
+        )
+    if inverter.battery_reserve_soc:
+        entities.append(
+            BatterySocNumber(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="battery_reserve_soc",
+                    name="Battery Reserve SOC",
+                    icon="mdi:battery-50",
+                ),
+                inverter_battery_soc=inverter.battery_reserve_soc,
+            )
+        )
+    if inverter.battery_max_charge_soc:
+        entities.append(
+            BatterySocNumber(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="battery_max_charge_soc",
+                    name="Battery Max Charge SOC",
+                    icon="mdi:battery",
+                ),
+                inverter_battery_soc=inverter.battery_max_charge_soc,
+            )
+        )
 
     if inverter.max_output_power is not None:
         entities.append(
@@ -411,3 +475,34 @@ class PowerLimit(SolisCloudControlEntity, NumberEntity):
         value_str = str(int(round(value)))
         _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_power_limit.cid, value_str)
+
+
+class BatterySocNumber(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        inverter_battery_soc: InverterBatteryReserveSOC
+        | InverterBatteryOverDischargeSOC
+        | InverterBatteryForceChargeSOC
+        | InverterBatteryRecoverySOC
+        | InverterBatteryMaxChargeSOC,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_battery_soc.cid)
+        self._attr_native_min_value = 0
+        self._attr_native_max_value = 100
+        self._attr_native_step = 1
+        self._attr_device_class = NumberDeviceClass.BATTERY
+        self._attr_native_unit_of_measurement = PERCENTAGE
+
+        self.inverter_battery_soc = inverter_battery_soc
+
+    @property
+    def native_value(self) -> float | None:
+        value_str = self.coordinator.data.get(self.inverter_battery_soc.cid)
+        return safe_get_float_value(value_str)
+
+    async def async_set_native_value(self, value: float) -> None:
+        value_str = str(int(round(value)))
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
+        await self.coordinator.control(self.inverter_battery_soc.cid, value_str)

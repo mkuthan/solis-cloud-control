@@ -8,6 +8,7 @@ from custom_components.solis_cloud_control.inverters.inverter import InverterBat
 from custom_components.solis_cloud_control.number import (
     BatteryCurrentV1,
     BatteryCurrentV2,
+    BatterySocNumber,
     BatterySocV2,
     MaxExportPower,
     MaxOutputPower,
@@ -444,4 +445,49 @@ class TestPowerLimit:
         await power_limit_entity.async_set_native_value(value)
         power_limit_entity.coordinator.control.assert_awaited_once_with(
             power_limit_entity.inverter_power_limit.cid, expected_str
+        )
+
+
+@pytest.fixture
+def battery_soc_number_entity(mock_coordinator, any_inverter):
+    return BatterySocNumber(
+        coordinator=mock_coordinator,
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
+        inverter_battery_soc=any_inverter.battery_force_charge_soc,
+    )
+
+
+class TestBatterySocNumber:
+    def test_attributes(self, battery_soc_number_entity):
+        assert battery_soc_number_entity.native_min_value == 0
+        assert battery_soc_number_entity.native_max_value == 100
+        assert battery_soc_number_entity.native_step == 1
+        assert battery_soc_number_entity.native_unit_of_measurement == PERCENTAGE
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("0", 0.0),
+            ("50", 50.0),
+            ("100", 100.0),
+            ("not a number", None),
+            (None, None),
+        ],
+    )
+    def test_native_value(self, battery_soc_number_entity, value, expected):
+        battery_soc_number_entity.coordinator.data = {battery_soc_number_entity.inverter_battery_soc.cid: value}
+        assert battery_soc_number_entity.native_value == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (0.1, "0"),
+            (50.4, "50"),
+            (99.9, "100"),
+        ],
+    )
+    async def test_set_native_value(self, battery_soc_number_entity, value, expected_str):
+        await battery_soc_number_entity.async_set_native_value(value)
+        battery_soc_number_entity.coordinator.control.assert_awaited_once_with(
+            battery_soc_number_entity.inverter_battery_soc.cid, expected_str
         )
