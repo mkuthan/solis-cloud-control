@@ -54,6 +54,7 @@ After successful configuration, the integration creates a new entity for your in
 ## Supported inverters
 
 All Solis inverters should be supported, although the integration has been tested with the following models:
+
 | Model name               | Model id         | Type   |
 | ------------------------ | ---------------- | ------ |
 | S6-EH3P(8-15)K02-NV-YD-L | 3331             | hybrid |
