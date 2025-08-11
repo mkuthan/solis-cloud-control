@@ -14,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _COORDINATOR_NAME = "Solis Cloud Control"
 
-_UPDATE_INTERVAL = timedelta(minutes=3)
+_UPDATE_INTERVAL = timedelta(minutes=5)
 
 
 _UPDATE_DATA_RETRY_COUNT = 5  # initial attempt + 5 retries

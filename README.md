@@ -108,6 +108,20 @@ The integration also meets several non-functional requirements:
 * ✅ After changing an inverter setting, the integration reads back the updated value from the inverter to verify that the change was applied successfully.
 * 🏡 Follows Home Assistant best practices for integration development to ensure a seamless and reliable user experience.
 
+## Data updates
+
+By default, the integration updates inverter settings every 5 minutes. This ensures that any changes made outside of Home Assistant—such as adjustments on the inverter itself or through the Solis app—are automatically reflected in Home Assistant.
+
+If you only use Home Assistant to control your inverter, you can turn off this periodic polling. Disabling polling may help if you experience instability or unreliable readings in the official Solis app caused by frequent data requests.
+
+To disable polling for changes:
+
+1. Go to [Settings > Devices & services](https://my.home-assistant.io/redirect/integrations/), and select "Solis Cloud Control" integration.
+2. On the integration entry, select the ⋮
+3. Select "System options" and toggle the button to disable polling.
+
+![System Options](system_options.png)
+
 ## FAQ
 
 ### What if the integration reports "B0115" error during initialization?
