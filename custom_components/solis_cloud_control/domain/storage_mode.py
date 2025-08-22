@@ -3,6 +3,7 @@ from custom_components.solis_cloud_control.utils.safe_converters import safe_get
 
 class StorageMode:
     BIT_SELF_USE: int = 0
+    BIT_TOU_MODE: int = 1
     BIT_OFF_GRID: int = 2
     BIT_BACKUP_MODE: int = 4
     BIT_GRID_CHARGING: int = 5
@@ -31,6 +32,9 @@ class StorageMode:
     def is_allow_grid_charging(self) -> bool:
         return (self.mode & (1 << self.BIT_GRID_CHARGING)) != 0
 
+    def is_tou_mode(self) -> bool:
+        return (self.mode & (1 << self.BIT_TOU_MODE)) != 0
+
     def set_self_use(self) -> None:
         self.mode |= 1 << self.BIT_SELF_USE
         self.mode &= ~(1 << self.BIT_FEED_IN_PRIORITY)
@@ -57,6 +61,12 @@ class StorageMode:
 
     def disable_allow_grid_charging(self) -> None:
         self.mode &= ~(1 << self.BIT_GRID_CHARGING)
+
+    def enable_tou_mode(self) -> None:
+        self.mode |= 1 << self.BIT_TOU_MODE
+
+    def disable_tou_mode(self) -> None:
+        self.mode &= ~(1 << self.BIT_TOU_MODE)
 
     def to_value(self) -> str:
         return str(self.mode)

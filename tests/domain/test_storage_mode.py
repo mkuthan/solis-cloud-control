@@ -47,6 +47,11 @@ class TestStorageMode:
 
         assert storage_mode.is_allow_grid_charging() is True
 
+    def test_is_tou_mode(self):
+        storage_mode = StorageMode(2)
+
+        assert storage_mode.is_tou_mode() is True
+
     @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
     def test_set_self_use(self, storage_mode):
         storage_mode.set_self_use()
@@ -94,3 +99,15 @@ class TestStorageMode:
         storage_mode.disable_allow_grid_charging()
 
         assert storage_mode.is_allow_grid_charging() is False
+
+    @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
+    def test_enable_tou_mode(self, storage_mode):
+        storage_mode.enable_tou_mode()
+
+        assert storage_mode.is_tou_mode() is True
+
+    @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
+    def test_disable_tou_mode(self, storage_mode):
+        storage_mode.disable_tou_mode()
+
+        assert storage_mode.is_tou_mode() is False
