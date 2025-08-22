@@ -8,6 +8,7 @@ from custom_components.solis_cloud_control.switch import (
     BatteryReserveSwitch,
     OnOffSwitch,
     SlotV2Switch,
+    TimeOfUseSwitch,
 )
 
 
@@ -334,3 +335,56 @@ class TestAllowGridChargingSwitch:
         await allow_grid_charging_switch.async_turn_on()
         await allow_grid_charging_switch.async_turn_off()
         allow_grid_charging_switch.coordinator.control.assert_not_awaited()
+
+
+@pytest.fixture
+def time_of_use_switch(mock_coordinator, any_inverter):
+    return TimeOfUseSwitch(
+        coordinator=mock_coordinator,
+        entity_description=SwitchEntityDescription(key="any_key", name="any name"),
+        inverter_storage_mode=any_inverter.storage_mode,
+    )
+
+
+class TestTimeOfUseSwitch:
+    def test_is_on_when_none(self, time_of_use_switch):
+        time_of_use_switch.coordinator.data = {time_of_use_switch.inverter_storage_mode.cid: None}
+        assert time_of_use_switch.is_on is None
+
+    def test_is_on_when_on(self, time_of_use_switch):
+        bit = StorageMode.BIT_TOU_MODE
+        time_of_use_switch.coordinator.data = {time_of_use_switch.inverter_storage_mode.cid: str(1 << bit)}
+        assert time_of_use_switch.is_on is True
+
+    def test_is_on_when_off(self, time_of_use_switch):
+        time_of_use_switch.coordinator.data = {time_of_use_switch.inverter_storage_mode.cid: str(0)}
+        assert time_of_use_switch.is_on is False
+
+    async def test_turn_on(self, time_of_use_switch):
+        bit = StorageMode.BIT_TOU_MODE
+        time_of_use_switch.coordinator.data = {time_of_use_switch.inverter_storage_mode.cid: str(0)}
+        await time_of_use_switch.async_turn_on()
+        time_of_use_switch.coordinator.control.assert_awaited_once_with(
+            time_of_use_switch.inverter_storage_mode.cid, str(1 << bit)
+        )
+
+    async def test_turn_off(self, time_of_use_switch):
+        bit = StorageMode.BIT_TOU_MODE
+        time_of_use_switch.coordinator.data = {time_of_use_switch.inverter_storage_mode.cid: str(1 << bit)}
+        await time_of_use_switch.async_turn_off()
+        time_of_use_switch.coordinator.control.assert_awaited_once_with(
+            time_of_use_switch.inverter_storage_mode.cid, str(0)
+        )
+
+    @pytest.mark.parametrize(
+        "initial_value",
+        [
+            "not a number",
+            None,
+        ],
+    )
+    async def test_async_turn_on_off_invalid_initial(self, time_of_use_switch, initial_value):
+        time_of_use_switch.coordinator.data = {time_of_use_switch.inverter_storage_mode.cid: initial_value}
+        await time_of_use_switch.async_turn_on()
+        await time_of_use_switch.async_turn_off()
+        time_of_use_switch.coordinator.control.assert_not_awaited()
