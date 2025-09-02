@@ -9,7 +9,8 @@ It allows you to read and control various settings of your Solis inverter.
 See my blog post for inspiration how to use this integration: [Home Assistant Solar Energy Management](https://mkuthan.github.io/blog/2025/04/12/home-assistant-solar/).
 
 > [!NOTE]
-> If your primary goal is to monitor data from the Solis Cloud Monitoring API, you might want to explore the [Solis Sensor Integration](https://github.com/hultenvp/solis-sensor/).  
+> If your primary goal is to monitor data from the Solis Cloud Monitoring API, you might want to explore the [Solis Sensor Integration](https://github.com/hultenvp/solis-sensor/).
+>
 > Both integrations are complementary and can be used together to enhance your Home Assistant setup.
 
 ## Installation
@@ -76,18 +77,18 @@ All Solis inverters should be supported, although the integration has been teste
 
 The integration provides a user-friendly interface to control your inverter settings. It allows you to:
 
-* ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid" 🟢
-* ⏱️ Schedule charge and discharge slots 🟢
-* Switch the inverter on or off 🟢 ⚪️
-* Toggle "Battery Reserve" 🟢
-* Toggle "Allow Grid Charging" 🟢
-* Toggle "Allow Export" (in "Self-Use" storage mode) 🟢
-* Set maximum output power 🟢
-* Set maximum export power 🟢
-* Control various Battery State of Charge (SOC) levels 🟢
-* Set power limit ⚪️
+- ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid" 🟢
+- ⏱️ Schedule charge and discharge slots 🟢
+- Switch the inverter on or off 🟢 ⚪️
+- Toggle "Battery Reserve" 🟢
+- Toggle "Allow Grid Charging" 🟢
+- Toggle "Allow Export" (in "Self-Use" storage mode) 🟢
+- Set maximum output power 🟢
+- Set maximum export power 🟢
+- Control various Battery State of Charge (SOC) levels 🟢
+- Set power limit ⚪️
 
-🟢 - Hybrid inverter  
+🟢 - Hybrid inverter
 ⚪️ - String inverter
 
 ![Inverter Controls](inverter_controls.png)
@@ -103,10 +104,10 @@ It also provides sensors for battery maximum charge and discharge current:
 
 The integration also meets several non-functional requirements:
 
-* 📦 Batch reading of all inverter settings in a single request to fit within the Solis Cloud API limits.
-* 🔄 Retry logic for API requests to mitigate API stability issues.
-* ✅ After changing an inverter setting, the integration reads back the updated value from the inverter to verify that the change was applied successfully.
-* 🏡 Follows Home Assistant best practices for integration development to ensure a seamless and reliable user experience.
+- 📦 Batch reading of all inverter settings in a single request to fit within the Solis Cloud API limits.
+- 🔄 Retry logic for API requests to mitigate API stability issues.
+- ✅ After changing an inverter setting, the integration reads back the updated value from the inverter to verify that the change was applied successfully.
+- 🏡 Follows Home Assistant best practices for integration development to ensure a seamless and reliable user experience.
 
 ## Data updates
 
