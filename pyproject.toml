@@ -1,7 +1,7 @@
 [project]
 name = "solis-cloud-control"
 version = "1.0.0"
-requires-python = "~=3.13"
+requires-python = "~=3.13.0"
 dependencies = [
     "homeassistant==2025.3.3",
 ]
