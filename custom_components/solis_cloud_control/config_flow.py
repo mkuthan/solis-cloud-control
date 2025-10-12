@@ -98,4 +98,4 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
         api_client = SolisCloudControlApiClient(
             API_BASE_URL, self._api_key, self._api_token, aiohttp_client.async_get_clientsession(self.hass)
         )
-        return await api_client.inverter_list(retry_count=0)
+        return await api_client.inverter_list(max_retry_time=0.0)
