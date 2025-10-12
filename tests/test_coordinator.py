@@ -34,16 +34,14 @@ async def test_async_update_data(hass: HomeAssistant, coordinator, mock_api_clie
     mock_api_client.read_batch.assert_called_once_with(
         any_inverter.info.serial_number,
         read_batch_cids,
-        retry_count=5,
-        retry_delay=10,
+        max_retry_time=180,
     )
 
     for read_cid in read_cids:
         mock_api_client.read.assert_called_once_with(
             any_inverter.info.serial_number,
             read_cid,
-            retry_count=5,
-            retry_delay=10,
+            max_retry_time=60,
         )
 
     assert data == {cid: f"value_{cid}" for cid in any_inverter.all_cids}
@@ -61,8 +59,7 @@ async def test_async_update_data_api_error(hass: HomeAssistant, coordinator, moc
     mock_api_client.read_batch.assert_called_once_with(
         coordinator._inverter.info.serial_number,
         coordinator._inverter.read_batch_cids,
-        retry_count=5,
-        retry_delay=10,
+        max_retry_time=180,
     )
 
 

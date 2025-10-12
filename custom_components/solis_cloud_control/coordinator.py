@@ -16,9 +16,9 @@ _COORDINATOR_NAME = "Solis Cloud Control"
 
 _UPDATE_INTERVAL = timedelta(minutes=5)
 
+_UPDATE_BATCH_DATA_MAX_RETRY_TIME_SECONDS = 180
+_UPDATE_DATA_MAX_RETRY_TIME_SECONDS = 60
 
-_UPDATE_DATA_RETRY_COUNT = 5  # initial attempt + 5 retries
-_UPDATE_DATA_RETRY_DELAY_SECONDS = 10
 _CONTROL_RETRY_COUNT = 1  # initial attempt + 1 retry
 _CONTROL_RETRY_DELAY_SECONDS = 5
 
@@ -51,16 +51,14 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
             results = await self._api_client.read_batch(
                 inverter_sn,
                 self._inverter.read_batch_cids,
-                retry_count=_UPDATE_DATA_RETRY_COUNT,
-                retry_delay=_UPDATE_DATA_RETRY_DELAY_SECONDS,
+                max_retry_time=_UPDATE_BATCH_DATA_MAX_RETRY_TIME_SECONDS,
             )
 
             for read_cid in self._inverter.read_cids:
                 results[read_cid] = await self._api_client.read(
                     inverter_sn,
                     read_cid,
-                    retry_count=_UPDATE_DATA_RETRY_COUNT,
-                    retry_delay=_UPDATE_DATA_RETRY_DELAY_SECONDS,
+                    max_retry_time=_UPDATE_DATA_MAX_RETRY_TIME_SECONDS,
                 )
 
             data = SolisCloudControlData({cid: results.get(cid) for cid in self._inverter.all_cids})

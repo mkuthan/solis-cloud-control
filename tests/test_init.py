@@ -39,7 +39,7 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
 
     charge_discharge_settings = "0,0,00:00,00:00,00:00,00:00,0,0,00:00,00:00,00:00,00:00,0,0,00:00,00:00,00:00,00:00"
 
-    mock_api_client.read.side_effect = lambda inverter_sn, cid, retry_count, retry_delay: (  # noqa: ARG005
+    mock_api_client.read.side_effect = lambda inverter_sn, cid, max_retry_time: (  # noqa: ARG005
         charge_discharge_settings if cid == 103 else None
     )
 

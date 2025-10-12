@@ -167,7 +167,7 @@ async def test_read_errors(mock_endpoint, expected_error, create_api_client, aio
     api_client = create_api_client(client)
 
     with pytest.raises(SolisCloudControlApiError) as excinfo:
-        await api_client.read(inverter_sn="any inverter", cid=-1, retry_count=0)
+        await api_client.read(inverter_sn="any inverter", cid=-1, max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)
 
@@ -238,7 +238,7 @@ async def test_read_batch_errors(mock_endpoint, expected_error, create_api_clien
     api_client = create_api_client(client)
 
     with pytest.raises(SolisCloudControlApiError) as excinfo:
-        await api_client.read_batch(inverter_sn="any inverter", cids=[-1], retry_count=0)
+        await api_client.read_batch(inverter_sn="any inverter", cids=[-1], max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)
 
@@ -293,7 +293,7 @@ async def test_control_errors(mock_endpoint, expected_error, create_api_client, 
     api_client = create_api_client(client)
 
     with pytest.raises(SolisCloudControlApiError) as excinfo:
-        await api_client.control(inverter_sn="any inverter", cid=-1, value="any value", retry_count=0)
+        await api_client.control(inverter_sn="any inverter", cid=-1, value="any value", max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)
 
@@ -340,7 +340,7 @@ async def test_inverter_list_errors(mock_endpoint, expected_error, create_api_cl
     api_client = create_api_client(client)
 
     with pytest.raises(SolisCloudControlApiError) as excinfo:
-        await api_client.inverter_list(retry_count=0)
+        await api_client.inverter_list(max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)
 
@@ -371,6 +371,6 @@ async def test_inverter_details_errors(mock_endpoint, expected_error, create_api
     api_client = create_api_client(client)
 
     with pytest.raises(SolisCloudControlApiError) as excinfo:
-        await api_client.inverter_details(inverter_sn="any_inverter_sn", retry_count=0)
+        await api_client.inverter_details(inverter_sn="any_inverter_sn", max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)

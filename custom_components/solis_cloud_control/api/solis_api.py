@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import time
 
 import aiohttp
 
@@ -40,8 +41,8 @@ class SolisCloudControlApiClient:
     _INVERTER_DETAILS_ENDPOINT = "/v1/api/inverterDetail"
     _TIMEOUT_SECONDS = 30
     _CONCURRENT_REQUESTS = 2
-    _RETRY_COUNT = 2  # initial attempt + 2 retries
-    _RETRY_DELAY_SECONDS = 5
+    _MAX_RETRY_TIME_SECONDS = 30
+    _INITIAL_RETRY_DELAY_SECONDS = 1
 
     def __init__(
         self,
@@ -59,9 +60,7 @@ class SolisCloudControlApiClient:
         self._timeout = timeout
         self._request_semaphore = asyncio.Semaphore(concurrent_requests)
 
-    async def read(
-        self, inverter_sn: str, cid: int, retry_count: int = _RETRY_COUNT, retry_delay: float = _RETRY_DELAY_SECONDS
-    ) -> str:
+    async def read(self, inverter_sn: str, cid: int, max_retry_time: float = _MAX_RETRY_TIME_SECONDS) -> str:
         async def read_operation() -> str:
             payload = {"inverterSn": inverter_sn, "cid": cid}
             data = await self._execute_request(self._READ_ENDPOINT, payload)
@@ -74,14 +73,13 @@ class SolisCloudControlApiClient:
 
             return data["msg"]
 
-        return await self._with_retry(read_operation, retry_count, retry_delay)
+        return await self._with_retry(read_operation, max_retry_time)
 
     async def read_batch(
         self,
         inverter_sn: str,
         cids: list[int],
-        retry_count: int = _RETRY_COUNT,
-        retry_delay: float = _RETRY_DELAY_SECONDS,
+        max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
     ) -> dict[int, str]:
         async def read_batch_operation() -> dict[int, str]:
             payload = {"inverterSn": inverter_sn, "cids": ",".join(map(str, cids))}
@@ -109,7 +107,7 @@ class SolisCloudControlApiClient:
 
             return result
 
-        return await self._with_retry(read_batch_operation, retry_count, retry_delay)
+        return await self._with_retry(read_batch_operation, max_retry_time)
 
     async def control(
         self,
@@ -117,8 +115,7 @@ class SolisCloudControlApiClient:
         cid: int,
         value: str,
         old_value: str | None = None,
-        retry_count: int = _RETRY_COUNT,
-        retry_delay: float = _RETRY_DELAY_SECONDS,
+        max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
     ) -> None:
         async def control_operation() -> None:
             payload = {"inverterSn": inverter_sn, "cid": cid, "value": value}
@@ -142,12 +139,11 @@ class SolisCloudControlApiClient:
 
             return
 
-        return await self._with_retry(control_operation, retry_count, retry_delay)
+        return await self._with_retry(control_operation, max_retry_time)
 
     async def inverter_list(
         self,
-        retry_count: int = _RETRY_COUNT,
-        retry_delay: float = _RETRY_DELAY_SECONDS,
+        max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
     ) -> list[dict[str, any]]:
         async def inverter_list_operation() -> list[dict[str, any]]:
             data = await self._execute_request(self._INVERTER_LIST_ENDPOINT, {})
@@ -163,13 +159,12 @@ class SolisCloudControlApiClient:
 
             return data["page"]["records"]
 
-        return await self._with_retry(inverter_list_operation, retry_count, retry_delay)
+        return await self._with_retry(inverter_list_operation, max_retry_time)
 
     async def inverter_details(
         self,
         inverter_sn: str,
-        retry_count: int = _RETRY_COUNT,
-        retry_delay: float = _RETRY_DELAY_SECONDS,
+        max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
     ) -> dict[str, any]:
         async def inverter_details_operation() -> dict[str, any]:
             payload = {"sn": inverter_sn}
@@ -180,7 +175,7 @@ class SolisCloudControlApiClient:
 
             return data
 
-        return await self._with_retry(inverter_details_operation, retry_count, retry_delay)
+        return await self._with_retry(inverter_details_operation, max_retry_time)
 
     async def _execute_request(self, endpoint: str, payload: dict[str, any] = None) -> any:
         body = json.dumps(payload)
@@ -234,18 +229,28 @@ class SolisCloudControlApiClient:
     async def _with_retry(
         self,
         operation_closure: callable,
-        retry_count: int,
-        retry_delay: float,
+        max_retry_time: float,
     ) -> any:
+        start_time = time.monotonic()
         attempt = 0
+        delay = self._INITIAL_RETRY_DELAY_SECONDS
 
-        while attempt <= retry_count:
+        while True:
             try:
                 return await operation_closure()
             except SolisCloudControlApiError as err:
-                attempt += 1
-                if attempt <= retry_count:
-                    _LOGGER.warning("Retrying due to error: %s (attempt %d/%d)", str(err), attempt, retry_count)
-                    await asyncio.sleep(retry_delay)
-                else:
+                elapsed_time = time.monotonic() - start_time
+
+                if elapsed_time >= max_retry_time:
                     raise err
+
+                attempt += 1
+                _LOGGER.warning(
+                    "Retrying due to error: %s (attempt %d, elapsed time: %.1fs)",
+                    str(err),
+                    attempt,
+                    elapsed_time,
+                )
+
+                await asyncio.sleep(delay)
+                delay = min(delay * 2, max_retry_time - elapsed_time)
