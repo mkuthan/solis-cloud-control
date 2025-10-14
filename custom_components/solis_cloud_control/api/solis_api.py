@@ -146,7 +146,8 @@ class SolisCloudControlApiClient:
         max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
     ) -> list[dict[str, any]]:
         async def inverter_list_operation() -> list[dict[str, any]]:
-            data = await self._execute_request(self._INVERTER_LIST_ENDPOINT, {})
+            payload = {"pageSize": "100"}
+            data = await self._execute_request(self._INVERTER_LIST_ENDPOINT, payload)
 
             if data is None:
                 raise SolisCloudControlApiError("InverterList failed: missing 'data' field")

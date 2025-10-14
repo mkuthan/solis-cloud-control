@@ -34,7 +34,7 @@ async def test_read(create_api_client, aiohttp_client):
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    result = await api_client.read(inverter_sn=any_inverter_sn, cid=any_cid)
+    result = await api_client.read(inverter_sn=any_inverter_sn, cid=any_cid, max_retry_time=0)
 
     assert result == any_result
 
@@ -57,7 +57,7 @@ async def test_read_batch(create_api_client, aiohttp_client):
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    result = await api_client.read_batch(inverter_sn=any_inverter_sn, cids=any_cids)
+    result = await api_client.read_batch(inverter_sn=any_inverter_sn, cids=any_cids, max_retry_time=0)
 
     assert result == any_results
 
@@ -82,7 +82,9 @@ async def test_control(create_api_client, aiohttp_client):
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    await api_client.control(inverter_sn=any_inverter_sn, cid=any_cid, value=any_value, old_value=any_old_value)
+    await api_client.control(
+        inverter_sn=any_inverter_sn, cid=any_cid, value=any_value, old_value=any_old_value, max_retry_time=0
+    )
 
 
 async def test_inverter_list(create_api_client, aiohttp_client):
@@ -92,6 +94,8 @@ async def test_inverter_list(create_api_client, aiohttp_client):
     ]
 
     async def mock_inverter_list_endpoint(request):
+        body = await request.json()
+        assert body.get("pageSize") == "100"
         return web.json_response({"code": "0", "msg": "Success", "data": {"page": {"records": any_records}}})
 
     app = web.Application()
@@ -100,7 +104,7 @@ async def test_inverter_list(create_api_client, aiohttp_client):
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    result = await api_client.inverter_list()
+    result = await api_client.inverter_list(max_retry_time=0)
 
     assert result == any_records
 
@@ -120,7 +124,7 @@ async def test_inverter_details(create_api_client, aiohttp_client):
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    result = await api_client.inverter_details(inverter_sn=any_inverter_sn)
+    result = await api_client.inverter_details(inverter_sn=any_inverter_sn, max_retry_time=0)
 
     assert result == any_details_response
 
