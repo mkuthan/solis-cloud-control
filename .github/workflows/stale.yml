@@ -19,11 +19,13 @@ jobs:
           # Issue settings
           days-before-stale: 30
           days-before-close: 7
+          exempt-issue-labels: "no-stale"
           stale-issue-message: "This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs. Thank you for your contributions."
           close-issue-message: "This issue was closed because it has been stale for 7 days with no activity."
 
           # PR settings
           days-before-pr-stale: 30
           days-before-pr-close: 7
+          exempt-pr-labels: "no-stale"
           stale-pr-message: "This pull request has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs. Thank you for your contributions."
           close-pr-message: "This pull request was closed because it has been stale for 7 days with no activity."
