@@ -8,6 +8,7 @@ from custom_components.solis_cloud_control.inverters.inverter import InverterBat
 from custom_components.solis_cloud_control.number import (
     BatteryCurrentV1,
     BatteryCurrentV2,
+    BatteryMaxCurrentNumber,
     BatterySocNumber,
     BatterySocV2,
     MaxExportPower,
@@ -490,4 +491,62 @@ class TestBatterySocNumber:
         await battery_soc_number_entity.async_set_native_value(value)
         battery_soc_number_entity.coordinator.control.assert_awaited_once_with(
             battery_soc_number_entity.inverter_battery_soc.cid, expected_str
+        )
+
+
+@pytest.fixture
+def battery_max_current_number_entity(mock_coordinator, any_inverter):
+    return BatteryMaxCurrentNumber(
+        coordinator=mock_coordinator,
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
+        inverter_battery_max_current=any_inverter.battery_max_charge_current,
+    )
+
+
+class TestBatteryMaxCurrentNumber:
+    def test_attributes(self, battery_max_current_number_entity):
+        assert (
+            battery_max_current_number_entity.native_min_value
+            == battery_max_current_number_entity.inverter_battery_max_current.min_value
+        )
+        assert (
+            battery_max_current_number_entity.native_max_value
+            == battery_max_current_number_entity.inverter_battery_max_current.max_value
+        )
+        assert (
+            battery_max_current_number_entity.native_step
+            == battery_max_current_number_entity.inverter_battery_max_current.step
+        )
+        assert battery_max_current_number_entity.native_unit_of_measurement == UnitOfElectricCurrent.AMPERE
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("0", 0.0),
+            ("10.5", 10.5),
+            ("100", 100.0),
+            ("1000", 1000.0),
+            ("not a number", None),
+            (None, None),
+        ],
+    )
+    def test_native_value(self, battery_max_current_number_entity, value, expected):
+        battery_max_current_number_entity.coordinator.data = {
+            battery_max_current_number_entity.inverter_battery_max_current.cid: value
+        }
+        assert battery_max_current_number_entity.native_value == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (0.1, "0"),
+            (10.4, "10"),
+            (99.9, "100"),
+            (999.5, "1000"),
+        ],
+    )
+    async def test_set_native_value(self, battery_max_current_number_entity, value, expected_str):
+        await battery_max_current_number_entity.async_set_native_value(value)
+        battery_max_current_number_entity.coordinator.control.assert_awaited_once_with(
+            battery_max_current_number_entity.inverter_battery_max_current.cid, expected_str
         )

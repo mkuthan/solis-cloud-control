@@ -87,6 +87,7 @@ The integration provides a user-friendly interface to control your inverter sett
 - Set maximum output power 🟢
 - Set maximum export power 🟢
 - Control various Battery State of Charge (SOC) levels 🟢
+- Set battery charge and discharge current limits  🟢
 - Set power limit ⚪️
 
 🟢 - Hybrid inverter
@@ -94,12 +95,8 @@ The integration provides a user-friendly interface to control your inverter sett
 
 ![Inverter Controls](inverter_controls.png)
 
-It also provides sensors for battery maximum charge and discharge current:
-
-![Inverter Sensors](inverter_sensors.png)
-
 > [!NOTE]
-> If the inverter doesn't support a specific feature, the integration don't create the corresponding control or sensor entities.
+> If the inverter doesn't support a specific feature, the integration don't create the corresponding control entities.
 
 ## Non-functional features
 

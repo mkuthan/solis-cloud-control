@@ -86,7 +86,7 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
     entries = er.async_entries_for_config_entry(entity_registry, mock_config_entry.entry_id)
 
     platform_counts = Counter(entry.domain for entry in entries)
-    assert platform_counts[Platform.NUMBER] == 38
+    assert platform_counts[Platform.NUMBER] == 40
     assert platform_counts[Platform.SELECT] == 1
     assert platform_counts[Platform.SENSOR] == 7
     assert platform_counts[Platform.SWITCH] == 17
@@ -95,7 +95,7 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
     platform_disabled_counts = Counter(entry.domain for entry in entries if entry.disabled_by is not None)
     assert platform_disabled_counts[Platform.NUMBER] == 0
     assert platform_disabled_counts[Platform.SELECT] == 0
-    assert platform_disabled_counts[Platform.SENSOR] == 5
+    assert platform_disabled_counts[Platform.SENSOR] == 7
     assert platform_disabled_counts[Platform.SWITCH] == 0
     assert platform_disabled_counts[Platform.TEXT] == 0
 

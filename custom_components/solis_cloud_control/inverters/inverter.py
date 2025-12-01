@@ -17,6 +17,8 @@ class InverterInfo:
     POWER_LIMIT_DEFAULT: ClassVar[float] = 110.0
     PARALLEL_INVERTER_COUNT_DEFAULT: ClassVar[int] = 1
     PARALLEL_BATTERY_COUNT_DEFAULT: ClassVar[int] = 1
+    MAX_BATTERY_CURRENT_DEFAULT: ClassVar[float] = 1_000.0
+    MAX_BATTERY_CURRENT_STEP_DEFAULT: ClassVar[float] = 1.0
 
     serial_number: str
     model: str | None
@@ -352,12 +354,18 @@ class InverterBatteryMaxChargeSOC:
 @dataclass(frozen=True)
 class InverterBatteryMaxChargeCurrent:
     cid: int = 7224
+    min_value: float = 0
+    max_value: float = InverterInfo.MAX_BATTERY_CURRENT_DEFAULT
+    step: float = InverterInfo.MAX_BATTERY_CURRENT_STEP_DEFAULT
     parallel_battery_count: int = InverterInfo.PARALLEL_BATTERY_COUNT_DEFAULT
 
 
 @dataclass(frozen=True)
 class InverterBatteryMaxDischargeCurrent:
     cid: int = 7226
+    min_value: float = 0
+    max_value: float = InverterInfo.MAX_BATTERY_CURRENT_DEFAULT
+    step: float = InverterInfo.MAX_BATTERY_CURRENT_STEP_DEFAULT
     parallel_battery_count: int = InverterInfo.PARALLEL_BATTERY_COUNT_DEFAULT
 
 

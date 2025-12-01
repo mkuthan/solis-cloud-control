@@ -100,8 +100,9 @@ async def async_setup_entry(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
                     key="battery_max_charge_current",
-                    name="Battery Max Charge Current",
+                    name="Battery Max Charge Current (deprecated)",
                     icon="mdi:battery-arrow-down-outline",
+                    entity_registry_enabled_default=False,
                 ),
                 inverter_battery_current=inverter.battery_max_charge_current,
             )
@@ -112,8 +113,9 @@ async def async_setup_entry(
                 coordinator=coordinator,
                 entity_description=SensorEntityDescription(
                     key="battery_max_discharge_current",
-                    name="Battery Max Discharge Current",
+                    name="Battery Max Discharge Current (deprecated)",
                     icon="mdi:battery-arrow-up-outline",
+                    entity_registry_enabled_default=False,
                 ),
                 inverter_battery_current=inverter.battery_max_discharge_current,
             )

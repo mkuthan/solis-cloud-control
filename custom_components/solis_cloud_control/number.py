@@ -184,6 +184,30 @@ async def async_setup_entry(
                 inverter_battery_soc=inverter.battery_max_charge_soc,
             )
         )
+    if inverter.battery_max_charge_current:
+        entities.append(
+            BatteryMaxCurrentNumber(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="battery_max_charge_current",
+                    name="Battery Max Charge Current",
+                    icon="mdi:battery-arrow-down-outline",
+                ),
+                inverter_battery_max_current=inverter.battery_max_charge_current,
+            )
+        )
+    if inverter.battery_max_discharge_current:
+        entities.append(
+            BatteryMaxCurrentNumber(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="battery_max_discharge_current",
+                    name="Battery Max Discharge Current",
+                    icon="mdi:battery-arrow-up-outline",
+                ),
+                inverter_battery_max_current=inverter.battery_max_discharge_current,
+            )
+        )
 
     if inverter.max_output_power is not None:
         entities.append(
@@ -506,3 +530,30 @@ class BatterySocNumber(SolisCloudControlEntity, NumberEntity):
         value_str = str(int(round(value)))
         _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_battery_soc.cid, value_str)
+
+
+class BatteryMaxCurrentNumber(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        inverter_battery_max_current: InverterBatteryMaxChargeCurrent | InverterBatteryMaxDischargeCurrent,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_battery_max_current.cid)
+        self._attr_native_min_value = inverter_battery_max_current.min_value
+        self._attr_native_max_value = inverter_battery_max_current.max_value
+        self._attr_native_step = inverter_battery_max_current.step
+        self._attr_device_class = NumberDeviceClass.CURRENT
+        self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+
+        self.inverter_battery_max_current = inverter_battery_max_current
+
+    @property
+    def native_value(self) -> float | None:
+        value_str = self.coordinator.data.get(self.inverter_battery_max_current.cid)
+        return safe_get_float_value(value_str)
+
+    async def async_set_native_value(self, value: float) -> None:
+        value_str = str(int(round(value)))
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
+        await self.coordinator.control(self.inverter_battery_max_current.cid, value_str)
