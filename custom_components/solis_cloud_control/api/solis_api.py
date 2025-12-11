@@ -144,8 +144,8 @@ class SolisCloudControlApiClient:
     async def inverter_list(
         self,
         max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
-    ) -> list[dict[str, any]]:
-        async def inverter_list_operation() -> list[dict[str, any]]:
+    ) -> list[dict]:
+        async def inverter_list_operation() -> list[dict]:
             payload = {"pageSize": "100"}
             data = await self._execute_request(self._INVERTER_LIST_ENDPOINT, payload)
 
@@ -166,8 +166,8 @@ class SolisCloudControlApiClient:
         self,
         inverter_sn: str,
         max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
-    ) -> dict[str, any]:
-        async def inverter_details_operation() -> dict[str, any]:
+    ) -> dict:
+        async def inverter_details_operation() -> dict:
             payload = {"sn": inverter_sn}
             data = await self._execute_request(self._INVERTER_DETAILS_ENDPOINT, payload)
 
@@ -178,7 +178,7 @@ class SolisCloudControlApiClient:
 
         return await self._with_retry(inverter_details_operation, max_retry_time)
 
-    async def _execute_request(self, endpoint: str, payload: dict[str, any] = None) -> any:
+    async def _execute_request(self, endpoint: str, payload: dict | None = None) -> any:
         body = json.dumps(payload)
 
         payload_digest = digest(body)

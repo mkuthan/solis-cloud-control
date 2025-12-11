@@ -10,7 +10,8 @@ dependencies = [
 [tool.uv]
 dev-dependencies = [
     "pytest-homeassistant-custom-component==0.13.224",
-    "ruff==0.11.5"
+    "ruff",
+    "ty"
 ]
 
 [tool.pytest.ini_options]
@@ -38,17 +39,18 @@ select = [
     "UP",  # pyupgrade
     "N",   # pep8-naming
 ]
-per-file-ignores = { "custom_components/**/*.py" = [
-        "ANN101",
-    ], "tests/*.py" = [
-        "ANN001",
-        "ANN101",
-        "ANN201",
-        "ANN202",
-        "ARG001",
-    ]}
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = [
+    "ANN001",
+    "ANN101",
+    "ANN201",
+    "ANN202",
+    "ARG001",
+]
 
 [tool.coverage.report]
-exclude_also = [
-    "raise NotImplementedError",
-]
+exclude_also = ["raise NotImplementedError"]
+
+[tool.ty.src]
+include = ["custom_components/**"]

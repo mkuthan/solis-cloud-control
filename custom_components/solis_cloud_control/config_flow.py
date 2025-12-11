@@ -94,7 +94,10 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def _inverter_list(self) -> list[dict[str, Any]]:
+    async def _inverter_list(self) -> list[dict]:
+        assert self._api_key is not None
+        assert self._api_token is not None
+
         api_client = SolisCloudControlApiClient(
             API_BASE_URL, self._api_key, self._api_token, aiohttp_client.async_get_clientsession(self.hass)
         )
