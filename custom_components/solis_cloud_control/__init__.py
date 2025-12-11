@@ -13,7 +13,14 @@ from custom_components.solis_cloud_control.inverters.inverter_factory import cre
 
 _LOGGER = logging.getLogger(__name__)
 
-_PLATFORMS: list[Platform] = [Platform.SELECT, Platform.TEXT, Platform.NUMBER, Platform.SWITCH, Platform.SENSOR]
+_PLATFORMS: list[Platform] = [
+    Platform.DATETIME,
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
+    Platform.TEXT,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: SolisCloudControlConfigEntry) -> bool:

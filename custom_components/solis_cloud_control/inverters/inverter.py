@@ -89,6 +89,11 @@ class InverterOnOff:
 
 
 @dataclass(frozen=True)
+class InverterTime:
+    cid: int = 56
+
+
+@dataclass(frozen=True)
 class InverterStorageMode:
     cid: int = 636
 
@@ -373,6 +378,7 @@ class InverterBatteryMaxDischargeCurrent:
 class Inverter:
     info: InverterInfo
     on_off: InverterOnOff | None = None
+    time: InverterTime | None = None
     storage_mode: InverterStorageMode | None = None
     charge_discharge_settings: InverterChargeDischargeSettings | None = None
     charge_discharge_slots: InverterChargeDischargeSlots | None = None
@@ -395,6 +401,8 @@ class Inverter:
         if self.on_off:
             cids.append(self.on_off.on_cid)
             cids.append(self.on_off.off_cid)
+        if self.time:
+            cids.append(self.time.cid)
         if self.storage_mode:
             cids.append(self.storage_mode.cid)
         if self.charge_discharge_slots:

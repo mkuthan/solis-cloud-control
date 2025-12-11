@@ -81,6 +81,7 @@ The integration provides a user-friendly interface to control your inverter sett
 - ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid" 🟢
 - ⏱️ Schedule charge and discharge slots 🟢
 - Switch the inverter on or off 🟢 ⚪️
+- Set the inverter time 🟢 ⚪️
 - Toggle "Battery Reserve" 🟢
 - Toggle "Allow Grid Charging" 🟢
 - Toggle "Allow Export" (in "Self-Use" storage mode) 🟢

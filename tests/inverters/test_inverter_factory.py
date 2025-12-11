@@ -20,6 +20,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterOnOff,
     InverterPowerLimit,
     InverterStorageMode,
+    InverterTime,
 )
 from custom_components.solis_cloud_control.inverters.inverter_factory import (
     create_inverter,
@@ -107,6 +108,7 @@ def test_create_string_inverter(any_inverter_info):
     expected = Inverter(
         info=inverter_info,
         on_off=InverterOnOff(on_cid=48, off_cid=53),
+        time=InverterTime(cid=18),
         power_limit=InverterPowerLimit(),
     )
 
@@ -120,6 +122,7 @@ def test_create_hybrid_inverter(any_inverter_info):
     expected = Inverter(
         info=inverter_info,
         on_off=InverterOnOff(),
+        time=InverterTime(),
         storage_mode=InverterStorageMode(),
         charge_discharge_slots=None,
         charge_discharge_settings=InverterChargeDischargeSettings(),

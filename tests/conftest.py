@@ -23,6 +23,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterMaxOutputPower,
     InverterOnOff,
     InverterStorageMode,
+    InverterTime,
 )
 from custom_components.solis_cloud_control.number import InverterPowerLimit
 
@@ -97,6 +98,7 @@ def any_inverter(any_inverter_info: InverterInfo) -> Inverter:
     return Inverter(
         info=any_inverter_info,
         on_off=InverterOnOff(),
+        time=InverterTime(),
         storage_mode=InverterStorageMode(),
         charge_discharge_settings=InverterChargeDischargeSettings(),
         charge_discharge_slots=InverterChargeDischargeSlots(),

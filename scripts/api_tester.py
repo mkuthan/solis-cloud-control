@@ -19,7 +19,7 @@ async def read_batch(client: SolisCloudControlApiClient, inverter_sn: str) -> No
 
 
 async def read(client: SolisCloudControlApiClient, inverter_sn: str) -> None:
-    cids_to_read = 103
+    cids_to_read = 56
 
     result = await client.read(inverter_sn, cids_to_read)
     print(json.dumps(result, indent=2))
