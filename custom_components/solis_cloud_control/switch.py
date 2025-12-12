@@ -159,14 +159,14 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
 
         return None
 
-    async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         _LOGGER.info("Turn on '%s'", self.name)
         if self.assumed_state:
             await self.coordinator.control_no_check(self.inverter_on_off.on_cid, self.inverter_on_off.on_value)
         else:
             await self.coordinator.control(self.inverter_on_off.on_cid, self.inverter_on_off.on_value)
 
-    async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         _LOGGER.info("Turn off '%s'", self.name)
         if self.assumed_state:
             await self.coordinator.control_no_check(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
@@ -204,7 +204,7 @@ class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
 
         return storage_mode.is_self_use()
 
-    async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
         if old_value is None:
             _LOGGER.warning("Unknown current state of '%s'", self.name)
@@ -213,7 +213,7 @@ class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
         _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
         await self.coordinator.control(self.inverter_allow_export.cid, "0", old_value)
 
-    async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
         if old_value is None:
             _LOGGER.warning("Unknown current state of '%s'", self.name)
@@ -251,12 +251,12 @@ class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):
         value = self.coordinator.data.get(self.inverter_charge_discharge_slot.switch_cid)
         return value == "1" if value is not None else None
 
-    async def async_turn_on(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
         _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
         await self.coordinator.control(self.inverter_charge_discharge_slot.switch_cid, "1", old_value)
 
-    async def async_turn_off(self, **kwargs: dict[str, any]) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
         _LOGGER.info("Turn off '%s' (old_value: %s)", self.name, old_value)
         await self.coordinator.control(self.inverter_charge_discharge_slot.switch_cid, "0", old_value)
@@ -309,7 +309,7 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
 
         return storage_mode.is_battery_reserve_enabled()
 
-    async def async_turn_on(self, **kwargs: any) -> None:  # noqa: ARG002
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
@@ -324,7 +324,7 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
         _LOGGER.info("Turn on '%s' (value: %s)", self.name, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
-    async def async_turn_off(self, **kwargs: any) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
@@ -361,7 +361,7 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
 
         return storage_mode.is_allow_grid_charging()
 
-    async def async_turn_on(self, **kwargs: any) -> None:  # noqa: ARG002
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
@@ -376,7 +376,7 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
         _LOGGER.info("Turn on '%s' (value: %s)", self.name, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
-    async def async_turn_off(self, **kwargs: any) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
@@ -413,7 +413,7 @@ class TimeOfUseSwitch(SolisCloudControlEntity, SwitchEntity):
 
         return storage_mode.is_tou_mode()
 
-    async def async_turn_on(self, **kwargs: any) -> None:  # noqa: ARG002
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
@@ -428,7 +428,7 @@ class TimeOfUseSwitch(SolisCloudControlEntity, SwitchEntity):
         _LOGGER.info("Turn on '%s' (value: %s)", self.name, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
-    async def async_turn_off(self, **kwargs: any) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)

@@ -56,7 +56,7 @@ def create_inverter(inverter_info: InverterInfo) -> Inverter:
         return _create_hybrid_inverter(inverter_info)
 
 
-def _get_inverter_detail(inverter_details: dict[str, any], field: str) -> str | None:
+def _get_inverter_detail(inverter_details: dict, field: str) -> str | None:
     return str(value) if (value := inverter_details.get(field)) is not None else None
 
 

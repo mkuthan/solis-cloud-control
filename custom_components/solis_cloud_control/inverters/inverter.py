@@ -270,7 +270,7 @@ class InverterChargeDischargeSlots:
             cids.extend(slot.all_cids)
         return cids
 
-    def get_charge_slot(self, slot_number: int) -> InverterChargeDischargeSlot | None:
+    def get_charge_slot(self, slot_number: int) -> InverterChargeDischargeSlot:
         if slot_number == 1:
             return self.charge_slot1
         elif slot_number == 2:
@@ -284,9 +284,9 @@ class InverterChargeDischargeSlots:
         elif slot_number == 6:
             return self.charge_slot6
         else:
-            return None
+            raise ValueError(f"Invalid charge slot number: {slot_number}")
 
-    def get_discharge_slot(self, slot_number: int) -> InverterChargeDischargeSlot | None:
+    def get_discharge_slot(self, slot_number: int) -> InverterChargeDischargeSlot:
         if slot_number == 1:
             return self.discharge_slot1
         elif slot_number == 2:
@@ -300,7 +300,7 @@ class InverterChargeDischargeSlots:
         elif slot_number == 6:
             return self.discharge_slot6
         else:
-            return None
+            raise ValueError(f"Invalid discharge slot number: {slot_number}")
 
 
 @dataclass(frozen=True)
