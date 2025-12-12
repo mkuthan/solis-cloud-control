@@ -2,6 +2,8 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import Callable
+from typing import Any
 
 import aiohttp
 
@@ -178,7 +180,7 @@ class SolisCloudControlApiClient:
 
         return await self._with_retry(inverter_details_operation, max_retry_time)
 
-    async def _execute_request(self, endpoint: str, payload: dict | None = None) -> any:
+    async def _execute_request(self, endpoint: str, payload: dict | None = None) -> Any:  # noqa: ANN401
         body = json.dumps(payload)
 
         payload_digest = digest(body)
@@ -229,9 +231,9 @@ class SolisCloudControlApiClient:
 
     async def _with_retry(
         self,
-        operation_closure: callable,
+        operation_closure: Callable,
         max_retry_time: float,
-    ) -> any:
+    ) -> Any:  # noqa: ANN401
         start_time = time.monotonic()
         attempt = 0
         delay = self._INITIAL_RETRY_DELAY_SECONDS
