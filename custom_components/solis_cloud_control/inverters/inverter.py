@@ -55,7 +55,7 @@ class InverterInfo:
 
     @property
     def max_export_power_scale(self) -> float:
-        if self.model and self.model.lower() in ["3315", "3331", "5305"]:
+        if self.model and self.model.lower() in ["3173", "3315", "3331", "5305"]:
             return 0.01
         else:
             return self.MAX_EXPORT_POWER_SCALE_DEFAULT

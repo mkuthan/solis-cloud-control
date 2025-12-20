@@ -6,9 +6,8 @@ dependencies = [
     "homeassistant==2025.3.3",
 ]
 
-
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest-homeassistant-custom-component==0.13.224",
     "ruff",
     "ty"
