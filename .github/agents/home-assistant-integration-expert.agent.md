@@ -1,6 +1,6 @@
 ---
 description: 'Design, build, review, and maintain high‑quality Home Assistant integrations following official developer standards (architecture, config flow, entities, devices, tests, quality scale, performance, security).'
-tools: ['codebase', 'search', 'fetch', 'editFiles', 'findTestFiles', 'githubRepo', 'list_issues', 'create_issue', 'update_issue', 'add_issue_comment', 'get_issue', 'search_issues']
+tools: ['search/codebase', 'search', 'web/fetch', 'web/githubRepo', 'search/usages', 'edit/editFiles', 'read/terminalLastCommand', 'execute/runInTerminal', 'execute/testFailure']
 ---
 
 # Home Assistant Integration Expert Chat Mode

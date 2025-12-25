@@ -5,7 +5,7 @@ applyTo: '**/*.py'
 
 # Python Coding Conventions (Repository Aligned)
 
-These instructions refine the generic Python guidance to match the project specific rules defined in `copilot-instructions.md`.
+These instructions refine the generic Python guidance to match the project specific rules defined in `AGENTS.md`.
 
 ## Core Principles
 
