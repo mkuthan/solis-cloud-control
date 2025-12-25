@@ -1,14 +1,14 @@
 [project]
 name = "solis-cloud-control"
 version = "1.0.0"
-requires-python = "~=3.13.0"
+requires-python = "~=3.13.2" # keep in sync with Home Assistant
 dependencies = [
-    "homeassistant==2025.3.3",
+    "homeassistant==2025.12.4",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest-homeassistant-custom-component==0.13.224",
+    "pytest-homeassistant-custom-component==0.13.301", # keep in sync with Home Assistant
     "ruff",
     "ty"
 ]
