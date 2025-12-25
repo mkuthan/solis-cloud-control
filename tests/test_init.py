@@ -8,7 +8,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.solis_cloud_control import async_migrate_entry
+from custom_components.solis_cloud_control import async_migrate_entry, async_remove_config_entry_device
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
@@ -146,3 +146,12 @@ async def test_migrate_config_entry_v1_to_v2(hass: HomeAssistant):
 
     assert CONF_TOKEN not in config_entry.data
     assert CONF_API_TOKEN in config_entry.data
+
+
+async def test_remove_config_entry_device(hass: HomeAssistant, mock_config_entry: MockConfigEntry):
+    result = await async_remove_config_entry_device(
+        hass,
+        mock_config_entry,
+        dr.DeviceEntry(),
+    )
+    assert result is True

@@ -82,6 +82,14 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: SolisCloudContr
     return True
 
 
+async def async_remove_config_entry_device(
+    hass: HomeAssistant,  # noqa: ARG001
+    config_entry: SolisCloudControlConfigEntry,  # noqa: ARG001
+    device_entry: dr.DeviceEntry,  # noqa: ARG001
+) -> bool:
+    return True
+
+
 def _create_api_client(hass: HomeAssistant, api_key: str, api_token: str) -> SolisCloudControlApiClient:
     session = aiohttp_client.async_get_clientsession(hass)
     return SolisCloudControlApiClient(API_BASE_URL, api_key, api_token, session)
