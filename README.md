@@ -85,6 +85,7 @@ The integration provides a user-friendly interface to control your inverter sett
 - Toggle "Battery Reserve" 🟢
 - Toggle "Allow Grid Charging" 🟢
 - Toggle "Allow Export" (in "Self-Use" storage mode) 🟢
+- Toggle "Grid Peak Shaving" (in "Self-Use" and "Feed-In Priority" storage modes) 🟢
 - Set maximum output power 🟢
 - Set maximum export power 🟢
 - Control various Battery State of Charge (SOC) levels 🟢
