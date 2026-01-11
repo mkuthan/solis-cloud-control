@@ -8,6 +8,7 @@ class StorageMode:
     BIT_BACKUP_MODE: int = 4
     BIT_GRID_CHARGING: int = 5
     BIT_FEED_IN_PRIORITY: int = 6
+    BIT_PEAK_SHAVING: int = 11
 
     @staticmethod
     def create(value: str | None) -> "StorageMode | None":
@@ -31,6 +32,9 @@ class StorageMode:
 
     def is_allow_grid_charging(self) -> bool:
         return (self.mode & (1 << self.BIT_GRID_CHARGING)) != 0
+
+    def is_peak_shaving(self) -> bool:
+        return (self.mode & (1 << self.BIT_PEAK_SHAVING)) != 0
 
     def is_tou_mode(self) -> bool:
         return (self.mode & (1 << self.BIT_TOU_MODE)) != 0
@@ -61,6 +65,12 @@ class StorageMode:
 
     def disable_allow_grid_charging(self) -> None:
         self.mode &= ~(1 << self.BIT_GRID_CHARGING)
+
+    def enable_peak_shaving(self) -> None:
+        self.mode |= 1 << self.BIT_PEAK_SHAVING
+
+    def disable_peak_shaving(self) -> None:
+        self.mode &= ~(1 << self.BIT_PEAK_SHAVING)
 
     def enable_tou_mode(self) -> None:
         self.mode |= 1 << self.BIT_TOU_MODE
