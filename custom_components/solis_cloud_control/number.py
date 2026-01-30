@@ -1,7 +1,7 @@
 import logging
 from typing import Literal
 
-from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberEntityDescription
+from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberEntityDescription, NumberMode
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -268,6 +268,7 @@ class BatteryCurrentV1(SolisCloudControlEntity, NumberEntity):
         self._attr_native_step = inverter_charge_discharge_settings.current_step
         self._attr_device_class = NumberDeviceClass.CURRENT
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+        self._attr_mode = NumberMode.BOX
 
         self.inverter_charge_discharge_settings = inverter_charge_discharge_settings
         self.inverter_battery_max_charge_discharge_current = inverter_battery_max_charge_discharge_current
@@ -338,6 +339,7 @@ class BatteryCurrentV2(SolisCloudControlEntity, NumberEntity):
         self._attr_native_step = inverter_charge_discharge_slot.current_step
         self._attr_device_class = NumberDeviceClass.CURRENT
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+        self._attr_mode = NumberMode.BOX
 
         self.inverter_charge_discharge_slot = inverter_charge_discharge_slot
         self.inverter_battery_max_charge_discharge_current = inverter_battery_max_charge_discharge_current
@@ -380,6 +382,7 @@ class BatterySocV2(SolisCloudControlEntity, NumberEntity):
         self._attr_native_step = inverter_charge_discharge_slot.soc_step
         self._attr_device_class = NumberDeviceClass.BATTERY
         self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_mode = NumberMode.BOX
 
         self.inverter_charge_discharge_slot = inverter_charge_discharge_slot
         self.inverter_battery_over_discharge_soc = inverter_battery_over_discharge_soc
@@ -435,6 +438,7 @@ class MaxOutputPower(SolisCloudControlEntity, NumberEntity):
         self._attr_native_max_value = 100
         self._attr_native_step = 1
         self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_mode = NumberMode.BOX
 
     @property
     def native_value(self) -> float | None:
@@ -462,6 +466,7 @@ class MaxExportPower(SolisCloudControlEntity, NumberEntity):
         self._attr_native_step = inverter_max_export_power.step
         self._attr_device_class = NumberDeviceClass.POWER
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
+        self._attr_mode = NumberMode.BOX
 
     @property
     def native_value(self) -> float | None:
@@ -489,6 +494,7 @@ class PowerLimit(SolisCloudControlEntity, NumberEntity):
         self._attr_native_max_value = inverter_power_limit.max_value
         self._attr_native_step = 1
         self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_mode = NumberMode.BOX
 
     @property
     def native_value(self) -> float | None:
@@ -518,6 +524,7 @@ class BatterySocNumber(SolisCloudControlEntity, NumberEntity):
         self._attr_native_step = 1
         self._attr_device_class = NumberDeviceClass.BATTERY
         self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_mode = NumberMode.BOX
 
         self.inverter_battery_soc = inverter_battery_soc
 
@@ -545,6 +552,7 @@ class BatteryMaxCurrentNumber(SolisCloudControlEntity, NumberEntity):
         self._attr_native_step = inverter_battery_max_current.step
         self._attr_device_class = NumberDeviceClass.CURRENT
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+        self._attr_mode = NumberMode.BOX
 
         self.inverter_battery_max_current = inverter_battery_max_current
 

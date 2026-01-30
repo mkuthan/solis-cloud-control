@@ -1,7 +1,7 @@
 from dataclasses import replace
 
 import pytest
-from homeassistant.components.number import NumberEntityDescription
+from homeassistant.components.number import NumberEntityDescription, NumberMode
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
 
 from custom_components.solis_cloud_control.inverters.inverter import InverterBatteryMaxChargeCurrent
@@ -51,6 +51,7 @@ class TestBatteryCurrentV1:
         assert battery_current_v1_charge_entity.native_max_value == inverter_charge_discharge_settings.current_max_value
         assert battery_current_v1_charge_entity.native_step == inverter_charge_discharge_settings.current_step
         assert battery_current_v1_charge_entity.native_unit_of_measurement == UnitOfElectricCurrent.AMPERE
+        assert battery_current_v1_charge_entity.mode == NumberMode.BOX
 
     def test_native_max_value(self, battery_current_v1_charge_entity):
         battery_current_v1_charge_entity.coordinator.data = {
@@ -169,6 +170,7 @@ class TestBatteryCurrentV2:
         assert battery_current_v2_entity.native_max_value == inverter_charge_discharge_slot.current_max_value
         assert battery_current_v2_entity.native_step == inverter_charge_discharge_slot.current_step
         assert battery_current_v2_entity.native_unit_of_measurement == UnitOfElectricCurrent.AMPERE
+        assert battery_current_v2_entity.mode == NumberMode.BOX
 
     def test_native_max_value(self, battery_current_v2_entity):
         battery_current_v2_entity.coordinator.data = {
@@ -235,6 +237,7 @@ class TestBatterySocV2:
         assert battery_soc_v2_entity.native_max_value == inverter_charge_discharge_slot.soc_max_value
         assert battery_soc_v2_entity.native_step == inverter_charge_discharge_slot.soc_step
         assert battery_soc_v2_entity.native_unit_of_measurement == PERCENTAGE
+        assert battery_soc_v2_entity.mode == NumberMode.BOX
 
     def test_native_min_value(self, battery_soc_v2_entity):
         battery_soc_v2_entity.coordinator.data = {battery_soc_v2_entity.inverter_battery_over_discharge_soc.cid: "10"}
@@ -288,6 +291,7 @@ class TestMaxOutputPower:
         assert max_output_power_entity.native_max_value == 100
         assert max_output_power_entity.native_step == 1
         assert max_output_power_entity.native_unit_of_measurement == PERCENTAGE
+        assert max_output_power_entity.mode == NumberMode.BOX
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -344,6 +348,7 @@ class TestMaxExportPower:
         assert max_export_power_entity.native_max_value == max_export_power.max_value
         assert max_export_power_entity.native_step == max_export_power.step
         assert max_export_power_entity.native_unit_of_measurement == UnitOfPower.WATT
+        assert max_export_power_entity.mode == NumberMode.BOX
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -419,6 +424,7 @@ class TestPowerLimit:
         assert power_limit_entity.native_max_value == power_limit_entity.inverter_power_limit.max_value
         assert power_limit_entity.native_step == 1
         assert power_limit_entity.native_unit_of_measurement == PERCENTAGE
+        assert power_limit_entity.mode == NumberMode.BOX
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -464,6 +470,7 @@ class TestBatterySocNumber:
         assert battery_soc_number_entity.native_max_value == 100
         assert battery_soc_number_entity.native_step == 1
         assert battery_soc_number_entity.native_unit_of_measurement == PERCENTAGE
+        assert battery_soc_number_entity.mode == NumberMode.BOX
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -518,6 +525,7 @@ class TestBatteryMaxCurrentNumber:
             == battery_max_current_number_entity.inverter_battery_max_current.step
         )
         assert battery_max_current_number_entity.native_unit_of_measurement == UnitOfElectricCurrent.AMPERE
+        assert battery_max_current_number_entity.mode == NumberMode.BOX
 
     @pytest.mark.parametrize(
         ("value", "expected"),
