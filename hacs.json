@@ -4,5 +4,5 @@
     "content_in_root": false,
     "zip_release": true,
     "filename": "solis_cloud_control.zip",
-    "homeassistant": "2025.3.3"
+    "homeassistant": "2025.12.4"
 }
