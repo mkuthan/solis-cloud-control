@@ -109,6 +109,17 @@ async def async_setup_entry(
                 inverter_storage_mode=inverter.storage_mode,
             )
         )
+        entities.append(
+            GridPeakShavingSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="grid_peak_shaving",
+                    name="Grid Peak Shaving",
+                    icon="mdi:chart-bell-curve",
+                ),
+                inverter_storage_mode=inverter.storage_mode,
+            )
+        )
 
     if inverter.storage_mode is not None and not inverter.info.is_tou_v2_enabled:
         entities.append(
@@ -385,6 +396,71 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
             return None
 
         storage_mode.disable_allow_grid_charging()
+
+        value_str = storage_mode.to_value()
+
+        _LOGGER.info("Turn off '%s' (value: %s)", self.name, value_str)
+        await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
+
+
+class GridPeakShavingSwitch(SolisCloudControlEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        inverter_storage_mode: InverterStorageMode,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_storage_mode.cid)
+        self.inverter_storage_mode = inverter_storage_mode
+
+    @property
+    def is_on(self) -> bool | None:
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
+            return None
+
+        return storage_mode.is_peak_shaving()
+
+    @property
+    def available(self) -> bool:
+        if not super().available:
+            return False
+
+        storage_mode_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        storage_mode = StorageMode.create(storage_mode_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, storage_mode_value)
+            return False
+
+        return storage_mode.is_self_use() or storage_mode.is_feed_in_priority()
+
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
+            return None
+
+        storage_mode.enable_peak_shaving()
+
+        value_str = storage_mode.to_value()
+
+        _LOGGER.info("Turn on '%s' (value: %s)", self.name, value_str)
+        await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
+
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
+            return None
+
+        storage_mode.disable_peak_shaving()
 
         value_str = storage_mode.to_value()
 
