@@ -5,6 +5,7 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient, SolisCloudControlApiError
@@ -15,6 +16,8 @@ _LOGGER = logging.getLogger(__name__)
 _COORDINATOR_NAME = "Solis Cloud Control"
 
 _UPDATE_INTERVAL = timedelta(minutes=5)
+
+_REQUEST_REFRESH_COOLDOWN_SECONDS = 10
 
 _UPDATE_BATCH_DATA_MAX_RETRY_TIME_SECONDS = 180
 _UPDATE_DATA_MAX_RETRY_TIME_SECONDS = 60
@@ -41,6 +44,12 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
             name=_COORDINATOR_NAME,
             config_entry=config_entry,
             update_interval=_UPDATE_INTERVAL,
+            request_refresh_debouncer=Debouncer(
+                hass,
+                _LOGGER,
+                cooldown=_REQUEST_REFRESH_COOLDOWN_SECONDS,
+                immediate=False,
+            ),
         )
         self._api_client = api_client
         self._inverter = inverter
