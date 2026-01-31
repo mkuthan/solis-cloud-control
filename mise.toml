@@ -1,0 +1,33 @@
+[env]
+_.file = ".env"
+
+[tools]
+python = "3.13"
+
+[tasks.test]
+description = "Run tests"
+run = "uv run pytest"
+
+[tasks.lint]
+description = "Run linter"
+run = "uv run ruff check"
+
+[tasks.typecheck]
+description = "Run type checker"
+run = "uv run ty check"
+
+[tasks.format]
+description = "Format code"
+run = "uv run ruff format"
+
+[tasks.lint-format]
+description = "Check code formatting"
+run = "uv run ruff format --check"
+
+[tasks.check]
+description = "Run all checks (lint, lint-format, typecheck, test)"
+depends = ["lint", "lint-format", "typecheck", "test"]
+
+[tasks.pre-commit]
+description = "Git pre-commit hook"
+run = ["mise run check"]
