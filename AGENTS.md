@@ -13,6 +13,11 @@ This is the Solis Cloud Control API integration for Home Assistant.
 - Run type checker: `mise run typecheck`
 - Format code: `mise run format`
 
+## MCP servers
+
+- Use GitHub MCP tools for managing repositories, issues, and pull requests
+- Use Context7 MCP when you need library/API documentation, code generation, setup, or configuration steps
+
 ## General rules
 
 - Always ask if you are unsure what to do or if the potential impact of a change is large
