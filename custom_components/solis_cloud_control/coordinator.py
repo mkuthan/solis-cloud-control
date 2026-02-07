@@ -93,7 +93,12 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
 
             current_value = await self._api_client.read(inverter_sn, cid)
             if current_value == value:
-                await self.async_request_refresh()
+                if self.data:
+                    new_data = SolisCloudControlData(self.data)
+                    new_data[cid] = value
+                    self.async_set_updated_data(new_data)
+                else:
+                    await self.async_request_refresh()
                 return
 
             attempt += 1
@@ -116,4 +121,10 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
     ) -> None:
         inverter_sn = self._inverter.info.serial_number
         await self._api_client.control(inverter_sn, cid, value, old_value)
-        await self.async_request_refresh()
+
+        if self.data:
+            new_data = SolisCloudControlData(self.data)
+            new_data[cid] = value
+            self.async_set_updated_data(new_data)
+        else:
+            await self.async_request_refresh()

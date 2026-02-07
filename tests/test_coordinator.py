@@ -78,6 +78,29 @@ async def test_control_success(hass: HomeAssistant, coordinator, mock_api_client
         mock_refresh.assert_called_once()
 
 
+async def test_control_success_with_data(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
+    any_cid = 123
+    any_value = "any_value"
+    initial_value = "initial_value"
+
+    coordinator.data = {any_cid: initial_value}
+
+    mock_api_client.control.return_value = None
+    mock_api_client.read.return_value = any_value
+
+    with (
+        patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_refresh,
+        patch.object(coordinator, "async_set_updated_data") as mock_set_updated_data,
+    ):
+        await coordinator.control(any_cid, any_value)
+
+        mock_api_client.control.assert_called_once_with(any_inverter.info.serial_number, any_cid, any_value, None)
+        mock_api_client.read.assert_called_once_with(any_inverter.info.serial_number, any_cid)
+
+        mock_refresh.assert_not_called()
+        mock_set_updated_data.assert_called_once_with({any_cid: any_value})
+
+
 async def test_control_api_error(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
     any_cid = 123
     any_value = "any_value"
@@ -113,7 +136,7 @@ async def test_control_retry_and_fail(hass: HomeAssistant, coordinator, mock_api
     mock_refresh.assert_not_called()
 
 
-async def test_control_no_check(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
+async def test_control_no_check_success(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
     any_cid = 123
     any_value = "any_value"
     any_old_value = "any_old_value"
@@ -128,6 +151,27 @@ async def test_control_no_check(hass: HomeAssistant, coordinator, mock_api_clien
         )
         mock_api_client.read.assert_not_called()
         mock_refresh.assert_called_once()
+
+
+async def test_control_no_check_success_with_data(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
+    any_cid = 123
+    any_value = "any_value"
+    initial_value = "initial_value"
+
+    coordinator.data = {any_cid: initial_value}
+
+    mock_api_client.control.return_value = None
+
+    with (
+        patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_refresh,
+        patch.object(coordinator, "async_set_updated_data") as mock_set_updated_data,
+    ):
+        await coordinator.control_no_check(any_cid, any_value)
+
+        mock_api_client.control.assert_called_once_with(any_inverter.info.serial_number, any_cid, any_value, None)
+
+        mock_refresh.assert_not_called()
+        mock_set_updated_data.assert_called_once_with({any_cid: any_value})
 
 
 async def test_control_no_check_api_error(hass: HomeAssistant, coordinator, mock_api_client):
