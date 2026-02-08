@@ -37,6 +37,11 @@ class TestStorageMode:
 
         assert storage_mode.is_off_grid() is True
 
+    def test_is_peak_shaving(self):
+        storage_mode = StorageMode(2048)
+
+        assert storage_mode.is_peak_shaving() is True
+
     def test_is_battery_reserve_enabled(self):
         storage_mode = StorageMode(16)
 
@@ -46,11 +51,6 @@ class TestStorageMode:
         storage_mode = StorageMode(32)
 
         assert storage_mode.is_allow_grid_charging() is True
-
-    def test_is_peak_shaving(self):
-        storage_mode = StorageMode(2048)
-
-        assert storage_mode.is_peak_shaving() is True
 
     def test_is_tou_mode(self):
         storage_mode = StorageMode(2)
@@ -64,6 +64,7 @@ class TestStorageMode:
         assert storage_mode.is_self_use() is True
         assert storage_mode.is_feed_in_priority() is False
         assert storage_mode.is_off_grid() is False
+        assert storage_mode.is_peak_shaving() is False
 
     @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
     def test_set_feed_in_priority(self, storage_mode):
@@ -72,6 +73,7 @@ class TestStorageMode:
         assert storage_mode.is_feed_in_priority() is True
         assert storage_mode.is_self_use() is False
         assert storage_mode.is_off_grid() is False
+        assert storage_mode.is_peak_shaving() is False
 
     @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
     def test_set_off_grid(self, storage_mode):
@@ -80,6 +82,16 @@ class TestStorageMode:
         assert storage_mode.is_off_grid() is True
         assert storage_mode.is_self_use() is False
         assert storage_mode.is_feed_in_priority() is False
+        assert storage_mode.is_peak_shaving() is False
+
+    @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
+    def test_set_peak_shaving(self, storage_mode):
+        storage_mode.set_peak_shaving()
+
+        assert storage_mode.is_peak_shaving() is True
+        assert storage_mode.is_self_use() is False
+        assert storage_mode.is_feed_in_priority() is False
+        assert storage_mode.is_off_grid() is False
 
     @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
     def test_enable_battery_reserve(self, storage_mode):
@@ -104,18 +116,6 @@ class TestStorageMode:
         storage_mode.disable_allow_grid_charging()
 
         assert storage_mode.is_allow_grid_charging() is False
-
-    @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
-    def test_enable_peak_shaving(self, storage_mode):
-        storage_mode.enable_peak_shaving()
-
-        assert storage_mode.is_peak_shaving() is True
-
-    @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
-    def test_disable_peak_shaving(self, storage_mode):
-        storage_mode.disable_peak_shaving()
-
-        assert storage_mode.is_peak_shaving() is False
 
     @pytest.mark.parametrize("storage_mode", [STORAGE_MODE_0x0000, STORAGE_MODE_0xFFFF])
     def test_enable_tou_mode(self, storage_mode):
