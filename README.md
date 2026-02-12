@@ -106,7 +106,6 @@ The integration also meets several non-functional requirements:
 
 - 📦 Batch reading of all inverter settings in a single request to fit within the Solis Cloud API limits.
 - 🔄 Retry logic for API requests to mitigate API stability issues.
-- ✅ After changing an inverter setting, the integration reads back the updated value from the inverter to verify that the change was applied successfully.
 - 🏡 Follows Home Assistant best practices for integration development to ensure a seamless and reliable user experience.
 
 ## Data updates

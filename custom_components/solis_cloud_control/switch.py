@@ -172,17 +172,11 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         _LOGGER.info("Turn on '%s'", self.name)
-        if self.assumed_state:
-            await self.coordinator.control_no_check(self.inverter_on_off.on_cid, self.inverter_on_off.on_value)
-        else:
-            await self.coordinator.control(self.inverter_on_off.on_cid, self.inverter_on_off.on_value)
+        await self.coordinator.control(self.inverter_on_off.on_cid, self.inverter_on_off.on_value)
 
     async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         _LOGGER.info("Turn off '%s'", self.name)
-        if self.assumed_state:
-            await self.coordinator.control_no_check(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
-        else:
-            await self.coordinator.control(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
+        await self.coordinator.control(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
 
 
 class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):

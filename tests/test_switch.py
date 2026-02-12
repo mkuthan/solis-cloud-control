@@ -61,7 +61,7 @@ class TestOnOffSwitch:
             on_off_switch.inverter_on_off.off_cid: "0",
         }
         await on_off_switch.async_turn_on()
-        on_off_switch.coordinator.control_no_check.assert_awaited_once_with(
+        on_off_switch.coordinator.control.assert_awaited_once_with(
             on_off_switch.inverter_on_off.on_cid, on_off_switch.inverter_on_off.on_value
         )
 
@@ -81,7 +81,7 @@ class TestOnOffSwitch:
             on_off_switch.inverter_on_off.off_cid: "0",
         }
         await on_off_switch.async_turn_off()
-        on_off_switch.coordinator.control_no_check.assert_awaited_once_with(
+        on_off_switch.coordinator.control.assert_awaited_once_with(
             on_off_switch.inverter_on_off.off_cid, on_off_switch.inverter_on_off.off_value
         )
 
