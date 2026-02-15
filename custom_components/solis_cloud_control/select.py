@@ -44,6 +44,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
     MODE_SELF_USE: str = "Self-Use"
     MODE_FEED_IN_PRIORITY: str = "Feed-In Priority"
     MODE_OFF_GRID: str = "Off-Grid"
+    MODE_GRID_PEAK_SHAVING: str = "Grid Peak-Shaving"
 
     def __init__(
         self,
@@ -56,6 +57,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
             self.MODE_SELF_USE,
             self.MODE_FEED_IN_PRIORITY,
             self.MODE_OFF_GRID,
+            self.MODE_GRID_PEAK_SHAVING,
         ]
 
         self.inverter_storage_mode = inverter_storage_mode
@@ -75,6 +77,8 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
             return self.MODE_FEED_IN_PRIORITY
         elif storage_mode.is_off_grid():
             return self.MODE_OFF_GRID
+        elif storage_mode.is_peak_shaving():
+            return self.MODE_GRID_PEAK_SHAVING
 
         return None
 
@@ -92,6 +96,8 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
             storage_mode.set_feed_in_priority()
         elif option == self.MODE_OFF_GRID:
             storage_mode.set_off_grid()
+        elif option == self.MODE_GRID_PEAK_SHAVING:
+            storage_mode.set_peak_shaving()
 
         value_str = storage_mode.to_value()
 
