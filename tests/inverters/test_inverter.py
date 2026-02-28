@@ -62,9 +62,11 @@ def test_inverter_max_export_power(any_inverter_info, power, power_unit, paralle
 @pytest.mark.parametrize(
     "model,expected_scale",
     [
+        ("3105", 0.01),
         ("3173", 0.01),
         ("3315", 0.01),
         ("3331", 0.01),
+        ("5305", 0.01),
         ("any_model", 1.0),
     ],
 )
