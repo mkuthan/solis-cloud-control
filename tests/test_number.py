@@ -287,9 +287,10 @@ def max_output_power_entity(mock_coordinator, any_inverter):
 
 class TestMaxOutputPower:
     def test_attributes(self, max_output_power_entity):
-        assert max_output_power_entity.native_min_value == 0
-        assert max_output_power_entity.native_max_value == 100
-        assert max_output_power_entity.native_step == 1
+        max_output_power = max_output_power_entity.inverter_max_output_power
+        assert max_output_power_entity.native_min_value == max_output_power.min_value
+        assert max_output_power_entity.native_max_value == max_output_power.max_value
+        assert max_output_power_entity.native_step == max_output_power.step
         assert max_output_power_entity.native_unit_of_measurement == PERCENTAGE
         assert max_output_power_entity.mode == NumberMode.BOX
 
@@ -422,7 +423,7 @@ class TestPowerLimit:
     def test_attributes(self, power_limit_entity):
         assert power_limit_entity.native_min_value == power_limit_entity.inverter_power_limit.min_value
         assert power_limit_entity.native_max_value == power_limit_entity.inverter_power_limit.max_value
-        assert power_limit_entity.native_step == 1
+        assert power_limit_entity.native_step == power_limit_entity.inverter_power_limit.step
         assert power_limit_entity.native_unit_of_measurement == PERCENTAGE
         assert power_limit_entity.mode == NumberMode.BOX
 
@@ -466,9 +467,10 @@ def battery_soc_number_entity(mock_coordinator, any_inverter):
 
 class TestBatterySocNumber:
     def test_attributes(self, battery_soc_number_entity):
-        assert battery_soc_number_entity.native_min_value == 0
-        assert battery_soc_number_entity.native_max_value == 100
-        assert battery_soc_number_entity.native_step == 1
+        inverter_battery_soc = battery_soc_number_entity.inverter_battery_soc
+        assert battery_soc_number_entity.native_min_value == inverter_battery_soc.min_value
+        assert battery_soc_number_entity.native_max_value == inverter_battery_soc.max_value
+        assert battery_soc_number_entity.native_step == inverter_battery_soc.step
         assert battery_soc_number_entity.native_unit_of_measurement == PERCENTAGE
         assert battery_soc_number_entity.mode == NumberMode.BOX
 

@@ -306,6 +306,9 @@ class InverterChargeDischargeSlots:
 @dataclass(frozen=True)
 class InverterMaxOutputPower:
     cid: int = 376
+    min_value: float = 0
+    max_value: float = 100
+    step: float = 1
 
 
 @dataclass(frozen=True)
@@ -322,6 +325,7 @@ class InverterPowerLimit:
     cid: int = 15
     min_value: float = 0
     max_value: float = InverterInfo.POWER_LIMIT_DEFAULT
+    step: float = 1
 
 
 @dataclass(frozen=True)
@@ -334,26 +338,41 @@ class InverterAllowExport:
 @dataclass(frozen=True)
 class InverterBatteryReserveSOC:
     cid: int = 157
+    min_value: float = 0
+    max_value: float = 100
+    step: float = 1
 
 
 @dataclass(frozen=True)
 class InverterBatteryOverDischargeSOC:
     cid: int = 158
+    min_value: float = 0
+    max_value: float = 100
+    step: float = 1
 
 
 @dataclass(frozen=True)
 class InverterBatteryForceChargeSOC:
     cid: int = 160
+    min_value: float = 0
+    max_value: float = 100
+    step: float = 1
 
 
 @dataclass(frozen=True)
 class InverterBatteryRecoverySOC:
     cid: int = 7229
+    min_value: float = 0
+    max_value: float = 100
+    step: float = 1
 
 
 @dataclass(frozen=True)
 class InverterBatteryMaxChargeSOC:
     cid: int = 7963
+    min_value: float = 0
+    max_value: float = 100
+    step: float = 1
 
 
 @dataclass(frozen=True)

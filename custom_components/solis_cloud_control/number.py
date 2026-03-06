@@ -434,9 +434,10 @@ class MaxOutputPower(SolisCloudControlEntity, NumberEntity):
         super().__init__(coordinator, entity_description, inverter_max_output_power.cid)
         self.inverter_max_output_power = inverter_max_output_power
 
-        self._attr_native_min_value = 0
-        self._attr_native_max_value = 100
-        self._attr_native_step = 1
+        self._attr_native_min_value = inverter_max_output_power.min_value
+        self._attr_native_max_value = inverter_max_output_power.max_value
+        self._attr_native_step = inverter_max_output_power.step
+        self._attr_device_class = None
         self._attr_native_unit_of_measurement = PERCENTAGE
         self._attr_mode = NumberMode.BOX
 
@@ -492,7 +493,8 @@ class PowerLimit(SolisCloudControlEntity, NumberEntity):
 
         self._attr_native_min_value = inverter_power_limit.min_value
         self._attr_native_max_value = inverter_power_limit.max_value
-        self._attr_native_step = 1
+        self._attr_native_step = inverter_power_limit.step
+        self._attr_device_class = None
         self._attr_native_unit_of_measurement = PERCENTAGE
         self._attr_mode = NumberMode.BOX
 
@@ -519,9 +521,9 @@ class BatterySocNumber(SolisCloudControlEntity, NumberEntity):
         | InverterBatteryMaxChargeSOC,
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_battery_soc.cid)
-        self._attr_native_min_value = 0
-        self._attr_native_max_value = 100
-        self._attr_native_step = 1
+        self._attr_native_min_value = inverter_battery_soc.min_value
+        self._attr_native_max_value = inverter_battery_soc.max_value
+        self._attr_native_step = inverter_battery_soc.step
         self._attr_device_class = NumberDeviceClass.BATTERY
         self._attr_native_unit_of_measurement = PERCENTAGE
         self._attr_mode = NumberMode.BOX
