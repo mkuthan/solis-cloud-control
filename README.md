@@ -5,11 +5,11 @@
 ![GitHub Release](https://img.shields.io/github/v/release/mkuthan/solis-cloud-control)
 
 This is the Solis Cloud Control API integration for Home Assistant.
-It allows you to read and control various settings of your Solis inverter.
+It allows you to **control** various settings of your Solis inverter.
 See my blog post for inspiration how to use this integration: [Home Assistant Solar Energy Management](https://mkuthan.github.io/blog/2025/04/12/home-assistant-solar/), or check my current [Solar automation using AppDaemon](https://github.com/mkuthan/home-assistant-appdaemon).
 
 > [!NOTE]
-> If your primary goal is to monitor data from the Solis Cloud Monitoring API, you might want to explore the [Solis Sensor Integration](https://github.com/hultenvp/solis-sensor/).
+> If your primary goal is to monitor your Solis inverter, you might want to explore the [Solis Sensor Integration](https://github.com/hultenvp/solis-sensor/).
 >
 > Both integrations are complementary and can be used together to enhance your Home Assistant setup.
 
@@ -128,3 +128,8 @@ To disable polling for changes:
 
 Most likely, your data logger is not supported by the integration, for example the "DLS-W" model.
 Replace your data logger with a supported model, such as "S2-WL-ST" or "S3-WiFi-ST", to use the integration.
+
+### Can I use this integration together with local Modbus integration?
+
+Yes, this is a perfect combination I use in my setup.
+[Solis Modbus](https://github.com/Pho3niX90/solis_modbus) for real-time monitoring of inverter data, and this integration for controlling the inverter settings using the official Solis Cloud API. With `100121d0` S2-WL-ST datalogger firmware update you don't even need additional hardware like Waveshare Modbus gateway.
