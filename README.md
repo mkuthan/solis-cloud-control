@@ -69,6 +69,7 @@ All Solis inverters should be supported, although the integration has been teste
 | S6-GR1P(2.5-6)K          | 0200, 0205             | string |
 | S6-GR1P(0.7-3.6)K-M      | 0101, 0105             | string |
 | S5-GR3P(3-20)K           | 0504, 0507             | string |
+| S5-GR3P(5-10)K-LV        | 052B                   | string |
 
 > [!NOTE]
 > If your inverter is not listed above, please open a GitHub issue using the "New Solis Inverter Support Request" template.
