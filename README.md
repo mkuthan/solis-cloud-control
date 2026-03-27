@@ -66,7 +66,8 @@ All Solis inverters should be supported, although the integration has been teste
 | S5-EH1P(3-6)K-L          | 3101, 3102, 3104, 3105 | hybrid |
 | RHI-3P(3-10)K-HVES-5G    | CA                     | hybrid |
 | RHI-(3-6)K-48ES-5G       | F4                     | hybrid |
-| S6-GR1P(2.5-6)K          | 0200, 0205             | string |
+| S5-GR1P(7-10)K           | 0410                   | string |
+| S6-GR1P(2.5-6)K          | 0200, 0201, 0205       | string |
 | S6-GR1P(0.7-3.6)K-M      | 0101, 0105             | string |
 | S5-GR3P(3-20)K           | 0504, 0507             | string |
 | S5-GR3P(5-10)K-LV        | 052B                   | string |

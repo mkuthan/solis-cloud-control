@@ -24,7 +24,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
 
 
 async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_sn: str) -> InverterInfo:
-    inverter_details = await api_client.inverter_details(inverter_sn)
+    inverter_details = await api_client.inverter_details(inverter_sn, max_retry_time=60.0)
 
     inverter_info = InverterInfo(
         serial_number=inverter_sn,
