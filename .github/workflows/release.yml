@@ -37,7 +37,7 @@ jobs:
           tag: ${{ github.ref_name }}
           useGitmojis: false
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: ${{ github.workspace }}/custom_components/${{ env.COMPONENT_NAME }}/${{ env.COMPONENT_NAME }}.zip
           body: ${{ steps.changelog.outputs.changes }}
