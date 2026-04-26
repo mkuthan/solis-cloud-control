@@ -46,6 +46,7 @@ After successful configuration, the integration creates a new entity for your in
 | ----------------- | -------- | :-------: |
 | S2-WL-ST          | WL       |     ✅     |
 | S3-WiFi-ST        | WIFI     |     ✅     |
+| S5-WiFi-ST        | WIFI     |     ✅     |
 | DLS-W             | ❓        |     ❌     |
 | DLS-L             | ❓        |     ❌     |
 
