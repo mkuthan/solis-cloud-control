@@ -6,7 +6,6 @@ from custom_components.solis_cloud_control.switch import (
     AllowExportSwitch,
     AllowGridChargingSwitch,
     BatteryReserveSwitch,
-    GridPeakShavingSwitch,
     OnOffSwitch,
     SlotV2Switch,
     TimeOfUseSwitch,
@@ -389,83 +388,3 @@ class TestTimeOfUseSwitch:
         await time_of_use_switch.async_turn_on()
         await time_of_use_switch.async_turn_off()
         time_of_use_switch.coordinator.control.assert_not_awaited()
-
-
-@pytest.fixture
-def grid_peak_shaving_switch(mock_coordinator, any_inverter):
-    return GridPeakShavingSwitch(
-        coordinator=mock_coordinator,
-        entity_description=SwitchEntityDescription(key="any_key", name="any name"),
-        inverter_storage_mode=any_inverter.storage_mode,
-    )
-
-
-class TestGridPeakShavingSwitch:
-    def test_is_on_when_none(self, grid_peak_shaving_switch):
-        grid_peak_shaving_switch.coordinator.data = {grid_peak_shaving_switch.inverter_storage_mode.cid: None}
-        assert grid_peak_shaving_switch.is_on is None
-
-    def test_is_on_when_on(self, grid_peak_shaving_switch):
-        bit = StorageMode.BIT_PEAK_SHAVING
-        grid_peak_shaving_switch.coordinator.data = {grid_peak_shaving_switch.inverter_storage_mode.cid: str(1 << bit)}
-        assert grid_peak_shaving_switch.is_on is True
-
-    def test_is_on_when_off(self, grid_peak_shaving_switch):
-        grid_peak_shaving_switch.coordinator.data = {grid_peak_shaving_switch.inverter_storage_mode.cid: str(0)}
-        assert grid_peak_shaving_switch.is_on is False
-
-    def test_available_when_storage_mode_is_self_use(self, grid_peak_shaving_switch):
-        mode = str(1 << StorageMode.BIT_SELF_USE)
-        grid_peak_shaving_switch.coordinator.data = {
-            grid_peak_shaving_switch.inverter_storage_mode.cid: mode,
-        }
-        assert grid_peak_shaving_switch.available is True
-
-    def test_available_when_storage_mode_is_feed_in_priority(self, grid_peak_shaving_switch):
-        mode = str(1 << StorageMode.BIT_FEED_IN_PRIORITY)
-        grid_peak_shaving_switch.coordinator.data = {
-            grid_peak_shaving_switch.inverter_storage_mode.cid: mode,
-        }
-        assert grid_peak_shaving_switch.available is True
-
-    def test_available_when_storage_mode_is_off_grid(self, grid_peak_shaving_switch):
-        mode = str(1 << StorageMode.BIT_OFF_GRID)
-        grid_peak_shaving_switch.coordinator.data = {
-            grid_peak_shaving_switch.inverter_storage_mode.cid: mode,
-        }
-        assert grid_peak_shaving_switch.available is False
-
-    def test_available_when_storage_mode_none(self, grid_peak_shaving_switch):
-        grid_peak_shaving_switch.coordinator.data = {
-            grid_peak_shaving_switch.inverter_storage_mode.cid: None,
-        }
-        assert grid_peak_shaving_switch.available is False
-
-    async def test_turn_on(self, grid_peak_shaving_switch):
-        bit = StorageMode.BIT_PEAK_SHAVING
-        grid_peak_shaving_switch.coordinator.data = {grid_peak_shaving_switch.inverter_storage_mode.cid: str(0)}
-        await grid_peak_shaving_switch.async_turn_on()
-        grid_peak_shaving_switch.coordinator.control.assert_awaited_once_with(
-            grid_peak_shaving_switch.inverter_storage_mode.cid, str(1 << bit)
-        )
-
-    async def test_turn_off(self, grid_peak_shaving_switch):
-        bit = StorageMode.BIT_PEAK_SHAVING
-        grid_peak_shaving_switch.coordinator.data = {grid_peak_shaving_switch.inverter_storage_mode.cid: str(1 << bit)}
-        await grid_peak_shaving_switch.async_turn_off()
-        grid_peak_shaving_switch.coordinator.control.assert_awaited_once_with(
-            grid_peak_shaving_switch.inverter_storage_mode.cid, str(0)
-        )
-
-    @pytest.mark.parametrize(
-        "initial_value",
-        [
-            "not a number",
-            None,
-        ],
-    )
-    async def test_async_turn_on_off_invalid_initial(self, grid_peak_shaving_switch, initial_value):
-        grid_peak_shaving_switch.coordinator.data = {grid_peak_shaving_switch.inverter_storage_mode.cid: initial_value}
-        await grid_peak_shaving_switch.async_turn_on()
-        await grid_peak_shaving_switch.async_turn_off()
-        grid_peak_shaving_switch.coordinator.control.assert_not_awaited()
