@@ -1,8 +1,6 @@
 import asyncio
 import json
 import logging
-import time
-from collections.abc import Callable
 from typing import Any
 
 import aiohttp
@@ -13,6 +11,7 @@ from custom_components.solis_cloud_control.api.solis_api_utils import (
     format_date,
     sign_authorization,
 )
+from custom_components.solis_cloud_control.utils.retry_policy import RetryPolicy
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,7 +43,8 @@ class SolisCloudControlApiClient:
     _TIMEOUT_SECONDS = 30
     _CONCURRENT_REQUESTS = 1
     _MAX_RETRY_TIME_SECONDS = 30
-    _INITIAL_RETRY_DELAY_SECONDS = 1
+
+    _RETRY_POLICY = RetryPolicy(retryable_exception=SolisCloudControlApiError)
 
     def __init__(
         self,
@@ -53,6 +53,7 @@ class SolisCloudControlApiClient:
         api_token: str,
         session: aiohttp.ClientSession,
         timeout: int = _TIMEOUT_SECONDS,
+        retry_policy: RetryPolicy = _RETRY_POLICY,
         concurrent_requests: int = _CONCURRENT_REQUESTS,
     ) -> None:
         self._base_url = base_url
@@ -60,6 +61,7 @@ class SolisCloudControlApiClient:
         self._api_secret = api_token
         self._session = session
         self._timeout = timeout
+        self._retry_policy = retry_policy
         self._request_semaphore = asyncio.Semaphore(concurrent_requests)
 
     async def read(self, inverter_sn: str, cid: int, max_retry_time: float = _MAX_RETRY_TIME_SECONDS) -> str:
@@ -75,7 +77,7 @@ class SolisCloudControlApiClient:
 
             return data["msg"]
 
-        return await self._with_retry(read_operation, max_retry_time)
+        return await self._retry_policy(read_operation, max_retry_time)
 
     async def read_batch(
         self,
@@ -109,7 +111,7 @@ class SolisCloudControlApiClient:
 
             return result
 
-        return await self._with_retry(read_batch_operation, max_retry_time)
+        return await self._retry_policy(read_batch_operation, max_retry_time)
 
     async def control(
         self,
@@ -141,7 +143,7 @@ class SolisCloudControlApiClient:
 
             return
 
-        return await self._with_retry(control_operation, max_retry_time)
+        return await self._retry_policy(control_operation, max_retry_time)
 
     async def inverter_list(
         self,
@@ -162,7 +164,7 @@ class SolisCloudControlApiClient:
 
             return data["page"]["records"]
 
-        return await self._with_retry(inverter_list_operation, max_retry_time)
+        return await self._retry_policy(inverter_list_operation, max_retry_time)
 
     async def inverter_details(
         self,
@@ -178,7 +180,7 @@ class SolisCloudControlApiClient:
 
             return data
 
-        return await self._with_retry(inverter_details_operation, max_retry_time)
+        return await self._retry_policy(inverter_details_operation, max_retry_time)
 
     async def _execute_request(self, endpoint: str, payload: dict | None = None) -> Any:  # noqa: ANN401
         body = json.dumps(payload)
@@ -228,32 +230,3 @@ class SolisCloudControlApiClient:
             raise SolisCloudControlApiError(f"Timeout accessing {url}") from err
         except aiohttp.ClientError as err:
             raise SolisCloudControlApiError(f"Error accessing {url}: {str(err)}") from err
-
-    async def _with_retry(
-        self,
-        operation_closure: Callable,
-        max_retry_time: float,
-    ) -> Any:  # noqa: ANN401
-        start_time = time.monotonic()
-        attempt = 0
-        delay = self._INITIAL_RETRY_DELAY_SECONDS
-
-        while True:
-            try:
-                return await operation_closure()
-            except SolisCloudControlApiError as err:
-                elapsed_time = time.monotonic() - start_time
-
-                if elapsed_time >= max_retry_time:
-                    raise err
-
-                attempt += 1
-                _LOGGER.warning(
-                    "Retrying due to error: %s (attempt %d, elapsed time: %.1fs)",
-                    str(err),
-                    attempt,
-                    elapsed_time,
-                )
-
-                await asyncio.sleep(delay)
-                delay = min(delay * 2, max_retry_time - elapsed_time)
