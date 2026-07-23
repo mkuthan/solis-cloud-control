@@ -59,7 +59,7 @@ All Solis inverters should be supported, although the integration has been teste
 
 | Model name               | Model id               | Type   |
 | ------------------------ | ---------------------- | ------ |
-| S6-EH3P(8-15)K02-NV-YD-L | 3331                   | hybrid |
+| S6-EH3P(8-15)K02-NV-YD-L | 3331,3332              | hybrid |
 | S6-EH3P(29.9-50)K-H      | 5305                   | hybrid |
 | S6-EH3P(12-20)K-H        | 3315                   | hybrid |
 | S6-EH3P(5-10)K-H         | 3306                   | hybrid |
