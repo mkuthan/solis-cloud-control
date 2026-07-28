@@ -12,6 +12,7 @@ from custom_components.solis_cloud_control.number import (
     BatterySocNumber,
     BatterySocV2,
     MaxExportPower,
+    InverterExportCalibration,
     MaxOutputPower,
     MpptScanIntervalNumber,
     PowerLimit,
@@ -408,6 +409,54 @@ class TestMaxExportPower:
         await max_export_power_entity_scaled_0_1.async_set_native_value(value)
         max_export_power_entity_scaled_0_1.coordinator.control.assert_awaited_once_with(
             max_export_power_entity_scaled_0_1.inverter_max_export_power.cid, expected_str
+        )
+
+
+@pytest.fixture
+def export_calibration_entity(mock_coordinator, any_inverter):
+    return InverterExportCalibration(
+        coordinator=mock_coordinator,
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
+        inverter_export_calibration=any_inverter.export_calibration,
+    )
+
+
+class TestInverterExportCalibration:
+    def test_attributes(self, export_calibration_entity):
+        export_calibration = export_calibration_entity.inverter_export_calibration
+        assert export_calibration_entity.native_min_value == export_calibration.min_value
+        assert export_calibration_entity.native_max_value == export_calibration.max_value
+        assert export_calibration_entity.native_step == export_calibration.step
+        assert export_calibration_entity.native_unit_of_measurement == UnitOfPower.WATT
+        assert export_calibration_entity.mode == NumberMode.BOX
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("-1000", -1000.0),
+            ("0", 0.0),
+            ("50", 50.0),
+            ("1000", 1000.0),
+            ("not a number", None),
+            (None, None),
+        ],
+    )
+    def test_native_value(self, export_calibration_entity, value, expected):
+        export_calibration_entity.coordinator.data = {export_calibration_entity.inverter_export_calibration.cid: value}
+        assert export_calibration_entity.native_value == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (0.1, "0"),
+            (50.4, "50"),
+            (99.9, "100"),
+        ],
+    )
+    async def test_set_native_value(self, export_calibration_entity, value, expected_str):
+        await export_calibration_entity.async_set_native_value(value)
+        export_calibration_entity.coordinator.control.assert_awaited_once_with(
+            export_calibration_entity.inverter_export_calibration.cid, expected_str
         )
 
 
