@@ -10,6 +10,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterAllowExport,
     InverterChargeDischargeSlot,
     InverterChargeDischargeSlots,
+    InverterMpptScanning,
     InverterOnOff,
     InverterStorageMode,
 )
@@ -131,6 +132,19 @@ async def async_setup_entry(
                     icon="mdi:clock-check-outline",
                 ),
                 inverter_storage_mode=inverter.storage_mode,
+            )
+        )
+
+    if inverter.mppt_scanning is not None:
+        entities.append(
+            MpptScanningSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="mppt_scanning_switch",
+                    name="MPPT Multi-peak Scanning",
+                    icon="mdi:solar-power-variant",
+                ),
+                inverter_mppt_scanning=inverter.mppt_scanning,
             )
         )
 
@@ -512,3 +526,27 @@ class TimeOfUseSwitch(SolisCloudControlEntity, SwitchEntity):
 
         _LOGGER.info("Turn off '%s' (value: %s)", self.name, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
+
+
+class MpptScanningSwitch(SolisCloudControlEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        inverter_mppt_scanning: InverterMpptScanning,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_mppt_scanning.cid)
+        self.inverter_mppt_scanning = inverter_mppt_scanning
+
+    @property
+    def is_on(self) -> bool | None:
+        value = self.coordinator.data.get(self.inverter_mppt_scanning.cid)
+        return value == self.inverter_mppt_scanning.on_value if value is not None else None
+
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        _LOGGER.info("Turn on '%s'", self.name)
+        await self.coordinator.control(self.inverter_mppt_scanning.cid, self.inverter_mppt_scanning.on_value)
+
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        _LOGGER.info("Turn off '%s'", self.name)
+        await self.coordinator.control(self.inverter_mppt_scanning.cid, self.inverter_mppt_scanning.off_value)

@@ -7,6 +7,7 @@ from custom_components.solis_cloud_control.switch import (
     AllowGridChargingSwitch,
     BatteryReserveSwitch,
     GridPeakShavingSwitch,
+    MpptScanningSwitch,
     OnOffSwitch,
     SlotV2Switch,
     TimeOfUseSwitch,
@@ -469,3 +470,40 @@ class TestGridPeakShavingSwitch:
         await grid_peak_shaving_switch.async_turn_on()
         await grid_peak_shaving_switch.async_turn_off()
         grid_peak_shaving_switch.coordinator.control.assert_not_awaited()
+
+
+@pytest.fixture
+def mppt_scanning_switch(mock_coordinator, any_inverter):
+    return MpptScanningSwitch(
+        coordinator=mock_coordinator,
+        entity_description=SwitchEntityDescription(key="any_key", name="any name"),
+        inverter_mppt_scanning=any_inverter.mppt_scanning,
+    )
+
+
+class TestMpptScanningSwitch:
+    def test_is_on_when_none(self, mppt_scanning_switch):
+        mppt_scanning_switch.coordinator.data = {mppt_scanning_switch.inverter_mppt_scanning.cid: None}
+        assert mppt_scanning_switch.is_on is None
+
+    def test_is_on_when_on(self, mppt_scanning_switch):
+        mppt_scanning_switch.coordinator.data = {mppt_scanning_switch.inverter_mppt_scanning.cid: "1"}
+        assert mppt_scanning_switch.is_on is True
+
+    def test_is_on_when_off(self, mppt_scanning_switch):
+        mppt_scanning_switch.coordinator.data = {mppt_scanning_switch.inverter_mppt_scanning.cid: "0"}
+        assert mppt_scanning_switch.is_on is False
+
+    async def test_turn_on(self, mppt_scanning_switch):
+        await mppt_scanning_switch.async_turn_on()
+        mppt_scanning_switch.coordinator.control.assert_awaited_once_with(
+            mppt_scanning_switch.inverter_mppt_scanning.cid,
+            mppt_scanning_switch.inverter_mppt_scanning.on_value,
+        )
+
+    async def test_turn_off(self, mppt_scanning_switch):
+        await mppt_scanning_switch.async_turn_off()
+        mppt_scanning_switch.coordinator.control.assert_awaited_once_with(
+            mppt_scanning_switch.inverter_mppt_scanning.cid,
+            mppt_scanning_switch.inverter_mppt_scanning.off_value,
+        )

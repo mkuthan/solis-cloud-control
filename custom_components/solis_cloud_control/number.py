@@ -2,7 +2,7 @@ import logging
 from typing import Literal
 
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberEntityDescription, NumberMode
-from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
+from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -20,6 +20,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSlot,
     InverterMaxExportPower,
     InverterMaxOutputPower,
+    InverterMpptScanInterval,
     InverterPowerLimit,
 )
 from custom_components.solis_cloud_control.utils.safe_converters import safe_get_float_value
@@ -245,6 +246,19 @@ async def async_setup_entry(
                     icon="mdi:transmission-tower-export",
                 ),
                 inverter_power_limit=inverter.power_limit,
+            )
+        )
+
+    if inverter.mppt_scan_interval is not None:
+        entities.append(
+            MpptScanIntervalNumber(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="mppt_scan_interval",
+                    name="MPPT Multi-peak Scan Interval",
+                    icon="mdi:timer-refresh-outline",
+                ),
+                inverter_mppt_scan_interval=inverter.mppt_scan_interval,
             )
         )
 
@@ -567,3 +581,31 @@ class BatteryMaxCurrentNumber(SolisCloudControlEntity, NumberEntity):
         value_str = str(int(round(value)))
         _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_battery_max_current.cid, value_str)
+
+
+class MpptScanIntervalNumber(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        inverter_mppt_scan_interval: InverterMpptScanInterval,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_mppt_scan_interval.cid)
+        self.inverter_mppt_scan_interval = inverter_mppt_scan_interval
+
+        self._attr_native_min_value = inverter_mppt_scan_interval.min_value
+        self._attr_native_max_value = inverter_mppt_scan_interval.max_value
+        self._attr_native_step = inverter_mppt_scan_interval.step
+        self._attr_device_class = NumberDeviceClass.DURATION
+        self._attr_native_unit_of_measurement = UnitOfTime.SECONDS
+        self._attr_mode = NumberMode.BOX
+
+    @property
+    def native_value(self) -> float | None:
+        value_str = self.coordinator.data.get(self.inverter_mppt_scan_interval.cid)
+        return safe_get_float_value(value_str)
+
+    async def async_set_native_value(self, value: float) -> None:
+        value_str = str(int(round(value)))
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
+        await self.coordinator.control(self.inverter_mppt_scan_interval.cid, value_str)
