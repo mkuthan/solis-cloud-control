@@ -87,10 +87,10 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
 
     platform_counts = Counter(entry.domain for entry in entries)
     assert platform_counts[Platform.DATETIME] == 1
-    assert platform_counts[Platform.NUMBER] == 40
+    assert platform_counts[Platform.NUMBER] == 41
     assert platform_counts[Platform.SELECT] == 1
     assert platform_counts[Platform.SENSOR] == 7
-    assert platform_counts[Platform.SWITCH] == 18
+    assert platform_counts[Platform.SWITCH] == 19
     assert platform_counts[Platform.TEXT] == 18
 
     platform_disabled_counts = Counter(entry.domain for entry in entries if entry.disabled_by is not None)

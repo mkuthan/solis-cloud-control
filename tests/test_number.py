@@ -2,7 +2,7 @@ from dataclasses import replace
 
 import pytest
 from homeassistant.components.number import NumberEntityDescription, NumberMode
-from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower
+from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower, UnitOfTime
 
 from custom_components.solis_cloud_control.inverters.inverter import InverterBatteryMaxChargeCurrent
 from custom_components.solis_cloud_control.number import (
@@ -13,6 +13,7 @@ from custom_components.solis_cloud_control.number import (
     BatterySocV2,
     MaxExportPower,
     MaxOutputPower,
+    MpptScanIntervalNumber,
     PowerLimit,
 )
 
@@ -559,4 +560,51 @@ class TestBatteryMaxCurrentNumber:
         await battery_max_current_number_entity.async_set_native_value(value)
         battery_max_current_number_entity.coordinator.control.assert_awaited_once_with(
             battery_max_current_number_entity.inverter_battery_max_current.cid, expected_str
+        )
+
+
+@pytest.fixture
+def mppt_scan_interval_entity(mock_coordinator, any_inverter):
+    return MpptScanIntervalNumber(
+        coordinator=mock_coordinator,
+        entity_description=NumberEntityDescription(key="any_key", name="any name"),
+        inverter_mppt_scan_interval=any_inverter.mppt_scan_interval,
+    )
+
+
+class TestMpptScanIntervalNumber:
+    def test_attributes(self, mppt_scan_interval_entity):
+        inverter = mppt_scan_interval_entity.inverter_mppt_scan_interval
+        assert mppt_scan_interval_entity.native_min_value == inverter.min_value
+        assert mppt_scan_interval_entity.native_max_value == inverter.max_value
+        assert mppt_scan_interval_entity.native_step == inverter.step
+        assert mppt_scan_interval_entity.native_unit_of_measurement == UnitOfTime.SECONDS
+        assert mppt_scan_interval_entity.mode == NumberMode.BOX
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("600", 600.0),
+            ("1800", 1800.0),
+            ("10800", 10800.0),
+            ("not a number", None),
+            (None, None),
+        ],
+    )
+    def test_native_value(self, mppt_scan_interval_entity, value, expected):
+        mppt_scan_interval_entity.coordinator.data = {mppt_scan_interval_entity.inverter_mppt_scan_interval.cid: value}
+        assert mppt_scan_interval_entity.native_value == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (600.0, "600"),
+            (1800.4, "1800"),
+            (10799.9, "10800"),
+        ],
+    )
+    async def test_set_native_value(self, mppt_scan_interval_entity, value, expected_str):
+        await mppt_scan_interval_entity.async_set_native_value(value)
+        mppt_scan_interval_entity.coordinator.control.assert_awaited_once_with(
+            mppt_scan_interval_entity.inverter_mppt_scan_interval.cid, expected_str
         )

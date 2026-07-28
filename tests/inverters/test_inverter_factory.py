@@ -17,6 +17,8 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterInfo,
     InverterMaxExportPower,
     InverterMaxOutputPower,
+    InverterMpptScanInterval,
+    InverterMpptScanning,
     InverterOnOff,
     InverterPowerLimit,
     InverterStorageMode,
@@ -136,6 +138,8 @@ def test_create_hybrid_inverter(any_inverter_info):
         battery_max_charge_soc=InverterBatteryMaxChargeSOC(),
         battery_max_charge_current=InverterBatteryMaxChargeCurrent(),
         battery_max_discharge_current=InverterBatteryMaxDischargeCurrent(),
+        mppt_scan_interval=InverterMpptScanInterval(),
+        mppt_scanning=InverterMpptScanning(),
     )
 
     assert result == expected

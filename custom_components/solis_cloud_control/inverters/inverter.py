@@ -394,6 +394,21 @@ class InverterBatteryMaxDischargeCurrent:
 
 
 @dataclass(frozen=True)
+class InverterMpptScanInterval:
+    cid: int = 4755
+    min_value: float = 600
+    max_value: float = 10800
+    step: float = 1
+
+
+@dataclass(frozen=True)
+class InverterMpptScanning:
+    cid: int = 4754
+    on_value: str = "1"
+    off_value: str = "0"
+
+
+@dataclass(frozen=True)
 class Inverter:
     info: InverterInfo
     on_off: InverterOnOff | None = None
@@ -412,6 +427,8 @@ class Inverter:
     battery_max_charge_soc: InverterBatteryMaxChargeSOC | None = None
     battery_max_charge_current: InverterBatteryMaxChargeCurrent | None = None
     battery_max_discharge_current: InverterBatteryMaxDischargeCurrent | None = None
+    mppt_scan_interval: InverterMpptScanInterval | None = None
+    mppt_scanning: InverterMpptScanning | None = None
 
     @property
     def read_batch_cids(self) -> list[int]:
@@ -448,6 +465,10 @@ class Inverter:
             cids.append(self.battery_max_charge_current.cid)
         if self.battery_max_discharge_current:
             cids.append(self.battery_max_discharge_current.cid)
+        if self.mppt_scan_interval:
+            cids.append(self.mppt_scan_interval.cid)
+        if self.mppt_scanning:
+            cids.append(self.mppt_scanning.cid)
 
         return cids
 

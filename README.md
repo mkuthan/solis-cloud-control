@@ -94,6 +94,7 @@ The integration provides a user-friendly interface to control your inverter sett
 - Control various Battery State of Charge (SOC) levels 🟢
 - Set battery charge and discharge current limits  🟢
 - Set power limit ⚪️
+- Control MPPT scan interval and scanning state 🟢
 
 🟢 - Hybrid inverter
 ⚪️ - String inverter
