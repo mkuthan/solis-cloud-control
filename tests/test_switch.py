@@ -495,15 +495,29 @@ class TestMpptScanningSwitch:
         assert mppt_scanning_switch.is_on is False
 
     async def test_turn_on(self, mppt_scanning_switch):
+        mppt_scanning_switch.coordinator.data = {mppt_scanning_switch.inverter_mppt_scanning.cid: "0"}
         await mppt_scanning_switch.async_turn_on()
         mppt_scanning_switch.coordinator.control.assert_awaited_once_with(
             mppt_scanning_switch.inverter_mppt_scanning.cid,
-            mppt_scanning_switch.inverter_mppt_scanning.on_value,
+            "1",
+            mppt_scanning_switch.inverter_mppt_scanning.off_value,
         )
 
     async def test_turn_off(self, mppt_scanning_switch):
+        mppt_scanning_switch.coordinator.data = {mppt_scanning_switch.inverter_mppt_scanning.cid: "1"}
         await mppt_scanning_switch.async_turn_off()
         mppt_scanning_switch.coordinator.control.assert_awaited_once_with(
             mppt_scanning_switch.inverter_mppt_scanning.cid,
-            mppt_scanning_switch.inverter_mppt_scanning.off_value,
+            "0",
+            mppt_scanning_switch.inverter_mppt_scanning.on_value,
         )
+
+    async def test_turn_on_when_none(self, mppt_scanning_switch):
+        mppt_scanning_switch.coordinator.data = {mppt_scanning_switch.inverter_mppt_scanning.cid: None}
+        await mppt_scanning_switch.async_turn_on()
+        mppt_scanning_switch.coordinator.control.assert_not_awaited()
+
+    async def test_turn_off_when_none(self, mppt_scanning_switch):
+        mppt_scanning_switch.coordinator.data = {mppt_scanning_switch.inverter_mppt_scanning.cid: None}
+        await mppt_scanning_switch.async_turn_off()
+        mppt_scanning_switch.coordinator.control.assert_not_awaited()

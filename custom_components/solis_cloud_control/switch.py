@@ -544,9 +544,29 @@ class MpptScanningSwitch(SolisCloudControlEntity, SwitchEntity):
         return value == self.inverter_mppt_scanning.on_value if value is not None else None
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
-        _LOGGER.info("Turn on '%s'", self.name)
-        await self.coordinator.control(self.inverter_mppt_scanning.cid, self.inverter_mppt_scanning.on_value)
+        old_value = self._calculate_old_value()
+        if old_value is None:
+            _LOGGER.warning("Unknown current state of '%s'", self.name)
+            return
+
+        _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(self.inverter_mppt_scanning.cid, "1", old_value)
 
     async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
-        _LOGGER.info("Turn off '%s'", self.name)
-        await self.coordinator.control(self.inverter_mppt_scanning.cid, self.inverter_mppt_scanning.off_value)
+        old_value = self._calculate_old_value()
+        if old_value is None:
+            _LOGGER.warning("Unknown current state of '%s'", self.name)
+            return
+
+        _LOGGER.info("Turn off '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(self.inverter_mppt_scanning.cid, "0", old_value)
+
+    def _calculate_old_value(self) -> str | None:
+        mppt_scanning = self.is_on
+        if mppt_scanning is None:
+            return None
+
+        if mppt_scanning:
+            return self.inverter_mppt_scanning.on_value
+        else:
+            return self.inverter_mppt_scanning.off_value
