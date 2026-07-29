@@ -18,6 +18,7 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterBatteryReserveSOC,
     InverterChargeDischargeSettings,
     InverterChargeDischargeSlot,
+    InverterExportCalibration,
     InverterMaxExportPower,
     InverterMaxOutputPower,
     InverterMpptScanInterval,
@@ -233,6 +234,19 @@ async def async_setup_entry(
                     icon="mdi:transmission-tower-export",
                 ),
                 inverter_max_export_power=inverter.max_export_power,
+            )
+        )
+
+    if inverter.export_calibration is not None:
+        entities.append(
+            ExportCalibration(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="export_calibration",
+                    name="Export Calibration",
+                    icon="mdi:image-filter-tilt-shift",
+                ),
+                inverter_export_calibration=inverter.export_calibration,
             )
         )
 
@@ -493,6 +507,34 @@ class MaxExportPower(SolisCloudControlEntity, NumberEntity):
         value_str = str(int(round(value * self.inverter_max_export_power.scale)))
         _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_max_export_power.cid, value_str)
+
+
+class ExportCalibration(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        inverter_export_calibration: InverterExportCalibration,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_export_calibration.cid)
+        self.inverter_export_calibration = inverter_export_calibration
+
+        self._attr_native_min_value = inverter_export_calibration.min_value
+        self._attr_native_max_value = inverter_export_calibration.max_value
+        self._attr_native_step = inverter_export_calibration.step
+        self._attr_device_class = NumberDeviceClass.POWER
+        self._attr_native_unit_of_measurement = UnitOfPower.WATT
+        self._attr_mode = NumberMode.BOX
+
+    @property
+    def native_value(self) -> float | None:
+        value_str = self.coordinator.data.get(self.inverter_export_calibration.cid)
+        return safe_get_float_value(value_str)
+
+    async def async_set_native_value(self, value: float) -> None:
+        value_str = str(int(round(value)))
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
+        await self.coordinator.control(self.inverter_export_calibration.cid, value_str)
 
 
 class PowerLimit(SolisCloudControlEntity, NumberEntity):
