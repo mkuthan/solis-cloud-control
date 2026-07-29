@@ -91,6 +91,7 @@ The integration provides a user-friendly interface to control your inverter sett
 - Toggle "Grid Peak Shaving" (in "Self-Use" and "Feed-In Priority" storage modes) 🟢
 - Set maximum output power 🟢
 - Set maximum export power 🟢
+- Control export calibration 🟢
 - Control various Battery State of Charge (SOC) levels 🟢
 - Set battery charge and discharge current limits  🟢
 - Set power limit ⚪️
