@@ -18,8 +18,8 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterBatteryReserveSOC,
     InverterChargeDischargeSettings,
     InverterChargeDischargeSlot,
-    InverterMaxExportPower,
     InverterExportCalibration,
+    InverterMaxExportPower,
     InverterMaxOutputPower,
     InverterMpptScanInterval,
     InverterPowerLimit,
@@ -239,7 +239,7 @@ async def async_setup_entry(
 
     if inverter.export_calibration is not None:
         entities.append(
-            InverterExportCalibration(
+            ExportCalibration(
                 coordinator=coordinator,
                 entity_description=NumberEntityDescription(
                     key="export_calibration",
@@ -509,8 +509,7 @@ class MaxExportPower(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_max_export_power.cid, value_str)
 
 
-
-class InverterExportCalibration(SolisCloudControlEntity, NumberEntity):
+class ExportCalibration(SolisCloudControlEntity, NumberEntity):
     def __init__(
         self,
         coordinator: SolisCloudControlCoordinator,

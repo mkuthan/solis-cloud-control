@@ -11,8 +11,8 @@ from custom_components.solis_cloud_control.number import (
     BatteryMaxCurrentNumber,
     BatterySocNumber,
     BatterySocV2,
+    ExportCalibration,
     MaxExportPower,
-    InverterExportCalibration,
     MaxOutputPower,
     MpptScanIntervalNumber,
     PowerLimit,
@@ -414,14 +414,14 @@ class TestMaxExportPower:
 
 @pytest.fixture
 def export_calibration_entity(mock_coordinator, any_inverter):
-    return InverterExportCalibration(
+    return ExportCalibration(
         coordinator=mock_coordinator,
         entity_description=NumberEntityDescription(key="any_key", name="any name"),
         inverter_export_calibration=any_inverter.export_calibration,
     )
 
 
-class TestInverterExportCalibration:
+class TestExportCalibration:
     def test_attributes(self, export_calibration_entity):
         export_calibration = export_calibration_entity.inverter_export_calibration
         assert export_calibration_entity.native_min_value == export_calibration.min_value
