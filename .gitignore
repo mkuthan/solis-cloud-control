@@ -22,3 +22,6 @@ venv/
 # Home Assistant configuration
 config/*
 !config/configuration.yaml
+
+# Claude Code local overrides
+.claude/settings.local.json
