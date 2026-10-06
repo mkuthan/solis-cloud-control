@@ -9,13 +9,19 @@
 
 ## Testing
 
-Run all tests:
+Run all checks (lint, format, type, test) -- this is what CI runs:
 
 ```bash
-uv run pytest
+mise run check
 ```
 
-Run a single test:
+Run only the tests:
+
+```bash
+mise run test
+```
+
+Run a single test file while iterating (skips the coverage gate, which a partial run cannot meet):
 
 ```bash
 uv run pytest --cov-fail-under=0 tests/test_init.py
