@@ -14,9 +14,8 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = "."
-testpaths = ["tests"]
-addopts = "-rA --cov=custom_components --cov-branch --cov-fail-under=98"
+pythonpath = ["custom_components"]
+addopts = "-ra --tb=short --strict-markers --strict-config --cov=custom_components --cov-branch --cov-report=term-missing:skip-covered --cov-fail-under=98"
 asyncio_mode = "auto"
 
 [tool.ruff]

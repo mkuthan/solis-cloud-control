@@ -7,11 +7,13 @@ This is the Solis Cloud Control API integration for Home Assistant.
 ## Setup Commands
 
 - Install dependencies: `uv sync`
+- Format code: `uv run ruff format`
+- Run linter: `uv run ruff check`
+- Run type checker: `uv run ty check`
+- Run tests (with coverage gate): `uv run pytest`
+- Run a subset without coverage: `uv run pytest --no-cov -q [path::test]`
+- Re-run only failures: `uv run pytest --lf --no-cov`
 - Run all checks (lint, format, type, test): `mise run check`
-- Run tests: `mise run test`
-- Run linter: `mise run lint`
-- Run type checker: `mise run typecheck`
-- Format code: `mise run format`
 
 ## MCP servers
 
