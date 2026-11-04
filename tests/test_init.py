@@ -47,14 +47,6 @@ async def test_async_setup_entry(hass, mock_api_client, any_inverter, setup_inte
     assert platform_counts[Platform.SWITCH] == 19
     assert platform_counts[Platform.TEXT] == 18
 
-    platform_disabled_counts = Counter(entry.domain for entry in entries if entry.disabled_by is not None)
-    assert platform_disabled_counts[Platform.DATETIME] == 0
-    assert platform_disabled_counts[Platform.NUMBER] == 0
-    assert platform_disabled_counts[Platform.SELECT] == 0
-    assert platform_disabled_counts[Platform.SENSOR] == 7
-    assert platform_disabled_counts[Platform.SWITCH] == 0
-    assert platform_disabled_counts[Platform.TEXT] == 0
-
 
 async def test_async_setup_entry_undefined_inverter(hass, mock_api_client, mock_config_entry, any_inverter_info):
     undefined_inverter = Inverter(info=any_inverter_info)

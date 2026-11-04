@@ -25,6 +25,7 @@ def slot1_charge_v2_entity_id(any_inverter: Inverter) -> str:
 
 @pytest.fixture
 def slot1_discharge_v2_entity_id(any_inverter: Inverter) -> str:
+    # V2 entities created SECOND, get _2 suffix
     return f"text.inverter_control_{any_inverter.info.serial_number}_slot1_discharge_time_2"
 
 

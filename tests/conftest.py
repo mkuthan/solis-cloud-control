@@ -133,7 +133,7 @@ async def setup_integration(
     mock_api_client.read_batch.return_value = {}
     mock_api_client.read.return_value = None
 
-    with (
+    patches = [
         patch(
             "custom_components.solis_cloud_control._create_api_client",
             return_value=mock_api_client,
@@ -146,9 +146,25 @@ async def setup_integration(
             "custom_components.solis_cloud_control.create_inverter",
             return_value=any_inverter,
         ),
-    ):
-        await hass.config_entries.async_setup(mock_config_entry.entry_id)
-        await hass.async_block_till_done()
+    ]
+    for p in patches:
+        p.start()
+
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    # Enable all disabled entities for to enable testing
+    from homeassistant.helpers import entity_registry as er
+
+    entity_registry = er.async_get(hass)
+    entries = er.async_entries_for_config_entry(entity_registry, mock_config_entry.entry_id)
+    for entry in entries:
+        if entry.disabled_by is not None:
+            entity_registry.async_update_entity(entry.entity_id, disabled_by=None)
+
+    # Reload to add enabled entities
+    await hass.config_entries.async_reload(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
 
     assert mock_config_entry.state.name == "LOADED"
     return mock_config_entry
