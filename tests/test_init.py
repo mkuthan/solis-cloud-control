@@ -13,62 +13,16 @@ from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
-async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter):
-    read_batch_cids = dict.fromkeys(any_inverter.read_batch_cids, "0")
-
-    for cid in [any_inverter.on_off.on_cid, any_inverter.on_off.off_cid]:
-        read_batch_cids[cid] = "190"
-
-    for cid in [
-        any_inverter.charge_discharge_slots.charge_slot1.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot2.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot3.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot4.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot5.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot6.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot1.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot2.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot3.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot4.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot5.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot6.time_cid,
-    ]:
-        read_batch_cids[cid] = "00:00-00:00"
-
-    mock_api_client.read_batch.return_value = read_batch_cids
-
-    charge_discharge_settings = "0,0,00:00,00:00,00:00,00:00,0,0,00:00,00:00,00:00,00:00,0,0,00:00,00:00,00:00,00:00"
-
-    mock_api_client.read.side_effect = lambda inverter_sn, cid, max_retry_time: (  # noqa: ARG005
-        charge_discharge_settings if cid == 103 else None
-    )
-
-    with (
-        patch(
-            "custom_components.solis_cloud_control._create_api_client",
-            return_value=mock_api_client,
-        ),
-        patch(
-            "custom_components.solis_cloud_control.create_inverter_info",
-            return_value=any_inverter.info,
-        ),
-        patch(
-            "custom_components.solis_cloud_control.create_inverter",
-            return_value=any_inverter,
-        ),
-    ):
-        await hass.config_entries.async_setup(mock_config_entry.entry_id)
-        await hass.async_block_till_done()
-
+async def test_async_setup_entry(hass, mock_api_client, any_inverter, setup_integration):
     # check if the config entry is loaded
-    assert mock_config_entry.state is ConfigEntryState.LOADED
+    assert setup_integration.state is ConfigEntryState.LOADED
 
     # coordinator.async_config_entry_first_refresh()
     assert mock_api_client.read_batch.called
 
-    assert hasattr(mock_config_entry, "runtime_data")
-    assert mock_config_entry.runtime_data.coordinator is not None
-    assert mock_config_entry.runtime_data.inverter is not None
+    assert hasattr(setup_integration, "runtime_data")
+    assert setup_integration.runtime_data.coordinator is not None
+    assert setup_integration.runtime_data.inverter is not None
 
     # check device registration
     device_registry = dr.async_get(hass)
@@ -83,7 +37,7 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
 
     # check entity registration
     entity_registry = er.async_get(hass)
-    entries = er.async_entries_for_config_entry(entity_registry, mock_config_entry.entry_id)
+    entries = er.async_entries_for_config_entry(entity_registry, setup_integration.entry_id)
 
     platform_counts = Counter(entry.domain for entry in entries)
     assert platform_counts[Platform.DATETIME] == 1

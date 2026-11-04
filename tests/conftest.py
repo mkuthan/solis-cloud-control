@@ -1,7 +1,8 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
+from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_socket import enable_socket, socket_allow_hosts
 
@@ -63,7 +64,7 @@ def mock_coordinator():
 
 
 @pytest.fixture
-def mock_config_entry(hass):
+def mock_config_entry(hass: HomeAssistant):
     config_entry = MockConfigEntry(
         domain=DOMAIN,
         version=2,
@@ -78,7 +79,7 @@ def mock_config_entry(hass):
 
 
 @pytest.fixture
-def any_inverter_info():
+def any_inverter_info() -> InverterInfo:
     return InverterInfo(
         serial_number="any_inverter_sn",
         model="any_model",
@@ -120,3 +121,34 @@ def any_inverter(any_inverter_info: InverterInfo) -> Inverter:
         mppt_scan_interval=InverterMpptScanInterval(),
         mppt_scanning=InverterMpptScanning(),
     )
+
+
+@pytest.fixture
+async def setup_integration(
+    hass: HomeAssistant,
+    mock_api_client: AsyncMock,
+    mock_config_entry: MockConfigEntry,
+    any_inverter: Inverter,
+) -> MockConfigEntry:
+    mock_api_client.read_batch.return_value = {}
+    mock_api_client.read.return_value = None
+
+    with (
+        patch(
+            "custom_components.solis_cloud_control._create_api_client",
+            return_value=mock_api_client,
+        ),
+        patch(
+            "custom_components.solis_cloud_control.create_inverter_info",
+            return_value=any_inverter.info,
+        ),
+        patch(
+            "custom_components.solis_cloud_control.create_inverter",
+            return_value=any_inverter,
+        ),
+    ):
+        await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert mock_config_entry.state.name == "LOADED"
+    return mock_config_entry
