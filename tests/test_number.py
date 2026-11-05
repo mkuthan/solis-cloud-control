@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -17,82 +19,78 @@ from custom_components.solis_cloud_control.inverters.inverter import (
 
 
 @pytest.fixture
-def slot1_charge_current_v1_entity_id(any_inverter: Inverter) -> str:
-    # V1 entities created FIRST, get base entity_id (no suffix)
-    return f"number.inverter_control_{any_inverter.info.serial_number}_slot1_charge_current"
+def slot1_charge_current_v1_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "slot1_charge_current_v1")
 
 
 @pytest.fixture
-def slot1_discharge_current_v1_entity_id(any_inverter: Inverter) -> str:
-    return f"number.inverter_control_{any_inverter.info.serial_number}_slot1_discharge_current"
+def slot1_discharge_current_v1_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "slot1_discharge_current_v1")
 
 
 @pytest.fixture
-def slot1_charge_current_v2_entity_id(any_inverter: Inverter) -> str:
-    # V2 entities created SECOND, get _2 suffix
-    return f"number.inverter_control_{any_inverter.info.serial_number}_slot1_charge_current_2"
+def slot1_charge_current_v2_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "slot1_charge_current")
 
 
 @pytest.fixture
-def slot1_discharge_current_v2_entity_id(any_inverter: Inverter) -> str:
-    # V2 entities created SECOND, get _2 suffix
-    return f"number.inverter_control_{any_inverter.info.serial_number}_slot1_discharge_current_2"
+def slot1_discharge_current_v2_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "slot1_discharge_current")
 
 
 @pytest.fixture
-def slot1_charge_soc_v2_entity_id(any_inverter: Inverter) -> str:
-    return f"number.inverter_control_{any_inverter.info.serial_number}_slot1_charge_soc"
+def slot1_charge_soc_v2_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "slot1_charge_soc")
 
 
 @pytest.fixture
-def slot1_discharge_soc_v2_entity_id(any_inverter: Inverter) -> str:
-    return f"number.inverter_control_{any_inverter.info.serial_number}_slot1_discharge_soc"
+def slot1_discharge_soc_v2_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "slot1_discharge_soc")
 
 
 @pytest.fixture
-def max_output_power_entity_id(any_inverter: Inverter) -> str:
-    return f"number.inverter_control_{any_inverter.info.serial_number}_max_output_power"
+def max_output_power_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "max_output_power")
 
 
 @pytest.fixture
-def max_export_power_entity_id(any_inverter: Inverter) -> str:
-    return f"number.inverter_control_{any_inverter.info.serial_number}_max_export_power"
+def max_export_power_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "max_export_power")
 
 
 @pytest.fixture
-def export_calibration_entity_id(any_inverter: Inverter) -> str:
-    return f"number.inverter_control_{any_inverter.info.serial_number}_export_calibration"
+def export_calibration_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "export_calibration")
 
 
 @pytest.fixture
-def power_limit_entity_id(any_inverter: Inverter) -> str:
-    return f"number.inverter_control_{any_inverter.info.serial_number}_power_limit"
+def power_limit_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "power_limit")
 
 
 @pytest.fixture
-def battery_force_charge_soc_entity_id(any_inverter: Inverter) -> str:
-    return f"number.inverter_control_{any_inverter.info.serial_number}_battery_force_charge_soc"
+def battery_force_charge_soc_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "battery_force_charge_soc")
 
 
 @pytest.fixture
-def battery_max_charge_current_entity_id(any_inverter: Inverter) -> str:
-    return f"number.inverter_control_{any_inverter.info.serial_number}_battery_max_charge_current"
+def battery_max_charge_current_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "battery_max_charge_current")
 
 
 @pytest.fixture
-def mppt_scan_interval_entity_id(any_inverter: Inverter) -> str:
-    # Entity ID is based on name "MPPT Multi-peak Scan Interval" -> mppt_multi_peak_scan_interval
-    return f"number.inverter_control_{any_inverter.info.serial_number}_mppt_multi_peak_scan_interval"
+def mppt_scan_interval_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.NUMBER, "mppt_scan_interval")
 
 
 class TestBatteryCurrentV1:
     VARIANT1_VALUE = "50,0,09:00,10:00,11:00,12:00,0,0,12:30,13:30,14:30,15:30,0,100,16:00,17:00,18:00,19:00"
     VARIANT2_VALUE = "50,0,09:00-10:00,11:00-12:00,0,0,12:30-13:30,14:30-15:30,0,100,16:00-17:00,18:00-19:00"
 
+    @pytest.mark.usefixtures("setup_integration")
     async def test_charge_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         slot1_charge_current_v1_entity_id: str,
     ) -> None:
         state = hass.states.get(slot1_charge_current_v1_entity_id)
@@ -102,10 +100,10 @@ class TestBatteryCurrentV1:
         assert state.attributes.get("step") == InverterChargeDischargeSettings.current_step
         assert state.attributes.get("unit_of_measurement") == "A"
 
+    @pytest.mark.usefixtures("setup_integration")
     async def test_discharge_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         slot1_discharge_current_v1_entity_id: str,
     ) -> None:
         state = hass.states.get(slot1_discharge_current_v1_entity_id)
@@ -119,18 +117,13 @@ class TestBatteryCurrentV1:
     async def test_charge_current_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         slot1_charge_current_v1_entity_id: str,
         value,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_settings.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(slot1_charge_current_v1_entity_id)
         assert state.state == "50.0"
@@ -139,18 +132,13 @@ class TestBatteryCurrentV1:
     async def test_discharge_current_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         slot1_discharge_current_v1_entity_id: str,
         value,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_settings.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(slot1_discharge_current_v1_entity_id)
         assert state.state == "0.0"
@@ -158,20 +146,15 @@ class TestBatteryCurrentV1:
     async def test_charge_current_native_value_no_data(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         slot1_charge_current_v1_entity_id: str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_settings.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = None
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: None})
 
         state = hass.states.get(slot1_charge_current_v1_entity_id)
-        assert state.state in ("unavailable", "unknown")
+        assert state.state == "unavailable"
 
     @pytest.mark.parametrize(
         ("initial_value", "expected_value"),
@@ -189,20 +172,15 @@ class TestBatteryCurrentV1:
     async def test_async_set_value_charge_current(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         slot1_charge_current_v1_entity_id: str,
         initial_value,
         expected_value,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_settings.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = initial_value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: initial_value})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -234,20 +212,15 @@ class TestBatteryCurrentV1:
     async def test_async_set_value_discharge_current(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         slot1_discharge_current_v1_entity_id: str,
         initial_value,
         expected_value,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_settings.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = initial_value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: initial_value})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -267,19 +240,14 @@ class TestBatteryCurrentV1:
     async def test_async_set_value_invalid_initial(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         slot1_charge_current_v1_entity_id: str,
         initial_value,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_settings.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = initial_value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: initial_value})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -292,10 +260,10 @@ class TestBatteryCurrentV1:
 
 
 class TestBatteryCurrentV2:
+    @pytest.mark.usefixtures("setup_integration")
     async def test_charge_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         slot1_charge_current_v2_entity_id: str,
     ) -> None:
         state = hass.states.get(slot1_charge_current_v2_entity_id)
@@ -305,10 +273,10 @@ class TestBatteryCurrentV2:
         assert state.attributes.get("step") == InverterChargeDischargeSlot.current_step
         assert state.attributes.get("unit_of_measurement") == "A"
 
+    @pytest.mark.usefixtures("setup_integration")
     async def test_discharge_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         slot1_discharge_current_v2_entity_id: str,
     ) -> None:
         state = hass.states.get(slot1_discharge_current_v2_entity_id)
@@ -331,19 +299,14 @@ class TestBatteryCurrentV2:
     async def test_charge_current_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         slot1_charge_current_v2_entity_id: str,
         value,
         expected,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_slots.charge_slot1.current_cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(slot1_charge_current_v2_entity_id)
         assert state.state == expected
@@ -359,20 +322,15 @@ class TestBatteryCurrentV2:
     async def test_async_set_value_charge_current(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         slot1_charge_current_v2_entity_id: str,
         value,
         expected_str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_slots.charge_slot1.current_cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = "10:00-12:00"
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: "10:00-12:00"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -388,12 +346,72 @@ class TestBatteryCurrentV2:
             None,
         )
 
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("0", "0.0"),
+            ("50", "50.0"),
+            ("100", "100.0"),
+            ("not a number", "unknown"),
+            (None, "unavailable"),
+        ],
+    )
+    async def test_discharge_current_native_value(
+        self,
+        hass: HomeAssistant,
+        set_data,
+        any_inverter: Inverter,
+        slot1_discharge_current_v2_entity_id: str,
+        value,
+        expected,
+    ):
+        cid = any_inverter.charge_discharge_slots.discharge_slot1.current_cid
+        await set_data({cid: value})
+
+        state = hass.states.get(slot1_discharge_current_v2_entity_id)
+        assert state.state == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (0.1, "0"),
+            (50.4, "50"),
+            (99.9, "100"),
+        ],
+    )
+    async def test_async_set_value_discharge_current(
+        self,
+        hass: HomeAssistant,
+        set_data,
+        mock_api_client,
+        any_inverter: Inverter,
+        slot1_discharge_current_v2_entity_id: str,
+        value,
+        expected_str,
+    ):
+        cid = any_inverter.charge_discharge_slots.discharge_slot1.current_cid
+        await set_data({cid: "50"})
+
+        await hass.services.async_call(
+            Platform.NUMBER,
+            "set_value",
+            {"entity_id": slot1_discharge_current_v2_entity_id, "value": value},
+            blocking=True,
+        )
+
+        mock_api_client.control.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            cid,
+            expected_str,
+            None,
+        )
+
 
 class TestBatterySocV2:
+    @pytest.mark.usefixtures("setup_integration")
     async def test_charge_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         slot1_charge_soc_v2_entity_id: str,
     ) -> None:
         state = hass.states.get(slot1_charge_soc_v2_entity_id)
@@ -403,10 +421,10 @@ class TestBatterySocV2:
         assert state.attributes.get("step") == InverterChargeDischargeSlot.soc_step
         assert state.attributes.get("unit_of_measurement") == "%"
 
+    @pytest.mark.usefixtures("setup_integration")
     async def test_discharge_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         slot1_discharge_soc_v2_entity_id: str,
     ) -> None:
         state = hass.states.get(slot1_discharge_soc_v2_entity_id)
@@ -429,19 +447,14 @@ class TestBatterySocV2:
     async def test_charge_soc_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         slot1_charge_soc_v2_entity_id: str,
         value,
         expected,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_slots.charge_slot1.soc_cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(slot1_charge_soc_v2_entity_id)
         assert state.state == expected
@@ -457,20 +470,15 @@ class TestBatterySocV2:
     async def test_async_set_value_charge_soc(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         slot1_charge_soc_v2_entity_id: str,
         value,
         expected_str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.charge_discharge_slots.charge_slot1.soc_cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = "50"
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: "50"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -486,12 +494,92 @@ class TestBatterySocV2:
             None,
         )
 
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("0", "0.0"),
+            ("50", "50.0"),
+            ("100", "100.0"),
+            ("not a number", "unknown"),
+            (None, "unavailable"),
+        ],
+    )
+    async def test_discharge_soc_native_value(
+        self,
+        hass: HomeAssistant,
+        set_data,
+        any_inverter: Inverter,
+        slot1_discharge_soc_v2_entity_id: str,
+        value,
+        expected,
+    ):
+        cid = any_inverter.charge_discharge_slots.discharge_slot1.soc_cid
+        await set_data({cid: value})
+
+        state = hass.states.get(slot1_discharge_soc_v2_entity_id)
+        assert state.state == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (0.1, "0"),
+            (50.4, "50"),
+            (99.9, "100"),
+        ],
+    )
+    async def test_async_set_value_discharge_soc(
+        self,
+        hass: HomeAssistant,
+        set_data,
+        mock_api_client,
+        any_inverter: Inverter,
+        slot1_discharge_soc_v2_entity_id: str,
+        value,
+        expected_str,
+    ):
+        cid = any_inverter.charge_discharge_slots.discharge_slot1.soc_cid
+        await set_data({cid: "50"})
+
+        await hass.services.async_call(
+            Platform.NUMBER,
+            "set_value",
+            {"entity_id": slot1_discharge_soc_v2_entity_id, "value": value},
+            blocking=True,
+        )
+
+        mock_api_client.control.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            cid,
+            expected_str,
+            None,
+        )
+
+    @pytest.mark.parametrize("entity_id_fixture", ["slot1_charge_soc_v2_entity_id", "slot1_discharge_soc_v2_entity_id"])
+    async def test_bounds_follow_battery_limits(
+        self,
+        request: pytest.FixtureRequest,
+        hass: HomeAssistant,
+        set_data,
+        any_inverter: Inverter,
+        entity_id_fixture: str,
+    ):
+        await set_data(
+            {
+                any_inverter.battery_over_discharge_soc.cid: "20",
+                any_inverter.battery_max_charge_soc.cid: "90",
+            }
+        )
+
+        state = hass.states.get(request.getfixturevalue(entity_id_fixture))
+        assert state.attributes.get("min") == 21
+        assert state.attributes.get("max") == 90
+
 
 class TestMaxOutputPower:
+    @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         max_output_power_entity_id: str,
     ) -> None:
         state = hass.states.get(max_output_power_entity_id)
@@ -514,19 +602,14 @@ class TestMaxOutputPower:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         max_output_power_entity_id: str,
         value,
         expected,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.max_output_power.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(max_output_power_entity_id)
         assert state.state == expected
@@ -542,20 +625,15 @@ class TestMaxOutputPower:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         max_output_power_entity_id: str,
         value,
         expected_str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.max_output_power.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = "50"
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: "50"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -573,10 +651,10 @@ class TestMaxOutputPower:
 
 
 class TestMaxExportPower:
+    @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         max_export_power_entity_id: str,
     ) -> None:
         state = hass.states.get(max_export_power_entity_id)
@@ -599,19 +677,14 @@ class TestMaxExportPower:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         max_export_power_entity_id: str,
         value,
         expected,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.max_export_power.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(max_export_power_entity_id)
         assert state.state == expected
@@ -627,20 +700,15 @@ class TestMaxExportPower:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         max_export_power_entity_id: str,
         value,
         expected_str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.max_export_power.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = "50"
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: "50"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -658,10 +726,10 @@ class TestMaxExportPower:
 
 
 class TestExportCalibration:
+    @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         export_calibration_entity_id: str,
     ) -> None:
         state = hass.states.get(export_calibration_entity_id)
@@ -685,19 +753,14 @@ class TestExportCalibration:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         export_calibration_entity_id: str,
         value,
         expected,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.export_calibration.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(export_calibration_entity_id)
         assert state.state == expected
@@ -713,20 +776,15 @@ class TestExportCalibration:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         export_calibration_entity_id: str,
         value,
         expected_str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.export_calibration.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = "50"
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: "50"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -744,10 +802,10 @@ class TestExportCalibration:
 
 
 class TestPowerLimit:
+    @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         power_limit_entity_id: str,
     ) -> None:
         state = hass.states.get(power_limit_entity_id)
@@ -770,19 +828,14 @@ class TestPowerLimit:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         power_limit_entity_id: str,
         value,
         expected,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.power_limit.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(power_limit_entity_id)
         assert state.state == expected
@@ -798,20 +851,15 @@ class TestPowerLimit:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         power_limit_entity_id: str,
         value,
         expected_str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.power_limit.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = "50"
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: "50"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -829,10 +877,10 @@ class TestPowerLimit:
 
 
 class TestBatterySocNumber:
+    @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         battery_force_charge_soc_entity_id: str,
     ) -> None:
         state = hass.states.get(battery_force_charge_soc_entity_id)
@@ -855,19 +903,14 @@ class TestBatterySocNumber:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         battery_force_charge_soc_entity_id: str,
         value,
         expected,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.battery_force_charge_soc.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(battery_force_charge_soc_entity_id)
         assert state.state == expected
@@ -883,20 +926,15 @@ class TestBatterySocNumber:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         battery_force_charge_soc_entity_id: str,
         value,
         expected_str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.battery_force_charge_soc.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = "50"
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: "50"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -914,10 +952,10 @@ class TestBatterySocNumber:
 
 
 class TestBatteryMaxCurrentNumber:
+    @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         battery_max_charge_current_entity_id: str,
     ) -> None:
         state = hass.states.get(battery_max_charge_current_entity_id)
@@ -940,19 +978,14 @@ class TestBatteryMaxCurrentNumber:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         battery_max_charge_current_entity_id: str,
         value,
         expected,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.battery_max_charge_current.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(battery_max_charge_current_entity_id)
         assert state.state == expected
@@ -968,20 +1001,15 @@ class TestBatteryMaxCurrentNumber:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         battery_max_charge_current_entity_id: str,
         value,
         expected_str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.battery_max_charge_current.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = "50"
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: "50"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -999,10 +1027,10 @@ class TestBatteryMaxCurrentNumber:
 
 
 class TestMpptScanIntervalNumber:
+    @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
         mppt_scan_interval_entity_id: str,
     ) -> None:
         state = hass.states.get(mppt_scan_interval_entity_id)
@@ -1025,19 +1053,14 @@ class TestMpptScanIntervalNumber:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         mppt_scan_interval_entity_id: str,
         value,
         expected,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.mppt_scan_interval.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(mppt_scan_interval_entity_id)
         assert state.state == expected
@@ -1053,20 +1076,15 @@ class TestMpptScanIntervalNumber:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         mppt_scan_interval_entity_id: str,
         value,
         expected_str,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.mppt_scan_interval.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = "1800"
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: "1800"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -1078,6 +1096,105 @@ class TestMpptScanIntervalNumber:
         mock_api_client.control.assert_awaited_once_with(
             any_inverter.info.serial_number,
             cid,
+            expected_str,
+            None,
+        )
+
+
+class TestParallelBatteries:
+    # max current of the slot entities scales with the number of parallel batteries
+    @pytest.fixture
+    def any_inverter(self, any_inverter: Inverter) -> Inverter:
+        return replace(
+            any_inverter,
+            battery_max_charge_current=replace(any_inverter.battery_max_charge_current, parallel_battery_count=2),
+            battery_max_discharge_current=replace(any_inverter.battery_max_discharge_current, parallel_battery_count=2),
+        )
+
+    @pytest.mark.parametrize(
+        ("entity_id_fixture", "max_current_attr"),
+        [
+            ("slot1_charge_current_v1_entity_id", "battery_max_charge_current"),
+            # V1 discharge is bounded by the charge max current CID too (number.py:59-71)
+            ("slot1_discharge_current_v1_entity_id", "battery_max_charge_current"),
+            ("slot1_charge_current_v2_entity_id", "battery_max_charge_current"),
+            ("slot1_discharge_current_v2_entity_id", "battery_max_discharge_current"),
+        ],
+    )
+    async def test_native_max_value(
+        self,
+        request: pytest.FixtureRequest,
+        hass: HomeAssistant,
+        set_data,
+        any_inverter: Inverter,
+        entity_id_fixture: str,
+        max_current_attr: str,
+    ):
+        await set_data({getattr(any_inverter, max_current_attr).cid: "50"})
+
+        state = hass.states.get(request.getfixturevalue(entity_id_fixture))
+        assert state.attributes.get("max") == 100
+
+
+class TestMaxExportPowerScaled:
+    @pytest.fixture
+    def any_inverter(self, any_inverter: Inverter) -> Inverter:
+        return replace(any_inverter, max_export_power=replace(any_inverter.max_export_power, scale=0.1))
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("0", "0.0"),
+            ("50", "500.0"),
+            ("100", "1000.0"),
+            ("not a number", "unknown"),
+            (None, "unavailable"),
+        ],
+    )
+    async def test_native_value(
+        self,
+        hass: HomeAssistant,
+        set_data,
+        any_inverter: Inverter,
+        max_export_power_entity_id: str,
+        value,
+        expected,
+    ):
+        await set_data({any_inverter.max_export_power.cid: value})
+
+        state = hass.states.get(max_export_power_entity_id)
+        assert state.state == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (1, "0"),
+            (504, "50"),
+            (999, "100"),
+        ],
+    )
+    async def test_async_set_value(
+        self,
+        hass: HomeAssistant,
+        set_data,
+        mock_api_client,
+        any_inverter: Inverter,
+        max_export_power_entity_id: str,
+        value,
+        expected_str,
+    ):
+        await set_data({any_inverter.max_export_power.cid: "50"})
+
+        await hass.services.async_call(
+            Platform.NUMBER,
+            "set_value",
+            {"entity_id": max_export_power_entity_id, "value": value},
+            blocking=True,
+        )
+
+        mock_api_client.control.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            any_inverter.max_export_power.cid,
             expected_str,
             None,
         )

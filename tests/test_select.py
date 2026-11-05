@@ -7,12 +7,13 @@ from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 @pytest.fixture
-def storage_mode_entity_id(any_inverter: Inverter) -> str:
-    return f"select.inverter_control_{any_inverter.info.serial_number}_storage_mode"
+def storage_mode_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.SELECT, "storage_mode")
 
 
 class TestStorageModeSelectIntegration:
-    async def test_entity_registered(self, hass: HomeAssistant, setup_integration, storage_mode_entity_id: str):  # noqa: ARG002
+    @pytest.mark.usefixtures("setup_integration")
+    async def test_entity_registered(self, hass: HomeAssistant, storage_mode_entity_id: str):
         state = hass.states.get(storage_mode_entity_id)
         assert state is not None
         assert state.attributes.get("options") == ["Self-Use", "Feed-In Priority", "Off-Grid"]
@@ -28,49 +29,40 @@ class TestStorageModeSelectIntegration:
     async def test_current_option_valid(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         storage_mode_entity_id: str,
         value,
         expected_mode,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.storage_mode.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(storage_mode_entity_id)
         assert state.state == expected_mode
 
     @pytest.mark.parametrize(
-        "value",
+        ("value", "expected_state"),
         [
-            str(0),
-            "not a number",
-            None,
+            (str(0), "unknown"),
+            ("not a number", "unknown"),
+            (None, "unavailable"),
         ],
     )
     async def test_current_option_invalid(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         any_inverter: Inverter,
         storage_mode_entity_id: str,
         value,
+        expected_state,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.storage_mode.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         state = hass.states.get(storage_mode_entity_id)
-        assert state.state in ("unavailable", "unknown")
+        assert state.state == expected_state
 
     @pytest.mark.parametrize(
         ("mode", "expected_value"),
@@ -83,20 +75,15 @@ class TestStorageModeSelectIntegration:
     async def test_async_select_option(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         storage_mode_entity_id: str,
         mode,
         expected_value,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.storage_mode.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = str(0)
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: str(0)})
 
         await hass.services.async_call(
             Platform.SELECT,
@@ -122,19 +109,14 @@ class TestStorageModeSelectIntegration:
     async def test_async_select_option_invalid_initial(
         self,
         hass: HomeAssistant,
-        setup_integration,
+        set_data,
         mock_api_client,
         any_inverter: Inverter,
         storage_mode_entity_id: str,
         initial_value,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = any_inverter.storage_mode.cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = initial_value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: initial_value})
 
         await hass.services.async_call(
             Platform.SELECT,

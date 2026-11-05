@@ -1,43 +1,43 @@
 import pytest
-from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent
+from homeassistant.const import PERCENTAGE, Platform, UnitOfElectricCurrent
 from homeassistant.core import HomeAssistant
 
 from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 @pytest.fixture
-def battery_reserve_soc_entity_id(any_inverter: Inverter) -> str:
-    return f"sensor.inverter_control_{any_inverter.info.serial_number}_battery_reserve_soc_deprecated"
+def battery_reserve_soc_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.SENSOR, "battery_reserve_soc")
 
 
 @pytest.fixture
-def battery_over_discharge_soc_entity_id(any_inverter: Inverter) -> str:
-    return f"sensor.inverter_control_{any_inverter.info.serial_number}_battery_over_discharge_soc_deprecated"
+def battery_over_discharge_soc_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.SENSOR, "battery_over_discharge_soc")
 
 
 @pytest.fixture
-def battery_force_charge_soc_entity_id(any_inverter: Inverter) -> str:
-    return f"sensor.inverter_control_{any_inverter.info.serial_number}_battery_force_charge_soc_deprecated"
+def battery_force_charge_soc_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.SENSOR, "battery_force_charge_soc")
 
 
 @pytest.fixture
-def battery_recovery_soc_entity_id(any_inverter: Inverter) -> str:
-    return f"sensor.inverter_control_{any_inverter.info.serial_number}_battery_recovery_soc_deprecated"
+def battery_recovery_soc_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.SENSOR, "battery_recovery_soc")
 
 
 @pytest.fixture
-def battery_max_charge_soc_entity_id(any_inverter: Inverter) -> str:
-    return f"sensor.inverter_control_{any_inverter.info.serial_number}_battery_max_charge_soc_deprecated"
+def battery_max_charge_soc_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.SENSOR, "battery_max_charge_soc")
 
 
 @pytest.fixture
-def battery_max_charge_current_entity_id(any_inverter: Inverter) -> str:
-    return f"sensor.inverter_control_{any_inverter.info.serial_number}_battery_max_charge_current_deprecated"
+def battery_max_charge_current_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.SENSOR, "battery_max_charge_current")
 
 
 @pytest.fixture
-def battery_max_discharge_current_entity_id(any_inverter: Inverter) -> str:
-    return f"sensor.inverter_control_{any_inverter.info.serial_number}_battery_max_discharge_current_deprecated"
+def battery_max_discharge_current_entity_id(get_entity_id) -> str:
+    return get_entity_id(Platform.SENSOR, "battery_max_discharge_current")
 
 
 class TestBatterySocSensorsIntegration:
@@ -51,11 +51,10 @@ class TestBatterySocSensorsIntegration:
             "battery_max_charge_soc_entity_id",
         ],
     )
+    @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
-        any_inverter: Inverter,  # noqa: ARG002
         entity_id_fixture: str,
         request: pytest.FixtureRequest,
     ):
@@ -85,21 +84,16 @@ class TestBatterySocSensorsIntegration:
     async def test_native_value_valid(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
-        any_inverter: Inverter,  # noqa: ARG002
+        set_data,
+        any_inverter: Inverter,
         entity_id_fixture: str,
         cid_attr: str,
         value,
         expected,
         request: pytest.FixtureRequest,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = getattr(any_inverter, cid_attr).cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         entity_id = request.getfixturevalue(entity_id_fixture)
         state = hass.states.get(entity_id)
@@ -116,33 +110,29 @@ class TestBatterySocSensorsIntegration:
         ],
     )
     @pytest.mark.parametrize(
-        "value",
+        ("value", "expected_state"),
         [
-            "not a number",
-            None,
+            ("not a number", "unknown"),
+            (None, "unavailable"),
         ],
     )
     async def test_native_value_invalid(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
-        any_inverter: Inverter,  # noqa: ARG002
+        set_data,
+        any_inverter: Inverter,
         entity_id_fixture: str,
         cid_attr: str,
         value,
+        expected_state,
         request: pytest.FixtureRequest,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = getattr(any_inverter, cid_attr).cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         entity_id = request.getfixturevalue(entity_id_fixture)
         state = hass.states.get(entity_id)
-        assert state.state in ("unavailable", "unknown")
+        assert state.state == expected_state
 
 
 class TestBatteryCurrentSensorsIntegration:
@@ -153,11 +143,10 @@ class TestBatteryCurrentSensorsIntegration:
             "battery_max_discharge_current_entity_id",
         ],
     )
+    @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
-        any_inverter: Inverter,  # noqa: ARG002
         entity_id_fixture: str,
         request: pytest.FixtureRequest,
     ):
@@ -184,21 +173,16 @@ class TestBatteryCurrentSensorsIntegration:
     async def test_native_value_valid(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
-        any_inverter: Inverter,  # noqa: ARG002
+        set_data,
+        any_inverter: Inverter,
         entity_id_fixture: str,
         cid_attr: str,
         value,
         expected,
         request: pytest.FixtureRequest,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = getattr(any_inverter, cid_attr).cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         entity_id = request.getfixturevalue(entity_id_fixture)
         state = hass.states.get(entity_id)
@@ -212,30 +196,26 @@ class TestBatteryCurrentSensorsIntegration:
         ],
     )
     @pytest.mark.parametrize(
-        "value",
+        ("value", "expected_state"),
         [
-            "not a number",
-            None,
+            ("not a number", "unknown"),
+            (None, "unavailable"),
         ],
     )
     async def test_native_value_invalid(
         self,
         hass: HomeAssistant,
-        setup_integration,  # noqa: ARG002
-        any_inverter: Inverter,  # noqa: ARG002
+        set_data,
+        any_inverter: Inverter,
         entity_id_fixture: str,
         cid_attr: str,
         value,
+        expected_state,
         request: pytest.FixtureRequest,
     ):
-        coordinator = setup_integration.runtime_data.coordinator
         cid = getattr(any_inverter, cid_attr).cid
-        new_data = dict(coordinator.data)
-        new_data[cid] = value
-
-        coordinator.async_set_updated_data(new_data)
-        await hass.async_block_till_done()
+        await set_data({cid: value})
 
         entity_id = request.getfixturevalue(entity_id_fixture)
         state = hass.states.get(entity_id)
-        assert state.state in ("unavailable", "unknown")
+        assert state.state == expected_state
