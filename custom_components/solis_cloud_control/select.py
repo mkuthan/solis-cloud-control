@@ -1,7 +1,7 @@
 import logging
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
@@ -60,13 +60,6 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
 
         self.inverter_storage_mode = inverter_storage_mode
 
-        self._update_current_option()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_current_option()
-        super()._handle_coordinator_update()
-
     async def async_select_option(self, option: str) -> None:
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
@@ -87,7 +80,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         _LOGGER.info("Set '%s' to %s (value: %s)", self.name, option, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
-    def _update_current_option(self) -> None:
+    def _update_attrs(self) -> None:
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)

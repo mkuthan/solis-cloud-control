@@ -554,7 +554,13 @@ class TestBatterySocV2:
             None,
         )
 
-    @pytest.mark.parametrize("entity_id_fixture", ["slot1_charge_soc_v2_entity_id", "slot1_discharge_soc_v2_entity_id"])
+    @pytest.mark.parametrize(
+        ("entity_id_fixture", "slot_attr"),
+        [
+            ("slot1_charge_soc_v2_entity_id", "charge_slot1"),
+            ("slot1_discharge_soc_v2_entity_id", "discharge_slot1"),
+        ],
+    )
     async def test_bounds_follow_battery_limits(
         self,
         request: pytest.FixtureRequest,
@@ -562,9 +568,12 @@ class TestBatterySocV2:
         set_data,
         any_inverter: Inverter,
         entity_id_fixture: str,
+        slot_attr: str,
     ):
+        # bounds are refreshed only while the entity has its own data
         await set_data(
             {
+                getattr(any_inverter.charge_discharge_slots, slot_attr).soc_cid: "50",
                 any_inverter.battery_over_discharge_soc.cid: "20",
                 any_inverter.battery_max_charge_soc.cid: "90",
             }
@@ -1112,13 +1121,28 @@ class TestParallelBatteries:
         )
 
     @pytest.mark.parametrize(
-        ("entity_id_fixture", "max_current_attr"),
+        ("entity_id_fixture", "entity_cid", "max_current_attr"),
         [
-            ("slot1_charge_current_v1_entity_id", "battery_max_charge_current"),
-            # V1 discharge is bounded by the charge max current CID too (number.py:59-71)
-            ("slot1_discharge_current_v1_entity_id", "battery_max_charge_current"),
-            ("slot1_charge_current_v2_entity_id", "battery_max_charge_current"),
-            ("slot1_discharge_current_v2_entity_id", "battery_max_discharge_current"),
+            (
+                "slot1_charge_current_v1_entity_id",
+                lambda inverter: inverter.charge_discharge_settings.cid,
+                "battery_max_charge_current",
+            ),
+            (
+                "slot1_discharge_current_v1_entity_id",
+                lambda inverter: inverter.charge_discharge_settings.cid,
+                "battery_max_discharge_current",
+            ),
+            (
+                "slot1_charge_current_v2_entity_id",
+                lambda inverter: inverter.charge_discharge_slots.charge_slot1.current_cid,
+                "battery_max_charge_current",
+            ),
+            (
+                "slot1_discharge_current_v2_entity_id",
+                lambda inverter: inverter.charge_discharge_slots.discharge_slot1.current_cid,
+                "battery_max_discharge_current",
+            ),
         ],
     )
     async def test_native_max_value(
@@ -1128,9 +1152,11 @@ class TestParallelBatteries:
         set_data,
         any_inverter: Inverter,
         entity_id_fixture: str,
+        entity_cid,
         max_current_attr: str,
     ):
-        await set_data({getattr(any_inverter, max_current_attr).cid: "50"})
+        # bounds are refreshed only while the entity has its own data
+        await set_data({entity_cid(any_inverter): "1", getattr(any_inverter, max_current_attr).cid: "50"})
 
         state = hass.states.get(request.getfixturevalue(entity_id_fixture))
         assert state.attributes.get("max") == 100

@@ -60,7 +60,12 @@ class ChargeDischargeSettings(ABC):
         return str(int(round(current)))
 
     @staticmethod
-    def _format_time_slot(start: str, end: str) -> str | None:
+    def _get_field(fields: list[str], index: int) -> str | None:
+        # slot index comes from the inverter model, not from the value, so it may not fit the value's variant
+        return fields[index] if 0 <= index < len(fields) else None
+
+    @staticmethod
+    def _format_time_slot(start: str | None, end: str | None) -> str | None:
         return f"{start}-{end}" if start and end else None
 
     @staticmethod
@@ -74,25 +79,25 @@ class ChargeDischargeSettingsVariant1(ChargeDischargeSettings):
 
     def get_charge_current(self, slot_index: int) -> float | None:
         base_idx = (slot_index - 1) * 6
-        return safe_get_float_value(self._fields[base_idx])
+        return safe_get_float_value(ChargeDischargeSettings._get_field(self._fields, base_idx))
 
     def get_discharge_current(self, slot_index: int) -> float | None:
         base_idx = (slot_index - 1) * 6
-        return safe_get_float_value(self._fields[base_idx + 1])
+        return safe_get_float_value(ChargeDischargeSettings._get_field(self._fields, base_idx + 1))
 
     def get_charge_time_slot(self, slot_index: int) -> str | None:
         base_idx = (slot_index - 1) * 6
 
-        charge_start = self._fields[base_idx + 2]
-        charge_end = self._fields[base_idx + 3]
+        charge_start = ChargeDischargeSettings._get_field(self._fields, base_idx + 2)
+        charge_end = ChargeDischargeSettings._get_field(self._fields, base_idx + 3)
 
         return ChargeDischargeSettings._format_time_slot(charge_start, charge_end)
 
     def get_discharge_time_slot(self, slot_index: int) -> str | None:
         base_idx = (slot_index - 1) * 6
 
-        discharge_start = self._fields[base_idx + 4]
-        discharge_end = self._fields[base_idx + 5]
+        discharge_start = ChargeDischargeSettings._get_field(self._fields, base_idx + 4)
+        discharge_end = ChargeDischargeSettings._get_field(self._fields, base_idx + 5)
 
         return ChargeDischargeSettings._format_time_slot(discharge_start, discharge_end)
 
@@ -126,15 +131,15 @@ class ChargeDischargeSettingsVariant2(ChargeDischargeSettings):
 
     def get_charge_current(self, slot_index: int) -> float | None:
         base_idx = (slot_index - 1) * 4
-        return safe_get_float_value(self._fields[base_idx])
+        return safe_get_float_value(ChargeDischargeSettings._get_field(self._fields, base_idx))
 
     def get_discharge_current(self, slot_index: int) -> float | None:
         base_idx = (slot_index - 1) * 4
-        return safe_get_float_value(self._fields[base_idx + 1])
+        return safe_get_float_value(ChargeDischargeSettings._get_field(self._fields, base_idx + 1))
 
     def get_charge_time_slot(self, slot_index: int) -> str | None:
         base_idx = (slot_index - 1) * 4
-        time_slot = self._fields[base_idx + 2]
+        time_slot = ChargeDischargeSettings._get_field(self._fields, base_idx + 2)
         if not time_slot:
             return None
 
@@ -142,7 +147,7 @@ class ChargeDischargeSettingsVariant2(ChargeDischargeSettings):
 
     def get_discharge_time_slot(self, slot_index: int) -> str | None:
         base_idx = (slot_index - 1) * 4
-        time_slot = self._fields[base_idx + 3]
+        time_slot = ChargeDischargeSettings._get_field(self._fields, base_idx + 3)
         if not time_slot:
             return None
 

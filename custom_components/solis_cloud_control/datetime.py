@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from homeassistant.components.datetime import DateTimeEntity, DateTimeEntityDescription
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
@@ -51,20 +51,13 @@ class InverterTimeEntity(SolisCloudControlEntity, DateTimeEntity):
         super().__init__(coordinator, entity_description, inverter_time.cid)
         self.inverter_time = inverter_time
 
-        self._update_native_value()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_native_value()
-        super()._handle_coordinator_update()
-
     async def async_set_value(self, value: datetime) -> None:
         value_str = format_inverter_time(value)
 
         _LOGGER.info("Set '%s' to %s (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_time.cid, value_str)
 
-    def _update_native_value(self) -> None:
+    def _update_attrs(self) -> None:
         current_value = self.coordinator.data.get(self.inverter_time.cid)
         self._attr_native_value = parse_inverter_time(current_value)
 

@@ -1,7 +1,7 @@
 import logging
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
@@ -161,13 +161,6 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
         super().__init__(coordinator, entity_description, [inverter_on_off.on_cid, inverter_on_off.off_cid])
         self.inverter_on_off = inverter_on_off
 
-        self._update_state()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_state()
-        super()._handle_coordinator_update()
-
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         _LOGGER.info("Turn on '%s'", self.name)
         await self.coordinator.control(self.inverter_on_off.on_cid, self.inverter_on_off.on_value)
@@ -176,7 +169,7 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
         _LOGGER.info("Turn off '%s'", self.name)
         await self.coordinator.control(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
 
-    def _update_state(self) -> None:
+    def _update_attrs(self) -> None:
         on_value = self.coordinator.data.get(self.inverter_on_off.on_cid)
         off_value = self.coordinator.data.get(self.inverter_on_off.off_cid)
 
@@ -198,13 +191,6 @@ class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
         super().__init__(coordinator, entity_description, inverter_allow_export.cid)
         self.inverter_allow_export = inverter_allow_export
         self.inverter_storage_mode = inverter_storage_mode
-
-        self._update_is_on()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_is_on()
-        super()._handle_coordinator_update()
 
     @property
     def available(self) -> bool:
@@ -235,7 +221,7 @@ class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
         else:
             return self.inverter_allow_export.off_value
 
-    def _update_is_on(self) -> None:
+    def _update_attrs(self) -> None:
         value = self.coordinator.data.get(self.inverter_allow_export.cid)
         self._attr_is_on = value == "0" if value is not None else None
 
@@ -252,13 +238,6 @@ class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):
 
         self.inverter_charge_discharge_slot = inverter_charge_discharge_slot
         self.inverter_charge_discharge_slots = inverter_charge_discharge_slots
-
-        self._update_is_on()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_is_on()
-        super()._handle_coordinator_update()
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
@@ -296,7 +275,7 @@ class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):
 
         return str(value)
 
-    def _update_is_on(self) -> None:
+    def _update_attrs(self) -> None:
         value = self.coordinator.data.get(self.inverter_charge_discharge_slot.switch_cid)
         self._attr_is_on = value == "1" if value is not None else None
 
@@ -310,13 +289,6 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_storage_mode.cid)
         self.inverter_storage_mode = inverter_storage_mode
-
-        self._update_is_on()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_is_on()
-        super()._handle_coordinator_update()
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
@@ -348,7 +320,7 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
         _LOGGER.info("Turn off '%s' (value: %s)", self.name, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
-    def _update_is_on(self) -> None:
+    def _update_attrs(self) -> None:
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
@@ -368,13 +340,6 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_storage_mode.cid)
         self.inverter_storage_mode = inverter_storage_mode
-
-        self._update_is_on()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_is_on()
-        super()._handle_coordinator_update()
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
@@ -406,7 +371,7 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
         _LOGGER.info("Turn off '%s' (value: %s)", self.name, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
-    def _update_is_on(self) -> None:
+    def _update_attrs(self) -> None:
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
@@ -426,13 +391,6 @@ class GridPeakShavingSwitch(SolisCloudControlEntity, SwitchEntity):
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_storage_mode.cid)
         self.inverter_storage_mode = inverter_storage_mode
-
-        self._update_is_on()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_is_on()
-        super()._handle_coordinator_update()
 
     @property
     def available(self) -> bool:
@@ -473,10 +431,10 @@ class GridPeakShavingSwitch(SolisCloudControlEntity, SwitchEntity):
         _LOGGER.info("Turn off '%s' (value: %s)", self.name, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
-    def _update_is_on(self) -> None:
+    def _update_attrs(self) -> None:
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
-        # runs also when unavailable, `available` already warns about invalid storage modes
+        # `available` already warns about invalid storage modes
         storage_mode = StorageMode.create(current_value)
         self._attr_is_on = storage_mode.is_peak_shaving() if storage_mode is not None else None
 
@@ -490,13 +448,6 @@ class TimeOfUseSwitch(SolisCloudControlEntity, SwitchEntity):
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_storage_mode.cid)
         self.inverter_storage_mode = inverter_storage_mode
-
-        self._update_is_on()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_is_on()
-        super()._handle_coordinator_update()
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
@@ -528,7 +479,7 @@ class TimeOfUseSwitch(SolisCloudControlEntity, SwitchEntity):
         _LOGGER.info("Turn off '%s' (value: %s)", self.name, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
-    def _update_is_on(self) -> None:
+    def _update_attrs(self) -> None:
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
@@ -549,13 +500,6 @@ class MpptScanningSwitch(SolisCloudControlEntity, SwitchEntity):
         super().__init__(coordinator, entity_description, inverter_mppt_scanning.cid)
         self.inverter_mppt_scanning = inverter_mppt_scanning
 
-        self._update_is_on()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_is_on()
-        super()._handle_coordinator_update()
-
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
         _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
@@ -572,6 +516,6 @@ class MpptScanningSwitch(SolisCloudControlEntity, SwitchEntity):
         else:
             return self.inverter_mppt_scanning.off_value
 
-    def _update_is_on(self) -> None:
+    def _update_attrs(self) -> None:
         value = self.coordinator.data.get(self.inverter_mppt_scanning.cid)
         self._attr_is_on = value == self.inverter_mppt_scanning.on_value if value is not None else None

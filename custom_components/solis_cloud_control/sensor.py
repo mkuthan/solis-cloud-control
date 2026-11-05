@@ -1,6 +1,6 @@
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
@@ -140,14 +140,7 @@ class BatterySocSensor(SolisCloudControlEntity, SensorEntity):
 
         self.inverter_battery_soc = inverter_battery_soc
 
-        self._update_native_value()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_native_value()
-        super()._handle_coordinator_update()
-
-    def _update_native_value(self) -> None:
+    def _update_attrs(self) -> None:
         value_str = self.coordinator.data.get(self.inverter_battery_soc.cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
@@ -164,13 +157,6 @@ class BatteryCurrentSensor(SolisCloudControlEntity, SensorEntity):
 
         self.inverter_battery_current = inverter_battery_current
 
-        self._update_native_value()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_native_value()
-        super()._handle_coordinator_update()
-
-    def _update_native_value(self) -> None:
+    def _update_attrs(self) -> None:
         value_str = self.coordinator.data.get(self.inverter_battery_current.cid)
         self._attr_native_value = safe_get_float_value(value_str)
