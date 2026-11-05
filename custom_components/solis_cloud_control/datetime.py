@@ -51,18 +51,15 @@ class InverterTimeEntity(SolisCloudControlEntity, DateTimeEntity):
         super().__init__(coordinator, entity_description, inverter_time.cid)
         self.inverter_time = inverter_time
 
-    @property
-    def native_value(self) -> datetime | None:
-        current_value = self.coordinator.data.get(self.inverter_time.cid)
-        result = parse_inverter_time(current_value)
-
-        if result is None:
-            _LOGGER.warning("Invalid '%s' value: '%s'", self.name, current_value)
-
-        return result
-
     async def async_set_value(self, value: datetime) -> None:
         value_str = format_inverter_time(value)
 
         _LOGGER.info("Set '%s' to %s (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_time.cid, value_str)
+
+    def _update_attrs(self) -> None:
+        current_value = self.coordinator.data.get(self.inverter_time.cid)
+        self._attr_native_value = parse_inverter_time(current_value)
+
+        if self._attr_native_value is None:
+            _LOGGER.warning("Invalid '%s' value: '%s'", self.name, current_value)

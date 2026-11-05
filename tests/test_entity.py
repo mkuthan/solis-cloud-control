@@ -4,6 +4,13 @@ from homeassistant.helpers.entity import EntityDescription
 from custom_components.solis_cloud_control.entity import SolisCloudControlEntity
 
 
+class _CountingEntity(SolisCloudControlEntity):
+    update_calls = 0
+
+    def _update_attrs(self) -> None:
+        self.update_calls += 1
+
+
 class TestSolisCloudControlEntity:
     def test_available_when_coordinator_last_update_failed(self, mock_coordinator):
         mock_coordinator.last_update_success = False
@@ -56,3 +63,25 @@ class TestSolisCloudControlEntity:
         )
         mock_coordinator.data = coordinator_data
         assert entity.available == expected_available
+
+
+class TestRefreshAttrs:
+    @pytest.mark.parametrize(
+        ("coordinator_data", "expected_calls"),
+        [
+            ({1: "any value", 2: "any value"}, 1),
+            ({1: "any value"}, 0),
+            ({1: "any value", 2: None}, 0),
+        ],
+    )
+    def test_updates_attrs_only_when_data_present(self, mock_coordinator, coordinator_data, expected_calls):
+        entity = _CountingEntity(
+            coordinator=mock_coordinator,
+            entity_description=EntityDescription(key="any_key", name="any name"),
+            cids=[1, 2],
+        )
+        mock_coordinator.data = coordinator_data
+
+        entity._refresh_attrs()
+
+        assert entity.update_calls == expected_calls

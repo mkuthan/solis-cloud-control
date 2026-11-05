@@ -99,6 +99,13 @@ class TestChargeDischargeSettingsVariant1:
             assert variant1_empty_settings.get_charge_time_slot(i) is None
             assert variant1_empty_settings.get_discharge_time_slot(i) is None
 
+    @pytest.mark.parametrize("slot_index", [0, 4, 100])
+    def test_slot_out_of_range(self, variant1_settings, slot_index):
+        assert variant1_settings.get_charge_current(slot_index) is None
+        assert variant1_settings.get_discharge_current(slot_index) is None
+        assert variant1_settings.get_charge_time_slot(slot_index) is None
+        assert variant1_settings.get_discharge_time_slot(slot_index) is None
+
 
 @pytest.fixture
 def variant2_settings(variant2_value):
@@ -162,3 +169,10 @@ class TestChargeDischargeSettingsVariant2:
             assert variant2_empty_settings.get_discharge_current(i) is None
             assert variant2_empty_settings.get_charge_time_slot(i) is None
             assert variant2_empty_settings.get_discharge_time_slot(i) is None
+
+    @pytest.mark.parametrize("slot_index", [0, 4, 100])
+    def test_slot_out_of_range(self, variant2_settings, slot_index):
+        assert variant2_settings.get_charge_current(slot_index) is None
+        assert variant2_settings.get_discharge_current(slot_index) is None
+        assert variant2_settings.get_charge_time_slot(slot_index) is None
+        assert variant2_settings.get_discharge_time_slot(slot_index) is None

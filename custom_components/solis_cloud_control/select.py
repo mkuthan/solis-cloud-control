@@ -60,24 +60,6 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
 
         self.inverter_storage_mode = inverter_storage_mode
 
-    @property
-    def current_option(self) -> str | None:
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
-
-        storage_mode = StorageMode.create(current_value)
-        if storage_mode is None:
-            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
-            return None
-
-        if storage_mode.is_self_use():
-            return self.MODE_SELF_USE
-        elif storage_mode.is_feed_in_priority():
-            return self.MODE_FEED_IN_PRIORITY
-        elif storage_mode.is_off_grid():
-            return self.MODE_OFF_GRID
-
-        return None
-
     async def async_select_option(self, option: str) -> None:
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
@@ -97,3 +79,19 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
 
         _LOGGER.info("Set '%s' to %s (value: %s)", self.name, option, value_str)
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
+
+    def _update_attrs(self) -> None:
+        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+
+        storage_mode = StorageMode.create(current_value)
+        if storage_mode is None:
+            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
+            self._attr_current_option = None
+        elif storage_mode.is_self_use():
+            self._attr_current_option = self.MODE_SELF_USE
+        elif storage_mode.is_feed_in_priority():
+            self._attr_current_option = self.MODE_FEED_IN_PRIORITY
+        elif storage_mode.is_off_grid():
+            self._attr_current_option = self.MODE_OFF_GRID
+        else:
+            self._attr_current_option = None

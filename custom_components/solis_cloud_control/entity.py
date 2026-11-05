@@ -1,3 +1,4 @@
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -36,11 +37,25 @@ class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
 
     @property
     def available(self) -> bool:
-        if not self.coordinator.last_update_success:
-            return False
+        return self.coordinator.last_update_success and self._has_data()
 
-        for cid in self.cids:
-            if cid not in self.coordinator.data or self.coordinator.data[cid] is None:
-                return False
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        # entities are built before the platform adds them, refresh so the first state write is current
+        self._refresh_attrs()
 
-        return True
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._refresh_attrs()
+        super()._handle_coordinator_update()
+
+    def _has_data(self) -> bool:
+        return all(self.coordinator.data.get(cid) is not None for cid in self.cids)
+
+    def _refresh_attrs(self) -> None:
+        # HA does not read state of unavailable entities, parsing missing data would only log noise
+        if self._has_data():
+            self._update_attrs()
+
+    def _update_attrs(self) -> None:
+        """Derive `_attr_*` state from coordinator data, called only when data for all cids is present."""

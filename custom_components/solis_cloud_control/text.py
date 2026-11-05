@@ -110,22 +110,6 @@ class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
         self.slot_number = slot_number
         self.slot_type = slot_type
 
-    @property
-    def native_value(self) -> str | None:
-        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
-
-        charge_discharge_settings = ChargeDischargeSettings.create(current_value)
-        if charge_discharge_settings is None:
-            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, current_value)
-            return None
-
-        if self.slot_type == "charge":
-            time_slot = charge_discharge_settings.get_charge_time_slot(self.slot_number)
-        else:
-            time_slot = charge_discharge_settings.get_discharge_time_slot(self.slot_number)
-
-        return time_slot
-
     async def async_set_value(self, value: str) -> None:
         current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
         charge_discharge_settings = ChargeDischargeSettings.create(current_value)
@@ -143,6 +127,18 @@ class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
 
         _LOGGER.info("Set '%s' to %s (value: %s)", self.name, value, value_str)
         await self.coordinator.control(self.inverter_charge_discharge_settings.cid, value_str)
+
+    def _update_attrs(self) -> None:
+        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+
+        charge_discharge_settings = ChargeDischargeSettings.create(current_value)
+        if charge_discharge_settings is None:
+            _LOGGER.warning("Invalid '%s' settings: '%s'", self.name, current_value)
+            self._attr_native_value = None
+        elif self.slot_type == "charge":
+            self._attr_native_value = charge_discharge_settings.get_charge_time_slot(self.slot_number)
+        else:
+            self._attr_native_value = charge_discharge_settings.get_discharge_time_slot(self.slot_number)
 
 
 class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
@@ -162,10 +158,9 @@ class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
 
         self.inverter_charge_discharge_slot = inverter_charge_discharge_slot
 
-    @property
-    def native_value(self) -> str | None:
-        return self.coordinator.data.get(self.inverter_charge_discharge_slot.time_cid)
-
     async def async_set_value(self, value: str) -> None:
         _LOGGER.info("Set '%s' to %s", self.name, value)
         await self.coordinator.control(self.inverter_charge_discharge_slot.time_cid, value)
+
+    def _update_attrs(self) -> None:
+        self._attr_native_value = self.coordinator.data.get(self.inverter_charge_discharge_slot.time_cid)
