@@ -225,28 +225,16 @@ class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
-        if old_value is None:
-            _LOGGER.warning("Unknown current state of '%s'", self.name)
-            return
-
         _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
         await self.coordinator.control(self.inverter_allow_export.cid, "0", old_value)
 
     async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
-        if old_value is None:
-            _LOGGER.warning("Unknown current state of '%s'", self.name)
-            return
-
         _LOGGER.info("Turn off '%s' (old_value: %s)", self.name, old_value)
         await self.coordinator.control(self.inverter_allow_export.cid, "1", old_value)
 
-    def _calculate_old_value(self) -> str | None:
-        allow_export = self.is_on
-        if allow_export is None:
-            return None
-
-        if allow_export:
+    def _calculate_old_value(self) -> str:
+        if self.is_on:
             return self.inverter_allow_export.on_value
         else:
             return self.inverter_allow_export.off_value
@@ -426,9 +414,7 @@ class GridPeakShavingSwitch(SolisCloudControlEntity, SwitchEntity):
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
-        if storage_mode is None:
-            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
-            return None
+        assert storage_mode is not None  # `available` rejects invalid storage modes
 
         return storage_mode.is_peak_shaving()
 
@@ -449,9 +435,7 @@ class GridPeakShavingSwitch(SolisCloudControlEntity, SwitchEntity):
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
-        if storage_mode is None:
-            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
-            return None
+        assert storage_mode is not None  # `available` rejects invalid storage modes
 
         storage_mode.enable_peak_shaving()
 
@@ -464,9 +448,7 @@ class GridPeakShavingSwitch(SolisCloudControlEntity, SwitchEntity):
         current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
-        if storage_mode is None:
-            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, current_value)
-            return None
+        assert storage_mode is not None  # `available` rejects invalid storage modes
 
         storage_mode.disable_peak_shaving()
 
@@ -545,28 +527,16 @@ class MpptScanningSwitch(SolisCloudControlEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
-        if old_value is None:
-            _LOGGER.warning("Unknown current state of '%s'", self.name)
-            return
-
         _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
         await self.coordinator.control(self.inverter_mppt_scanning.cid, "1", old_value)
 
     async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
-        if old_value is None:
-            _LOGGER.warning("Unknown current state of '%s'", self.name)
-            return
-
         _LOGGER.info("Turn off '%s' (old_value: %s)", self.name, old_value)
         await self.coordinator.control(self.inverter_mppt_scanning.cid, "0", old_value)
 
-    def _calculate_old_value(self) -> str | None:
-        mppt_scanning = self.is_on
-        if mppt_scanning is None:
-            return None
-
-        if mppt_scanning:
+    def _calculate_old_value(self) -> str:
+        if self.is_on:
             return self.inverter_mppt_scanning.on_value
         else:
             return self.inverter_mppt_scanning.off_value

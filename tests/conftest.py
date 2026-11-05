@@ -1,7 +1,11 @@
-from unittest.mock import AsyncMock, Mock
+from collections.abc import AsyncGenerator, Generator
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN, Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_socket import enable_socket, socket_allow_hosts
 
@@ -25,10 +29,10 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterMpptScanInterval,
     InverterMpptScanning,
     InverterOnOff,
+    InverterPowerLimit,
     InverterStorageMode,
     InverterTime,
 )
-from custom_components.solis_cloud_control.number import InverterPowerLimit
 
 
 # https://github.com/MatthewFlamm/pytest-homeassistant-custom-component/issues/154
@@ -63,7 +67,7 @@ def mock_coordinator():
 
 
 @pytest.fixture
-def mock_config_entry(hass):
+def mock_config_entry(hass: HomeAssistant):
     config_entry = MockConfigEntry(
         domain=DOMAIN,
         version=2,
@@ -78,7 +82,7 @@ def mock_config_entry(hass):
 
 
 @pytest.fixture
-def any_inverter_info():
+def any_inverter_info() -> InverterInfo:
     return InverterInfo(
         serial_number="any_inverter_sn",
         model="any_model",
@@ -120,3 +124,53 @@ def any_inverter(any_inverter_info: InverterInfo) -> Inverter:
         mppt_scan_interval=InverterMpptScanInterval(),
         mppt_scanning=InverterMpptScanning(),
     )
+
+
+@pytest.fixture
+def integration_patches(mock_api_client: AsyncMock, any_inverter: Inverter) -> Generator[None]:
+    with patch.multiple(
+        "custom_components.solis_cloud_control",
+        _create_api_client=Mock(return_value=mock_api_client),
+        create_inverter_info=AsyncMock(return_value=any_inverter.info),
+        create_inverter=Mock(return_value=any_inverter),
+    ):
+        yield
+
+
+@pytest.fixture
+async def setup_integration(
+    hass: HomeAssistant,
+    mock_api_client: AsyncMock,
+    mock_config_entry: MockConfigEntry,
+    integration_patches: None,  # noqa: ARG001
+) -> AsyncGenerator[MockConfigEntry]:
+    mock_api_client.read_batch.return_value = {}
+    mock_api_client.read.return_value = None
+
+    with patch("homeassistant.helpers.entity.Entity.entity_registry_enabled_default", new=True):
+        await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+
+        assert mock_config_entry.state is ConfigEntryState.LOADED
+        yield mock_config_entry
+
+
+@pytest.fixture
+def get_entity_id(hass: HomeAssistant, setup_integration: MockConfigEntry):
+    def _get_entity_id(platform: Platform, key: str) -> str:
+        entity_id = er.async_get(hass).async_get_entity_id(platform, DOMAIN, f"{setup_integration.entry_id}_{key}")
+        assert entity_id is not None, f"no {platform} entity registered with key '{key}'"
+        return entity_id
+
+    return _get_entity_id
+
+
+@pytest.fixture
+def set_data(hass: HomeAssistant, setup_integration: MockConfigEntry):
+    # Merges into the coordinator data and waits for entities to process the update
+    async def _set_data(values: dict[int, str | None]) -> None:
+        coordinator = setup_integration.runtime_data.coordinator
+        coordinator.async_set_updated_data({**coordinator.data, **values})
+        await hass.async_block_till_done()
+
+    return _set_data

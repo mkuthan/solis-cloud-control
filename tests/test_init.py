@@ -13,7 +13,7 @@ from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
-async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter):
+async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter, integration_patches):
     read_batch_cids = dict.fromkeys(any_inverter.read_batch_cids, "0")
 
     for cid in [any_inverter.on_off.on_cid, any_inverter.on_off.off_cid]:
@@ -43,22 +43,8 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
         charge_discharge_settings if cid == 103 else None
     )
 
-    with (
-        patch(
-            "custom_components.solis_cloud_control._create_api_client",
-            return_value=mock_api_client,
-        ),
-        patch(
-            "custom_components.solis_cloud_control.create_inverter_info",
-            return_value=any_inverter.info,
-        ),
-        patch(
-            "custom_components.solis_cloud_control.create_inverter",
-            return_value=any_inverter,
-        ),
-    ):
-        await hass.config_entries.async_setup(mock_config_entry.entry_id)
-        await hass.async_block_till_done()
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
 
     # check if the config entry is loaded
     assert mock_config_entry.state is ConfigEntryState.LOADED
