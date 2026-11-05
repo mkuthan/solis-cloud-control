@@ -219,12 +219,12 @@ class TestAllowExportSwitch:
         assert state.state == expected_state
 
     @pytest.mark.parametrize(
-        ("storage_mode_value", "expected_available"),
+        ("storage_mode_value", "expected_state"),
         [
-            (str(1 << StorageMode.BIT_SELF_USE), True),
-            (str(1 << StorageMode.BIT_FEED_IN_PRIORITY), False),
-            (str(1 << StorageMode.BIT_OFF_GRID), False),
-            (None, False),
+            (str(1 << StorageMode.BIT_SELF_USE), "on"),
+            (str(1 << StorageMode.BIT_FEED_IN_PRIORITY), "unavailable"),
+            (str(1 << StorageMode.BIT_OFF_GRID), "unavailable"),
+            (None, "unavailable"),
         ],
     )
     async def test_availability(
@@ -234,7 +234,7 @@ class TestAllowExportSwitch:
         any_inverter: Inverter,
         allow_export_entity_id: str,
         storage_mode_value,
-        expected_available,
+        expected_state,
     ):
         storage_cid = any_inverter.storage_mode.cid
         export_cid = any_inverter.allow_export.cid
@@ -246,7 +246,7 @@ class TestAllowExportSwitch:
         )
 
         state = hass.states.get(allow_export_entity_id)
-        assert state.state == "unavailable" if not expected_available else state.state != "unavailable"
+        assert state.state == expected_state
 
     async def test_turn_on(
         self,
@@ -745,13 +745,13 @@ class TestGridPeakShavingSwitch:
         assert state.state == expected_state
 
     @pytest.mark.parametrize(
-        ("storage_mode_value", "expected_available"),
+        ("storage_mode_value", "expected_state"),
         [
-            (str(1 << StorageMode.BIT_SELF_USE), True),
-            (str(1 << StorageMode.BIT_FEED_IN_PRIORITY), True),
-            (str(1 << StorageMode.BIT_OFF_GRID), False),
-            ("not a number", False),
-            (None, False),
+            (str(1 << StorageMode.BIT_SELF_USE), "off"),
+            (str(1 << StorageMode.BIT_FEED_IN_PRIORITY), "off"),
+            (str(1 << StorageMode.BIT_OFF_GRID), "unavailable"),
+            ("not a number", "unavailable"),
+            (None, "unavailable"),
         ],
     )
     async def test_availability(
@@ -761,13 +761,13 @@ class TestGridPeakShavingSwitch:
         any_inverter: Inverter,
         grid_peak_shaving_entity_id: str,
         storage_mode_value,
-        expected_available,
+        expected_state,
     ):
         cid = any_inverter.storage_mode.cid
         await set_data({cid: storage_mode_value})
 
         state = hass.states.get(grid_peak_shaving_entity_id)
-        assert state.state == "unavailable" if not expected_available else state.state != "unavailable"
+        assert state.state == expected_state
 
     async def test_turn_on(
         self,
