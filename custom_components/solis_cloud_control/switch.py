@@ -1,22 +1,27 @@
 import logging
+from typing import TYPE_CHECKING
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
-from custom_components.solis_cloud_control.inverters.inverter import (
-    InverterAllowExport,
-    InverterChargeDischargeSlot,
-    InverterChargeDischargeSlots,
-    InverterMpptScanning,
-    InverterOnOff,
-    InverterStorageMode,
-)
 
-from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+    from custom_components.solis_cloud_control.inverters.inverter import (
+        InverterAllowExport,
+        InverterChargeDischargeSlot,
+        InverterChargeDischargeSlots,
+        InverterMpptScanning,
+        InverterOnOff,
+        InverterStorageMode,
+    )
+
+    from .coordinator import SolisCloudControlCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 

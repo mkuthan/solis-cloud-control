@@ -1,6 +1,6 @@
 from dataclasses import replace
+from typing import TYPE_CHECKING
 
-from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
     InverterAllowExport,
@@ -24,6 +24,9 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterStorageMode,
     InverterTime,
 )
+
+if TYPE_CHECKING:
+    from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
 
 _MAX_RETRY_TIME_SECONDS = 60
 

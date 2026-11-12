@@ -1,12 +1,15 @@
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
-from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 _TEST_API_KEY = "any api key"
 _TEST_API_TOKEN = "any api token"

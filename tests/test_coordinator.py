@@ -1,11 +1,14 @@
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 
 @pytest.fixture

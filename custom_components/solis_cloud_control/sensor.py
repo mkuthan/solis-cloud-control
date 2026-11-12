@@ -1,22 +1,28 @@
+from typing import TYPE_CHECKING
+
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
-from custom_components.solis_cloud_control.inverters.inverter import (
-    InverterBatteryForceChargeSOC,
-    InverterBatteryMaxChargeCurrent,
-    InverterBatteryMaxChargeSOC,
-    InverterBatteryMaxDischargeCurrent,
-    InverterBatteryOverDischargeSOC,
-    InverterBatteryRecoverySOC,
-    InverterBatteryReserveSOC,
-)
 from custom_components.solis_cloud_control.utils.safe_converters import safe_get_float_value
 
-from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+    from custom_components.solis_cloud_control.inverters.inverter import (
+        InverterBatteryForceChargeSOC,
+        InverterBatteryMaxChargeCurrent,
+        InverterBatteryMaxChargeSOC,
+        InverterBatteryMaxDischargeCurrent,
+        InverterBatteryOverDischargeSOC,
+        InverterBatteryRecoverySOC,
+        InverterBatteryReserveSOC,
+    )
+
+    from .coordinator import SolisCloudControlCoordinator
 
 
 async def async_setup_entry(

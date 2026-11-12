@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
+
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
+
+if TYPE_CHECKING:
+    from homeassistant.helpers.entity import EntityDescription
 
 
 class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):

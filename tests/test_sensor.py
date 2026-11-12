@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from homeassistant.const import PERCENTAGE, Platform, UnitOfElectricCurrent
-from homeassistant.core import HomeAssistant
 
-from custom_components.solis_cloud_control.inverters.inverter import Inverter
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+
+    from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 @pytest.fixture

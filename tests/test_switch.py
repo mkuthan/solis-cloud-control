@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
 
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
-from custom_components.solis_cloud_control.inverters.inverter import Inverter
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+
+    from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 def _slot_data(slots) -> dict:

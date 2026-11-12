@@ -1,10 +1,10 @@
 from collections import Counter
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN, CONF_TOKEN, Platform
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -12,6 +12,9 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.solis_cloud_control import async_migrate_entry, async_remove_config_entry_device
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 from custom_components.solis_cloud_control.inverters.inverter import Inverter
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 
 async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter, integration_patches):

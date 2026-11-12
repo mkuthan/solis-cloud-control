@@ -1,8 +1,8 @@
 from dataclasses import replace
+from typing import TYPE_CHECKING
 
 import pytest
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
 
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
@@ -16,6 +16,9 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterMpptScanInterval,
     InverterPowerLimit,
 )
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 
 @pytest.fixture

@@ -1,9 +1,12 @@
 from dataclasses import asdict
+from typing import TYPE_CHECKING
 
 from homeassistant.components.diagnostics import async_redact_data
-from homeassistant.core import HomeAssistant
 
-from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+
+    from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 
 _TO_REDACT = ["serial_number"]
 

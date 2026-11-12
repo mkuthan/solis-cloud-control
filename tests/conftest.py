@@ -1,10 +1,9 @@
-from collections.abc import AsyncGenerator, Generator
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN, Platform
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_socket import enable_socket, socket_allow_hosts
@@ -33,6 +32,11 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterStorageMode,
     InverterTime,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Generator
+
+    from homeassistant.core import HomeAssistant
 
 
 # https://github.com/MatthewFlamm/pytest-homeassistant-custom-component/issues/154

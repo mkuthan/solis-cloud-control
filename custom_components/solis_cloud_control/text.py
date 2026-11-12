@@ -1,19 +1,23 @@
 import logging
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from homeassistant.components.text import TextEntity, TextEntityDescription
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 from custom_components.solis_cloud_control.domain.charge_discharge_settings import ChargeDischargeSettings
-from custom_components.solis_cloud_control.inverters.inverter import (
-    InverterChargeDischargeSettings,
-    InverterChargeDischargeSlot,
-)
 
-from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+    from custom_components.solis_cloud_control.inverters.inverter import (
+        InverterChargeDischargeSettings,
+        InverterChargeDischargeSlot,
+    )
+
+    from .coordinator import SolisCloudControlCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 

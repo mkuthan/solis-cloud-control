@@ -1,33 +1,37 @@
 import logging
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberEntityDescription, NumberMode
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower, UnitOfTime
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 from custom_components.solis_cloud_control.domain.charge_discharge_settings import ChargeDischargeSettings
-from custom_components.solis_cloud_control.inverters.inverter import (
-    InverterBatteryForceChargeSOC,
-    InverterBatteryMaxChargeCurrent,
-    InverterBatteryMaxChargeSOC,
-    InverterBatteryMaxDischargeCurrent,
-    InverterBatteryOverDischargeSOC,
-    InverterBatteryRecoverySOC,
-    InverterBatteryReserveSOC,
-    InverterChargeDischargeSettings,
-    InverterChargeDischargeSlot,
-    InverterExportCalibration,
-    InverterMaxExportPower,
-    InverterMaxOutputPower,
-    InverterMpptScanInterval,
-    InverterPowerLimit,
-)
 from custom_components.solis_cloud_control.utils.safe_converters import safe_get_float_value
 
-from .coordinator import SolisCloudControlCoordinator
 from .entity import SolisCloudControlEntity
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
+    from custom_components.solis_cloud_control.inverters.inverter import (
+        InverterBatteryForceChargeSOC,
+        InverterBatteryMaxChargeCurrent,
+        InverterBatteryMaxChargeSOC,
+        InverterBatteryMaxDischargeCurrent,
+        InverterBatteryOverDischargeSOC,
+        InverterBatteryRecoverySOC,
+        InverterBatteryReserveSOC,
+        InverterChargeDischargeSettings,
+        InverterChargeDischargeSlot,
+        InverterExportCalibration,
+        InverterMaxExportPower,
+        InverterMaxOutputPower,
+        InverterMpptScanInterval,
+        InverterPowerLimit,
+    )
+
+    from .coordinator import SolisCloudControlCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
