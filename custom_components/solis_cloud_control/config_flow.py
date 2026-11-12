@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-import voluptuous as vol
+import probatio
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
 from homeassistant.helpers import aiohttp_client
@@ -53,10 +53,10 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
                 _LOGGER.warning(error, exc_info=True)
                 errors["base"] = "unknown"
 
-        data_schema = vol.Schema(
+        data_schema = probatio.Schema(
             {
-                vol.Required(CONF_API_KEY): str,
-                vol.Required(CONF_API_TOKEN): str,
+                probatio.Required(CONF_API_KEY): str,
+                probatio.Required(CONF_API_TOKEN): str,
             }
         )
 
@@ -82,9 +82,9 @@ class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
                 },
             )
 
-        data_schema = vol.Schema(
+        data_schema = probatio.Schema(
             {
-                vol.Required(CONF_INVERTER_SN): vol.In(self._inverter_options),
+                probatio.Required(CONF_INVERTER_SN): probatio.In(self._inverter_options),
             }
         )
 

@@ -9,7 +9,7 @@ These instructions refine the generic Python guidance to match the project speci
 
 ## Core Principles
 
-- Target Python 3.13 only; do not use syntax or stdlib features newer than 3.13.
+- Target Python 3.14 only; do not use syntax or stdlib features newer than 3.14.
 - Follow existing patterns in `custom_components/solis_cloud_control` before introducing new ones.
 - Prefer clarity, consistency, and minimalism over exhaustive commentary.
 - Avoid external dependencies beyond those already declared in `pyproject.toml`.

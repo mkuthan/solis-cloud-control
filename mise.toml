@@ -2,7 +2,7 @@
 _.file = ".env"
 
 [tools]
-python = "3.13"
+python = "3.14"
 
 [tasks.check]
 description = "Run all checks (lint, lint-format, typecheck, test)"

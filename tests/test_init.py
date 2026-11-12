@@ -59,7 +59,9 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
 
     # check device registration
     device_registry = dr.async_get(hass)
-    device = device_registry.async_get_device(identifiers={(DOMAIN, any_inverter.info.serial_number)})
+    device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, any_inverter.info.serial_number), mock_config_entry.entry_id
+    )
 
     assert device is not None
     assert device.manufacturer == "Solis"
@@ -212,6 +214,6 @@ async def test_remove_config_entry_device(hass: HomeAssistant, mock_config_entry
     result = await async_remove_config_entry_device(
         hass,
         mock_config_entry,
-        dr.DeviceEntry(),
+        dr.DeviceEntry(config_entry_id=mock_config_entry.entry_id),
     )
     assert result is True
