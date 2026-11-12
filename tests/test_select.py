@@ -16,7 +16,7 @@ class TestStorageModeSelectIntegration:
     async def test_entity_registered(self, hass: HomeAssistant, storage_mode_entity_id: str):
         state = hass.states.get(storage_mode_entity_id)
         assert state is not None
-        assert state.attributes.get("options") == ["Self-Use", "Feed-In Priority", "Off-Grid"]
+        assert state.attributes.get("options") == ["Self-Use", "Feed-In Priority", "Off-Grid", "Peak Shaving"]
 
     @pytest.mark.parametrize(
         ("value", "expected_mode"),
@@ -24,6 +24,7 @@ class TestStorageModeSelectIntegration:
             (str(1 << StorageMode.BIT_SELF_USE), "Self-Use"),
             (str(1 << StorageMode.BIT_FEED_IN_PRIORITY), "Feed-In Priority"),
             (str(1 << StorageMode.BIT_OFF_GRID), "Off-Grid"),
+            (str(1 << StorageMode.BIT_PEAK_SHAVING), "Peak Shaving"),
         ],
     )
     async def test_current_option_valid(
@@ -70,6 +71,7 @@ class TestStorageModeSelectIntegration:
             ("Self-Use", str(1 << StorageMode.BIT_SELF_USE)),
             ("Feed-In Priority", str(1 << StorageMode.BIT_FEED_IN_PRIORITY)),
             ("Off-Grid", str(1 << StorageMode.BIT_OFF_GRID)),
+            ("Peak Shaving", str(1 << StorageMode.BIT_PEAK_SHAVING)),
         ],
     )
     async def test_async_select_option(
@@ -89,6 +91,48 @@ class TestStorageModeSelectIntegration:
             Platform.SELECT,
             "select_option",
             {"entity_id": storage_mode_entity_id, "option": mode},
+            blocking=True,
+        )
+
+        mock_api_client.control.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            cid,
+            expected_value,
+            None,
+        )
+
+    @pytest.mark.parametrize(
+        ("initial_mode", "expected_value"),
+        [
+            # Self-Use + grid charging -> Peak Shaving + grid charging
+            (
+                str((1 << StorageMode.BIT_SELF_USE) | (1 << StorageMode.BIT_GRID_CHARGING)),
+                str((1 << StorageMode.BIT_PEAK_SHAVING) | (1 << StorageMode.BIT_GRID_CHARGING)),
+            ),
+            # Feed-In Priority + grid charging -> Peak Shaving + grid charging
+            (
+                str((1 << StorageMode.BIT_FEED_IN_PRIORITY) | (1 << StorageMode.BIT_GRID_CHARGING)),
+                str((1 << StorageMode.BIT_PEAK_SHAVING) | (1 << StorageMode.BIT_GRID_CHARGING)),
+            ),
+        ],
+    )
+    async def test_async_select_peak_shaving_clears_other_base_modes(
+        self,
+        hass: HomeAssistant,
+        set_data,
+        mock_api_client,
+        any_inverter: Inverter,
+        storage_mode_entity_id: str,
+        initial_mode,
+        expected_value,
+    ):
+        cid = any_inverter.storage_mode.cid
+        await set_data({cid: initial_mode})
+
+        await hass.services.async_call(
+            Platform.SELECT,
+            "select_option",
+            {"entity_id": storage_mode_entity_id, "option": "Peak Shaving"},
             blocking=True,
         )
 

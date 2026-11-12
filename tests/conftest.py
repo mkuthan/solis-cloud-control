@@ -70,7 +70,7 @@ def mock_coordinator():
 def mock_config_entry(hass: HomeAssistant):
     config_entry = MockConfigEntry(
         domain=DOMAIN,
-        version=2,
+        version=3,
         data={
             CONF_API_KEY: "any_api_key",
             CONF_API_TOKEN: "any_api_token",

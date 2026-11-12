@@ -4,6 +4,7 @@ from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 
 from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
 from custom_components.solis_cloud_control.const import API_BASE_URL, CONF_INVERTER_SN
@@ -70,16 +71,30 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: SolisCloudContro
 async def async_migrate_entry(hass: HomeAssistant, config_entry: SolisCloudControlConfigEntry) -> bool:
     _LOGGER.debug("Migrating configuration from version %s", config_entry.version)
 
-    new_data = {**config_entry.data}
+    version = config_entry.version
 
-    if config_entry.version == 1:
+    if version == 1:
         from homeassistant.const import CONF_TOKEN
 
+        new_data = {**config_entry.data}
         new_data[CONF_API_TOKEN] = new_data.pop(CONF_TOKEN)
 
-    hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
+        hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
+        version = 2
 
-    return True
+    if version == 2:
+        # Peak Shaving is now a base storage mode, so the standalone switch would conflict with mode selection
+        entity_registry = er.async_get(hass)
+        entity_id = entity_registry.async_get_entity_id(
+            Platform.SWITCH, config_entry.domain, f"{config_entry.entry_id}_grid_peak_shaving"
+        )
+        if entity_id is not None:
+            entity_registry.async_remove(entity_id)
+
+        hass.config_entries.async_update_entry(config_entry, version=3)
+        version = 3
+
+    return version == 3
 
 
 async def async_remove_config_entry_device(

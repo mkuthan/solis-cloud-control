@@ -13,7 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SolisCloudControlFlowHandler(ConfigFlow, domain=DOMAIN):
-    VERSION = 2
+    VERSION = 3
 
     def __init__(self) -> None:
         self._api_key: str | None = None

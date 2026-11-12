@@ -1,6 +1,7 @@
 from collections import Counter
 from unittest.mock import patch
 
+import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN, CONF_TOKEN, Platform
 from homeassistant.core import HomeAssistant
@@ -76,7 +77,7 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
     assert platform_counts[Platform.NUMBER] == 42
     assert platform_counts[Platform.SELECT] == 1
     assert platform_counts[Platform.SENSOR] == 7
-    assert platform_counts[Platform.SWITCH] == 19
+    assert platform_counts[Platform.SWITCH] == 18
     assert platform_counts[Platform.TEXT] == 18
 
     platform_disabled_counts = Counter(entry.domain for entry in entries if entry.disabled_by is not None)
@@ -114,24 +115,97 @@ async def test_async_setup_entry_undefined_inverter(hass, mock_api_client, mock_
     assert len(entries) == 0
 
 
-async def test_migrate_config_entry_v1_to_v2(hass: HomeAssistant):
-    config_entry = MockConfigEntry(
+@pytest.fixture
+def create_config_entry(hass: HomeAssistant):
+    def _create(version: int, data: dict[str, str]) -> MockConfigEntry:
+        config_entry = MockConfigEntry(domain=DOMAIN, version=version, data=data)
+        config_entry.add_to_hass(hass)
+        return config_entry
+
+    return _create
+
+
+async def test_migrate_config_entry_v1(hass: HomeAssistant, create_config_entry):
+    config_entry = create_config_entry(
         version=1,
-        domain=DOMAIN,
         data={
             CONF_API_KEY: "any api key",
             CONF_TOKEN: "any api token",
             CONF_INVERTER_SN: "any inverter sn",
         },
     )
-    config_entry.add_to_hass(hass)
 
     assert await async_migrate_entry(hass, config_entry)
 
-    assert config_entry.version == 2
+    assert config_entry.version == 3
+    assert dict(config_entry.data) == {
+        CONF_API_KEY: "any api key",
+        CONF_API_TOKEN: "any api token",
+        CONF_INVERTER_SN: "any inverter sn",
+    }
 
-    assert CONF_TOKEN not in config_entry.data
-    assert CONF_API_TOKEN in config_entry.data
+
+async def test_migrate_config_entry_v2_removes_grid_peak_shaving_switch(hass: HomeAssistant, create_config_entry):
+    config_entry = create_config_entry(
+        version=2,
+        data={
+            CONF_API_KEY: "any api key",
+            CONF_API_TOKEN: "any api token",
+            CONF_INVERTER_SN: "any inverter sn",
+        },
+    )
+
+    entity_registry = er.async_get(hass)
+    grid_peak_shaving_unique_id = f"{config_entry.entry_id}_grid_peak_shaving"
+    battery_reserve_unique_id = f"{config_entry.entry_id}_battery_reserve"
+    for unique_id in (grid_peak_shaving_unique_id, battery_reserve_unique_id):
+        entity_registry.async_get_or_create(
+            Platform.SWITCH,
+            DOMAIN,
+            unique_id,
+            config_entry=config_entry,
+        )
+
+    assert await async_migrate_entry(hass, config_entry)
+
+    assert config_entry.version == 3
+    assert entity_registry.async_get_entity_id(Platform.SWITCH, DOMAIN, grid_peak_shaving_unique_id) is None
+    assert entity_registry.async_get_entity_id(Platform.SWITCH, DOMAIN, battery_reserve_unique_id) is not None
+
+
+async def test_migrate_config_entry_v2_without_grid_peak_shaving_switch(hass: HomeAssistant, create_config_entry):
+    config_entry = create_config_entry(
+        version=2,
+        data={
+            CONF_API_KEY: "any api key",
+            CONF_API_TOKEN: "any api token",
+            CONF_INVERTER_SN: "any inverter sn",
+        },
+    )
+
+    assert await async_migrate_entry(hass, config_entry)
+
+    assert config_entry.version == 3
+
+
+async def test_migrate_config_entry_current_version(hass: HomeAssistant, create_config_entry):
+    config_entry = create_config_entry(
+        version=3,
+        data={
+            CONF_API_KEY: "any api key",
+            CONF_API_TOKEN: "any api token",
+            CONF_INVERTER_SN: "any inverter sn",
+        },
+    )
+
+    assert await async_migrate_entry(hass, config_entry)
+
+    assert config_entry.version == 3
+    assert dict(config_entry.data) == {
+        CONF_API_KEY: "any api key",
+        CONF_API_TOKEN: "any api token",
+        CONF_INVERTER_SN: "any inverter sn",
+    }
 
 
 async def test_remove_config_entry_device(hass: HomeAssistant, mock_config_entry: MockConfigEntry):

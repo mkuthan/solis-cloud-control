@@ -41,17 +41,26 @@ class StorageMode:
 
     def set_self_use(self) -> None:
         self.mode |= 1 << self.BIT_SELF_USE
-        self.mode &= ~(1 << self.BIT_FEED_IN_PRIORITY)
         self.mode &= ~(1 << self.BIT_OFF_GRID)
+        self.mode &= ~(1 << self.BIT_FEED_IN_PRIORITY)
+        self.mode &= ~(1 << self.BIT_PEAK_SHAVING)
 
     def set_feed_in_priority(self) -> None:
         self.mode |= 1 << self.BIT_FEED_IN_PRIORITY
         self.mode &= ~(1 << self.BIT_SELF_USE)
         self.mode &= ~(1 << self.BIT_OFF_GRID)
+        self.mode &= ~(1 << self.BIT_PEAK_SHAVING)
 
     def set_off_grid(self) -> None:
         self.mode |= 1 << self.BIT_OFF_GRID
         self.mode &= ~(1 << self.BIT_SELF_USE)
+        self.mode &= ~(1 << self.BIT_FEED_IN_PRIORITY)
+        self.mode &= ~(1 << self.BIT_PEAK_SHAVING)
+
+    def set_peak_shaving(self) -> None:
+        self.mode |= 1 << self.BIT_PEAK_SHAVING
+        self.mode &= ~(1 << self.BIT_SELF_USE)
+        self.mode &= ~(1 << self.BIT_OFF_GRID)
         self.mode &= ~(1 << self.BIT_FEED_IN_PRIORITY)
 
     def enable_battery_reserve(self) -> None:
@@ -65,12 +74,6 @@ class StorageMode:
 
     def disable_allow_grid_charging(self) -> None:
         self.mode &= ~(1 << self.BIT_GRID_CHARGING)
-
-    def enable_peak_shaving(self) -> None:
-        self.mode |= 1 << self.BIT_PEAK_SHAVING
-
-    def disable_peak_shaving(self) -> None:
-        self.mode &= ~(1 << self.BIT_PEAK_SHAVING)
 
     def enable_tou_mode(self) -> None:
         self.mode |= 1 << self.BIT_TOU_MODE

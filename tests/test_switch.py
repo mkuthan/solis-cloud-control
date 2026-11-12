@@ -61,11 +61,6 @@ def allow_grid_charging_entity_id(get_entity_id) -> str:
 
 
 @pytest.fixture
-def grid_peak_shaving_entity_id(get_entity_id) -> str:
-    return get_entity_id(Platform.SWITCH, "grid_peak_shaving")
-
-
-@pytest.fixture
 def time_of_use_entity_id(get_entity_id) -> str:
     return get_entity_id(Platform.SWITCH, "time_of_use_switch")
 
@@ -709,123 +704,6 @@ class TestAllowGridChargingSwitch:
             )
 
         mock_api_client.control.assert_not_awaited()
-
-
-class TestGridPeakShavingSwitch:
-    @pytest.mark.usefixtures("setup_integration")
-    async def test_entity_registered(
-        self,
-        hass: HomeAssistant,
-        grid_peak_shaving_entity_id: str,
-    ):
-        state = hass.states.get(grid_peak_shaving_entity_id)
-        assert state is not None
-
-    @pytest.mark.parametrize(
-        ("value", "expected_state"),
-        [
-            (str((1 << StorageMode.BIT_SELF_USE) | (1 << StorageMode.BIT_PEAK_SHAVING)), "on"),
-            (str(1 << StorageMode.BIT_SELF_USE), "off"),
-            (None, "unavailable"),
-        ],
-    )
-    async def test_state_from_coordinator(
-        self,
-        hass: HomeAssistant,
-        set_data,
-        any_inverter: Inverter,
-        grid_peak_shaving_entity_id: str,
-        value,
-        expected_state,
-    ):
-        cid = any_inverter.storage_mode.cid
-        await set_data({cid: value})
-
-        state = hass.states.get(grid_peak_shaving_entity_id)
-        assert state.state == expected_state
-
-    @pytest.mark.parametrize(
-        ("storage_mode_value", "expected_state"),
-        [
-            (str(1 << StorageMode.BIT_SELF_USE), "off"),
-            (str(1 << StorageMode.BIT_FEED_IN_PRIORITY), "off"),
-            (str(1 << StorageMode.BIT_OFF_GRID), "unavailable"),
-            ("not a number", "unavailable"),
-            (None, "unavailable"),
-        ],
-    )
-    async def test_availability(
-        self,
-        hass: HomeAssistant,
-        set_data,
-        any_inverter: Inverter,
-        grid_peak_shaving_entity_id: str,
-        storage_mode_value,
-        expected_state,
-    ):
-        cid = any_inverter.storage_mode.cid
-        await set_data({cid: storage_mode_value})
-
-        state = hass.states.get(grid_peak_shaving_entity_id)
-        assert state.state == expected_state
-
-    async def test_turn_on(
-        self,
-        hass: HomeAssistant,
-        set_data,
-        mock_api_client,
-        any_inverter: Inverter,
-        grid_peak_shaving_entity_id: str,
-    ):
-        cid = any_inverter.storage_mode.cid
-        bit = StorageMode.BIT_PEAK_SHAVING
-        # Start with Self-Use mode (available) without peak shaving
-        await set_data({cid: str(1 << StorageMode.BIT_SELF_USE)})
-
-        await hass.services.async_call(
-            Platform.SWITCH,
-            "turn_on",
-            {"entity_id": grid_peak_shaving_entity_id},
-            blocking=True,
-        )
-
-        # Should set Self-Use + Peak Shaving bits
-        expected_value = str((1 << StorageMode.BIT_SELF_USE) | (1 << bit))
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_value,
-            None,
-        )
-
-    async def test_turn_off(
-        self,
-        hass: HomeAssistant,
-        set_data,
-        mock_api_client,
-        any_inverter: Inverter,
-        grid_peak_shaving_entity_id: str,
-    ):
-        cid = any_inverter.storage_mode.cid
-        bit = StorageMode.BIT_PEAK_SHAVING
-        # Start with Self-Use + Peak Shaving (available, peak shaving on)
-        await set_data({cid: str((1 << StorageMode.BIT_SELF_USE) | (1 << bit))})
-
-        await hass.services.async_call(
-            Platform.SWITCH,
-            "turn_off",
-            {"entity_id": grid_peak_shaving_entity_id},
-            blocking=True,
-        )
-
-        # Should set Self-Use only (peak shaving off)
-        expected_value = str(1 << StorageMode.BIT_SELF_USE)
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_value,
-            None,
-        )
 
 
 class TestTimeOfUseSwitch:

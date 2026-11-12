@@ -84,14 +84,13 @@ All Solis inverters should be supported, although the integration has been teste
 
 The integration provides a user-friendly interface to control your inverter settings. It allows you to:
 
-- ⚡ Control storage modes: "Self-Use", "Feed-In Priority" and "Off-Grid" 🟢
+- ⚡ Control storage modes: "Self-Use", "Feed-In Priority", "Off-Grid" and "Peak Shaving" 🟢
 - ⏱️ Schedule charge and discharge slots 🟢
 - Switch the inverter on or off 🟢 ⚪️
 - Set the inverter time 🟢 ⚪️
 - Toggle "Battery Reserve" 🟢
 - Toggle "Allow Grid Charging" 🟢
 - Toggle "Allow Export" (in "Self-Use" storage mode) 🟢
-- Toggle "Grid Peak Shaving" (in "Self-Use" and "Feed-In Priority" storage modes) 🟢
 - Set maximum output power 🟢
 - Set maximum export power 🟢
 - Control export calibration 🟢
