@@ -25,9 +25,12 @@ if TYPE_CHECKING:
         InverterChargeDischargeSettings,
         InverterChargeDischargeSlot,
         InverterExportCalibration,
+        InverterGridPeakShavingPower,
         InverterMaxExportPower,
         InverterMaxOutputPower,
         InverterMpptScanInterval,
+        InverterPeakShavingBaselineSOC,
+        InverterPeakShavingMaxUsableGridPower,
         InverterPowerLimit,
     )
 
@@ -277,6 +280,45 @@ async def async_setup_entry(
                     icon="mdi:timer-refresh-outline",
                 ),
                 inverter_mppt_scan_interval=inverter.mppt_scan_interval,
+            )
+        )
+
+    if inverter.peak_shaving_max_usable_grid_power is not None:
+        entities.append(
+            PeakShavingMaxUsableGridPower(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="peak_shaving_max_usable_grid_power",
+                    name="Peak Shaving Max Usable Grid Power",
+                    icon="mdi:transmission-tower-import",
+                ),
+                inverter_peak_shaving_max_usable_grid_power=inverter.peak_shaving_max_usable_grid_power,
+            )
+        )
+
+    if inverter.peak_shaving_baseline_soc is not None:
+        entities.append(
+            BatterySocNumber(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="peak_shaving_baseline_soc",
+                    name="Peak Shaving Baseline SOC",
+                    icon="mdi:battery-50",
+                ),
+                inverter_battery_soc=inverter.peak_shaving_baseline_soc,
+            )
+        )
+
+    if inverter.grid_peak_shaving_power is not None:
+        entities.append(
+            GridPeakShavingPower(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="grid_peak_shaving_power",
+                    name="Grid Peak Shaving Power",
+                    icon="mdi:transmission-tower-import",
+                ),
+                inverter_grid_peak_shaving_power=inverter.grid_peak_shaving_power,
             )
         )
 
@@ -563,7 +605,8 @@ class BatterySocNumber(SolisCloudControlEntity, NumberEntity):
         | InverterBatteryOverDischargeSOC
         | InverterBatteryForceChargeSOC
         | InverterBatteryRecoverySOC
-        | InverterBatteryMaxChargeSOC,
+        | InverterBatteryMaxChargeSOC
+        | InverterPeakShavingBaselineSOC,
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_battery_soc.cid)
         self._attr_native_min_value = inverter_battery_soc.min_value
@@ -636,4 +679,58 @@ class MpptScanIntervalNumber(SolisCloudControlEntity, NumberEntity):
 
     def _update_attrs(self) -> None:
         value_str = self.coordinator.data.get(self.inverter_mppt_scan_interval.cid)
+        self._attr_native_value = safe_get_float_value(value_str)
+
+
+class PeakShavingMaxUsableGridPower(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        inverter_peak_shaving_max_usable_grid_power: InverterPeakShavingMaxUsableGridPower,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_peak_shaving_max_usable_grid_power.cid)
+        self.inverter_peak_shaving_max_usable_grid_power = inverter_peak_shaving_max_usable_grid_power
+
+        self._attr_native_min_value = inverter_peak_shaving_max_usable_grid_power.min_value
+        self._attr_native_max_value = inverter_peak_shaving_max_usable_grid_power.max_value
+        self._attr_native_step = inverter_peak_shaving_max_usable_grid_power.step
+        self._attr_device_class = NumberDeviceClass.POWER
+        self._attr_native_unit_of_measurement = UnitOfPower.WATT
+        self._attr_mode = NumberMode.BOX
+
+    async def async_set_native_value(self, value: float) -> None:
+        value_str = str(int(round(value)))
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
+        await self.coordinator.control(self.inverter_peak_shaving_max_usable_grid_power.cid, value_str)
+
+    def _update_attrs(self) -> None:
+        value_str = self.coordinator.data.get(self.inverter_peak_shaving_max_usable_grid_power.cid)
+        self._attr_native_value = safe_get_float_value(value_str)
+
+
+class GridPeakShavingPower(SolisCloudControlEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        inverter_grid_peak_shaving_power: InverterGridPeakShavingPower,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_grid_peak_shaving_power.cid)
+        self.inverter_grid_peak_shaving_power = inverter_grid_peak_shaving_power
+
+        self._attr_native_min_value = inverter_grid_peak_shaving_power.min_value
+        self._attr_native_max_value = inverter_grid_peak_shaving_power.max_value
+        self._attr_native_step = inverter_grid_peak_shaving_power.step
+        self._attr_device_class = NumberDeviceClass.POWER
+        self._attr_native_unit_of_measurement = UnitOfPower.WATT
+        self._attr_mode = NumberMode.BOX
+
+    async def async_set_native_value(self, value: float) -> None:
+        value_str = str(int(round(value)))
+        _LOGGER.info("Set '%s' to %f (value: %s)", self.name, value, value_str)
+        await self.coordinator.control(self.inverter_grid_peak_shaving_power.cid, value_str)
+
+    def _update_attrs(self) -> None:
+        value_str = self.coordinator.data.get(self.inverter_grid_peak_shaving_power.cid)
         self._attr_native_value = safe_get_float_value(value_str)

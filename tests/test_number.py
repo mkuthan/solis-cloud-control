@@ -11,9 +11,12 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterChargeDischargeSettings,
     InverterChargeDischargeSlot,
     InverterExportCalibration,
+    InverterGridPeakShavingPower,
     InverterMaxExportPower,
     InverterMaxOutputPower,
     InverterMpptScanInterval,
+    InverterPeakShavingBaselineSOC,
+    InverterPeakShavingMaxUsableGridPower,
     InverterPowerLimit,
 )
 from tests.helpers import GetEntityId, SetData, assert_control, ensure, get_state
@@ -88,6 +91,21 @@ def battery_max_charge_current_entity_id(get_entity_id: GetEntityId) -> str:
 @pytest.fixture
 def mppt_scan_interval_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "mppt_scan_interval")
+
+
+@pytest.fixture
+def peak_shaving_max_usable_grid_power_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.NUMBER, "peak_shaving_max_usable_grid_power")
+
+
+@pytest.fixture
+def peak_shaving_baseline_soc_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.NUMBER, "peak_shaving_baseline_soc")
+
+
+@pytest.fixture
+def grid_peak_shaving_power_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.NUMBER, "grid_peak_shaving_power")
 
 
 class TestBatteryCurrentV1:
@@ -1046,6 +1064,181 @@ class TestMpptScanIntervalNumber:
             Platform.NUMBER,
             "set_value",
             {"entity_id": mppt_scan_interval_entity_id, "value": value},
+            blocking=True,
+        )
+
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
+
+
+class TestPeakShavingBaselineSoc:
+    @pytest.mark.usefixtures("setup_integration")
+    async def test_entity_registered(
+        self,
+        hass: HomeAssistant,
+        peak_shaving_baseline_soc_entity_id: str,
+    ) -> None:
+        state = hass.states.get(peak_shaving_baseline_soc_entity_id)
+        assert state is not None
+        assert state.attributes.get("min") == InverterPeakShavingBaselineSOC.min_value
+        assert state.attributes.get("max") == InverterPeakShavingBaselineSOC.max_value
+        assert state.attributes.get("step") == InverterPeakShavingBaselineSOC.step
+        assert state.attributes.get("unit_of_measurement") == "%"
+
+    async def test_async_set_value(
+        self,
+        hass: HomeAssistant,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        peak_shaving_baseline_soc_entity_id: str,
+    ) -> None:
+        cid = ensure(any_inverter.peak_shaving_baseline_soc).cid
+        await set_data({cid: "50"})
+
+        await hass.services.async_call(
+            Platform.NUMBER,
+            "set_value",
+            {"entity_id": peak_shaving_baseline_soc_entity_id, "value": 40},
+            blocking=True,
+        )
+
+        assert_control(mock_api_client, any_inverter, cid, "40")
+
+
+class TestPeakShavingMaxUsableGridPower:
+    @pytest.mark.usefixtures("setup_integration")
+    async def test_entity_registered(
+        self,
+        hass: HomeAssistant,
+        peak_shaving_max_usable_grid_power_entity_id: str,
+    ) -> None:
+        state = hass.states.get(peak_shaving_max_usable_grid_power_entity_id)
+        assert state is not None
+        assert state.attributes.get("min") == InverterPeakShavingMaxUsableGridPower.min_value
+        assert state.attributes.get("max") == InverterPeakShavingMaxUsableGridPower.max_value
+        assert state.attributes.get("step") == InverterPeakShavingMaxUsableGridPower.step
+        assert state.attributes.get("unit_of_measurement") == "W"
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("0", "0.0"),
+            ("5000", "5000.0"),
+            ("10000", "10000.0"),
+            ("not a number", "unknown"),
+            (None, "unavailable"),
+        ],
+    )
+    async def test_native_value(
+        self,
+        hass: HomeAssistant,
+        set_data: SetData,
+        any_inverter: Inverter,
+        peak_shaving_max_usable_grid_power_entity_id: str,
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.peak_shaving_max_usable_grid_power).cid
+        await set_data({cid: value})
+
+        state = get_state(hass, peak_shaving_max_usable_grid_power_entity_id)
+        assert state.state == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (0.1, "0"),
+            (5000.4, "5000"),
+            (9999.9, "10000"),
+        ],
+    )
+    async def test_async_set_value(
+        self,
+        hass: HomeAssistant,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        peak_shaving_max_usable_grid_power_entity_id: str,
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.peak_shaving_max_usable_grid_power).cid
+        await set_data({cid: "5000"})
+
+        await hass.services.async_call(
+            Platform.NUMBER,
+            "set_value",
+            {"entity_id": peak_shaving_max_usable_grid_power_entity_id, "value": value},
+            blocking=True,
+        )
+
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
+
+
+class TestGridPeakShavingPower:
+    @pytest.mark.usefixtures("setup_integration")
+    async def test_entity_registered(
+        self,
+        hass: HomeAssistant,
+        grid_peak_shaving_power_entity_id: str,
+    ) -> None:
+        state = hass.states.get(grid_peak_shaving_power_entity_id)
+        assert state is not None
+        assert state.attributes.get("min") == InverterGridPeakShavingPower.min_value
+        assert state.attributes.get("max") == InverterGridPeakShavingPower.max_value
+        assert state.attributes.get("step") == InverterGridPeakShavingPower.step
+        assert state.attributes.get("unit_of_measurement") == "W"
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("0", "0.0"),
+            ("32000", "32000.0"),
+            ("64000", "64000.0"),
+            ("not a number", "unknown"),
+            (None, "unavailable"),
+        ],
+    )
+    async def test_native_value(
+        self,
+        hass: HomeAssistant,
+        set_data: SetData,
+        any_inverter: Inverter,
+        grid_peak_shaving_power_entity_id: str,
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.grid_peak_shaving_power).cid
+        await set_data({cid: value})
+
+        state = get_state(hass, grid_peak_shaving_power_entity_id)
+        assert state.state == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected_str"),
+        [
+            (0.1, "0"),
+            (32000.4, "32000"),
+            (63999.9, "64000"),
+        ],
+    )
+    async def test_async_set_value(
+        self,
+        hass: HomeAssistant,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        grid_peak_shaving_power_entity_id: str,
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.grid_peak_shaving_power).cid
+        await set_data({cid: "32000"})
+
+        await hass.services.async_call(
+            Platform.NUMBER,
+            "set_value",
+            {"entity_id": grid_peak_shaving_power_entity_id, "value": value},
             blocking=True,
         )
 

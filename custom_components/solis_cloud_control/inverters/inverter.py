@@ -417,6 +417,37 @@ class InverterMpptScanning:
 
 
 @dataclass(frozen=True)
+class InverterPeakShavingMaxUsableGridPower:
+    cid: int = 4678
+    min_value: float = 0
+    max_value: float = 10_000
+    step: float = 1
+
+
+@dataclass(frozen=True)
+class InverterPeakShavingBaselineSOC:
+    cid: int = 4679
+    min_value: float = 10
+    max_value: float = 100
+    step: float = 1
+
+
+@dataclass(frozen=True)
+class InverterGridPeakShaving:
+    cid: int = 6969
+    on_value: str = "1"
+    off_value: str = "0"
+
+
+@dataclass(frozen=True)
+class InverterGridPeakShavingPower:
+    cid: int = 6970
+    min_value: float = 0
+    max_value: float = 64_000
+    step: float = 1
+
+
+@dataclass(frozen=True)
 class Inverter:
     info: InverterInfo
     on_off: InverterOnOff | None = None
@@ -438,6 +469,10 @@ class Inverter:
     battery_max_discharge_current: InverterBatteryMaxDischargeCurrent | None = None
     mppt_scan_interval: InverterMpptScanInterval | None = None
     mppt_scanning: InverterMpptScanning | None = None
+    peak_shaving_max_usable_grid_power: InverterPeakShavingMaxUsableGridPower | None = None
+    peak_shaving_baseline_soc: InverterPeakShavingBaselineSOC | None = None
+    grid_peak_shaving: InverterGridPeakShaving | None = None
+    grid_peak_shaving_power: InverterGridPeakShavingPower | None = None
 
     @property
     def read_batch_cids(self) -> list[int]:
@@ -480,6 +515,14 @@ class Inverter:
             cids.append(self.mppt_scan_interval.cid)
         if self.mppt_scanning:
             cids.append(self.mppt_scanning.cid)
+        if self.peak_shaving_max_usable_grid_power:
+            cids.append(self.peak_shaving_max_usable_grid_power.cid)
+        if self.peak_shaving_baseline_soc:
+            cids.append(self.peak_shaving_baseline_soc.cid)
+        if self.grid_peak_shaving:
+            cids.append(self.grid_peak_shaving.cid)
+        if self.grid_peak_shaving_power:
+            cids.append(self.grid_peak_shaving_power.cid)
 
         return cids
 

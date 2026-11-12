@@ -16,6 +16,7 @@ if TYPE_CHECKING:
         InverterAllowExport,
         InverterChargeDischargeSlot,
         InverterChargeDischargeSlots,
+        InverterGridPeakShaving,
         InverterMpptScanning,
         InverterOnOff,
         InverterStorageMode,
@@ -49,7 +50,7 @@ async def async_setup_entry(
             )
         )
 
-    if inverter.allow_export is not None and inverter.storage_mode is not None:
+    if inverter.allow_export is not None:
         entities.append(
             AllowExportSwitch(
                 coordinator=coordinator,
@@ -59,7 +60,6 @@ async def async_setup_entry(
                     icon="mdi:transmission-tower-export",
                 ),
                 inverter_allow_export=inverter.allow_export,
-                inverter_storage_mode=inverter.storage_mode,
             )
         )
 
@@ -142,6 +142,19 @@ async def async_setup_entry(
             )
         )
 
+    if inverter.grid_peak_shaving is not None:
+        entities.append(
+            GridPeakShavingSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="grid_peak_shaving_switch",
+                    name="Grid Peak Shaving",
+                    icon="mdi:chart-bell-curve",
+                ),
+                inverter_grid_peak_shaving=inverter.grid_peak_shaving,
+            )
+        )
+
     async_add_entities(entities)
 
 
@@ -180,24 +193,9 @@ class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
         coordinator: SolisCloudControlCoordinator,
         entity_description: SwitchEntityDescription,
         inverter_allow_export: InverterAllowExport,
-        inverter_storage_mode: InverterStorageMode,
     ) -> None:
         super().__init__(coordinator, entity_description, inverter_allow_export.cid)
         self.inverter_allow_export = inverter_allow_export
-        self.inverter_storage_mode = inverter_storage_mode
-
-    @property
-    def available(self) -> bool:
-        if not super().available:
-            return False
-
-        storage_mode_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
-        storage_mode = StorageMode.create(storage_mode_value)
-        if storage_mode is None:
-            _LOGGER.warning("Invalid '%s' storage mode: '%s'", self.name, storage_mode_value)
-            return False
-
-        return storage_mode.is_self_use()
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
         old_value = self._calculate_old_value()
@@ -456,3 +454,38 @@ class MpptScanningSwitch(SolisCloudControlEntity, SwitchEntity):
     def _update_attrs(self) -> None:
         value = self.coordinator.data.get(self.inverter_mppt_scanning.cid)
         self._attr_is_on = value == self.inverter_mppt_scanning.on_value if value is not None else None
+
+
+class GridPeakShavingSwitch(SolisCloudControlEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        inverter_grid_peak_shaving: InverterGridPeakShaving,
+    ) -> None:
+        super().__init__(coordinator, entity_description, inverter_grid_peak_shaving.cid)
+        self.inverter_grid_peak_shaving = inverter_grid_peak_shaving
+
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        old_value = self._calculate_old_value()
+        _LOGGER.info("Turn on '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(
+            self.inverter_grid_peak_shaving.cid, self.inverter_grid_peak_shaving.on_value, old_value
+        )
+
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        old_value = self._calculate_old_value()
+        _LOGGER.info("Turn off '%s' (old_value: %s)", self.name, old_value)
+        await self.coordinator.control(
+            self.inverter_grid_peak_shaving.cid, self.inverter_grid_peak_shaving.off_value, old_value
+        )
+
+    def _calculate_old_value(self) -> str:
+        if self.is_on:
+            return self.inverter_grid_peak_shaving.on_value
+        else:
+            return self.inverter_grid_peak_shaving.off_value
+
+    def _update_attrs(self) -> None:
+        value = self.coordinator.data.get(self.inverter_grid_peak_shaving.cid)
+        self._attr_is_on = value == self.inverter_grid_peak_shaving.on_value if value is not None else None

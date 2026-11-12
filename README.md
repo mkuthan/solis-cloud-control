@@ -90,7 +90,9 @@ The integration provides a user-friendly interface to control your inverter sett
 - Set the inverter time 🟢 ⚪️
 - Toggle "Battery Reserve" 🟢
 - Toggle "Allow Grid Charging" 🟢
-- Toggle "Allow Export" (in "Self-Use" storage mode) 🟢
+- Toggle "Allow Export" 🟢
+- Set "Max Usable Grid Power" and "Baseline SOC" (in "Peak Shaving" storage mode) 🟢
+- Toggle "Grid Peak Shaving" and set "Grid Peak Shaving Power" 🟢
 - Set maximum output power 🟢
 - Set maximum export power 🟢
 - Control export calibration 🟢
@@ -135,6 +137,34 @@ To disable polling for changes:
 
 Most likely, your data logger is not supported by the integration, for example the "DLS-W" model.
 Replace your data logger with a supported model, such as "S2-WL-ST" or "S3-WiFi-ST", to use the integration.
+
+### How does the "Peak Shaving" storage mode work?
+
+In "Peak Shaving" storage mode the inverter uses the battery to keep power imported from the grid at or below
+"Peak Shaving Max Usable Grid Power".
+When household load exceeds this limit, the battery covers the difference.
+
+"Peak Shaving Baseline SOC" is the level the battery is allowed to discharge to while peak shaving.
+Once the battery reaches it, peak shaving stops and the grid supplies any additional load.
+If the battery is below the baseline and grid import is under the limit,
+the spare import capacity is used to charge the battery back up to the baseline.
+
+### What is the difference between "Peak Shaving" storage mode and "Grid Peak Shaving"?
+
+They are two independent features:
+
+- "Peak Shaving" is a storage mode, selected instead of "Self-Use", "Feed-In Priority" or "Off-Grid".
+  It is configured with "Peak Shaving Max Usable Grid Power" and "Peak Shaving Baseline SOC".
+- "Grid Peak Shaving" is an on/off import cap applied on top of the "Self-Use" or "Feed-In Priority" storage mode,
+  configured with "Grid Peak Shaving Power".
+  While the load stays below the cap, the inverter imports what it needs and keeps the battery idle to preserve stored
+  energy.
+  When the load exceeds the cap, the battery discharges to cover the excess.
+  The cap limits import only, export is controlled by "Allow Export" and "Max Export Power".
+  It's available on selected three-phase hybrid inverters and requires a CT or meter on the grid connection.
+
+The integration doesn't enforce any relationship between these entities, it's up to you to use them in a meaningful
+combination.
 
 ### Can I use this integration together with local Modbus integration?
 

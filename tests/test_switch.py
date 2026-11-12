@@ -78,6 +78,11 @@ def mppt_scanning_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "mppt_scanning_switch")
 
 
+@pytest.fixture
+def grid_peak_shaving_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.SWITCH, "grid_peak_shaving_switch")
+
+
 class TestOnOffSwitch:
     @pytest.mark.usefixtures("setup_integration")
     async def test_entity_registered(
@@ -200,43 +205,7 @@ class TestAllowExportSwitch:
         expected_state: str,
     ) -> None:
         cid = ensure(any_inverter.allow_export).cid
-        storage_cid = ensure(any_inverter.storage_mode).cid
-        await set_data(
-            {
-                cid: value,
-                storage_cid: str(1 << StorageMode.BIT_SELF_USE),
-            }
-        )
-
-        state = get_state(hass, allow_export_entity_id)
-        assert state.state == expected_state
-
-    @pytest.mark.parametrize(
-        ("storage_mode_value", "expected_state"),
-        [
-            (str(1 << StorageMode.BIT_SELF_USE), "on"),
-            (str(1 << StorageMode.BIT_FEED_IN_PRIORITY), "unavailable"),
-            (str(1 << StorageMode.BIT_OFF_GRID), "unavailable"),
-            (None, "unavailable"),
-        ],
-    )
-    async def test_availability(
-        self,
-        hass: HomeAssistant,
-        set_data: SetData,
-        any_inverter: Inverter,
-        allow_export_entity_id: str,
-        storage_mode_value: str | None,
-        expected_state: str,
-    ) -> None:
-        storage_cid = ensure(any_inverter.storage_mode).cid
-        export_cid = ensure(any_inverter.allow_export).cid
-        await set_data(
-            {
-                storage_cid: storage_mode_value,
-                export_cid: "0",
-            }
-        )
+        await set_data({cid: value})
 
         state = get_state(hass, allow_export_entity_id)
         assert state.state == expected_state
@@ -250,13 +219,7 @@ class TestAllowExportSwitch:
         allow_export_entity_id: str,
     ) -> None:
         cid = ensure(any_inverter.allow_export).cid
-        storage_cid = ensure(any_inverter.storage_mode).cid
-        await set_data(
-            {
-                cid: "1",
-                storage_cid: str(1 << StorageMode.BIT_SELF_USE),
-            }
-        )
+        await set_data({cid: "1"})
 
         await hass.services.async_call(
             Platform.SWITCH,
@@ -276,13 +239,7 @@ class TestAllowExportSwitch:
         allow_export_entity_id: str,
     ) -> None:
         cid = ensure(any_inverter.allow_export).cid
-        storage_cid = ensure(any_inverter.storage_mode).cid
-        await set_data(
-            {
-                cid: "0",
-                storage_cid: str(1 << StorageMode.BIT_SELF_USE),
-            }
-        )
+        await set_data({cid: "0"})
 
         await hass.services.async_call(
             Platform.SWITCH,
@@ -830,3 +787,77 @@ class TestMpptScanningSwitch:
         )
 
         assert_control(mock_api_client, any_inverter, cid, "0", ensure(any_inverter.mppt_scanning).on_value)
+
+
+class TestGridPeakShavingSwitch:
+    @pytest.mark.usefixtures("setup_integration")
+    async def test_entity_registered(
+        self,
+        hass: HomeAssistant,
+        grid_peak_shaving_entity_id: str,
+    ) -> None:
+        state = hass.states.get(grid_peak_shaving_entity_id)
+        assert state is not None
+
+    @pytest.mark.parametrize(
+        ("value", "expected_state"),
+        [
+            ("1", "on"),
+            ("0", "off"),
+            (None, "unavailable"),
+        ],
+    )
+    async def test_state_from_coordinator(
+        self,
+        hass: HomeAssistant,
+        set_data: SetData,
+        any_inverter: Inverter,
+        grid_peak_shaving_entity_id: str,
+        value: None | str,
+        expected_state: str,
+    ) -> None:
+        cid = ensure(any_inverter.grid_peak_shaving).cid
+        await set_data({cid: value})
+
+        state = get_state(hass, grid_peak_shaving_entity_id)
+        assert state.state == expected_state
+
+    async def test_turn_on(
+        self,
+        hass: HomeAssistant,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        grid_peak_shaving_entity_id: str,
+    ) -> None:
+        cid = ensure(any_inverter.grid_peak_shaving).cid
+        await set_data({cid: "0"})
+
+        await hass.services.async_call(
+            Platform.SWITCH,
+            "turn_on",
+            {"entity_id": grid_peak_shaving_entity_id},
+            blocking=True,
+        )
+
+        assert_control(mock_api_client, any_inverter, cid, "1", "0")
+
+    async def test_turn_off(
+        self,
+        hass: HomeAssistant,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        grid_peak_shaving_entity_id: str,
+    ) -> None:
+        cid = ensure(any_inverter.grid_peak_shaving).cid
+        await set_data({cid: "1"})
+
+        await hass.services.async_call(
+            Platform.SWITCH,
+            "turn_off",
+            {"entity_id": grid_peak_shaving_entity_id},
+            blocking=True,
+        )
+
+        assert_control(mock_api_client, any_inverter, cid, "0", "1")
