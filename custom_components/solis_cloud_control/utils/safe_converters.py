@@ -22,7 +22,7 @@ def safe_convert_power_to_watts(power: str | float | None, power_unit: str | Non
 
     try:
         power_float = float(power)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
 
     if power_unit == "kW":

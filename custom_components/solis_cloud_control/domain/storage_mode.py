@@ -11,7 +11,7 @@ class StorageMode:
     BIT_PEAK_SHAVING: int = 11
 
     @staticmethod
-    def create(value: str | None) -> "StorageMode | None":
+    def create(value: str | None) -> StorageMode | None:
         mode = safe_get_int_value(value)
         return StorageMode(mode) if mode is not None else None
 

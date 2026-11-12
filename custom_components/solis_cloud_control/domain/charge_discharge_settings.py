@@ -5,7 +5,7 @@ from custom_components.solis_cloud_control.utils.safe_converters import safe_get
 
 class ChargeDischargeSettings(ABC):
     @staticmethod
-    def create(value: str | None) -> "ChargeDischargeSettings | None":
+    def create(value: str | None) -> ChargeDischargeSettings | None:
         if value is None:
             return None
 
