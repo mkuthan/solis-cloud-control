@@ -4,30 +4,33 @@ import pytest
 from homeassistant.const import Platform
 
 from custom_components.solis_cloud_control.text import TimeSlotV1Text, TimeSlotV2Text
+from tests.helpers import GetEntityId, SetData, assert_control, ensure, get_state
 
 if TYPE_CHECKING:
+    from unittest.mock import AsyncMock
+
     from homeassistant.core import HomeAssistant
 
     from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 @pytest.fixture
-def slot1_charge_v1_entity_id(get_entity_id) -> str:
+def slot1_charge_v1_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.TEXT, "slot1_charge_time_v1")
 
 
 @pytest.fixture
-def slot1_discharge_v1_entity_id(get_entity_id) -> str:
+def slot1_discharge_v1_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.TEXT, "slot1_discharge_time_v1")
 
 
 @pytest.fixture
-def slot1_charge_v2_entity_id(get_entity_id) -> str:
+def slot1_charge_v2_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.TEXT, "slot1_charge_time")
 
 
 @pytest.fixture
-def slot1_discharge_v2_entity_id(get_entity_id) -> str:
+def slot1_discharge_v2_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.TEXT, "slot1_discharge_time")
 
 
@@ -63,44 +66,44 @@ class TestTimeSlotV1Text:
     async def test_charge_slot_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_charge_v1_entity_id: str,
-        value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        value: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
 
         await set_data({cid: value})
 
-        state = hass.states.get(slot1_charge_v1_entity_id)
+        state = get_state(hass, slot1_charge_v1_entity_id)
         assert state.state == "09:00-10:00"
 
     @pytest.mark.parametrize("value", [VARIANT1_VALUE, VARIANT2_VALUE])
     async def test_discharge_slot_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_discharge_v1_entity_id: str,
-        value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        value: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: value})
 
-        state = hass.states.get(slot1_discharge_v1_entity_id)
+        state = get_state(hass, slot1_discharge_v1_entity_id)
         assert state.state == "11:00-12:00"
 
     async def test_charge_slot_native_value_no_data(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_charge_v1_entity_id: str,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: None})
 
-        state = hass.states.get(slot1_charge_v1_entity_id)
+        state = get_state(hass, slot1_charge_v1_entity_id)
         assert state.state == "unavailable"
 
     @pytest.mark.parametrize(
@@ -119,14 +122,14 @@ class TestTimeSlotV1Text:
     async def test_async_set_value_charge_slot(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_charge_v1_entity_id: str,
-        initial_value,
-        expected_value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        initial_value: str,
+        expected_value: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: initial_value})
 
         await hass.services.async_call(
@@ -136,12 +139,7 @@ class TestTimeSlotV1Text:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_value,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_value)
 
     @pytest.mark.parametrize(
         ("initial_value", "expected_value"),
@@ -159,14 +157,14 @@ class TestTimeSlotV1Text:
     async def test_async_set_value_discharge_slot(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_discharge_v1_entity_id: str,
-        initial_value,
-        expected_value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        initial_value: str,
+        expected_value: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: initial_value})
 
         await hass.services.async_call(
@@ -176,24 +174,19 @@ class TestTimeSlotV1Text:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_value,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_value)
 
     @pytest.mark.parametrize("initial_value", ["invalid format", None])
     async def test_async_set_value_invalid_initial(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_charge_v1_entity_id: str,
-        initial_value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        initial_value: None | str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: initial_value})
 
         await hass.services.async_call(
@@ -234,51 +227,51 @@ class TestTimeSlotV2Text:
     async def test_charge_slot_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_charge_v2_entity_id: str,
-    ):
-        cid = any_inverter.charge_discharge_slots.charge_slot1.time_cid
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).charge_slot1.time_cid
         await set_data({cid: "10:00-12:00"})
 
-        state = hass.states.get(slot1_charge_v2_entity_id)
+        state = get_state(hass, slot1_charge_v2_entity_id)
         assert state.state == "10:00-12:00"
 
     async def test_discharge_slot_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_discharge_v2_entity_id: str,
-    ):
-        cid = any_inverter.charge_discharge_slots.discharge_slot1.time_cid
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).discharge_slot1.time_cid
         await set_data({cid: "14:00-16:00"})
 
-        state = hass.states.get(slot1_discharge_v2_entity_id)
+        state = get_state(hass, slot1_discharge_v2_entity_id)
         assert state.state == "14:00-16:00"
 
     async def test_charge_slot_native_value_no_data(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_charge_v2_entity_id: str,
-    ):
-        cid = any_inverter.charge_discharge_slots.charge_slot1.time_cid
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).charge_slot1.time_cid
         await set_data({cid: None})
 
-        state = hass.states.get(slot1_charge_v2_entity_id)
+        state = get_state(hass, slot1_charge_v2_entity_id)
         assert state.state == "unavailable"
 
     async def test_async_set_value_charge_slot(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_charge_v2_entity_id: str,
-    ):
-        cid = any_inverter.charge_discharge_slots.charge_slot1.time_cid
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).charge_slot1.time_cid
         await set_data({cid: "10:00-12:00"})
 
         await hass.services.async_call(
@@ -288,22 +281,17 @@ class TestTimeSlotV2Text:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            "09:00-17:00",
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, "09:00-17:00")
 
     async def test_async_set_value_discharge_slot(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_discharge_v2_entity_id: str,
-    ):
-        cid = any_inverter.charge_discharge_slots.discharge_slot1.time_cid
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).discharge_slot1.time_cid
         await set_data({cid: "14:00-16:00"})
 
         await hass.services.async_call(
@@ -313,9 +301,4 @@ class TestTimeSlotV2Text:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            "18:00-22:00",
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, "18:00-22:00")

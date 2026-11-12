@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from homeassistant.helpers.entity import EntityDescription
 
 from custom_components.solis_cloud_control.entity import SolisCloudControlEntity
+
+if TYPE_CHECKING:
+    from unittest.mock import Mock
 
 
 class _CountingEntity(SolisCloudControlEntity):
@@ -12,7 +17,7 @@ class _CountingEntity(SolisCloudControlEntity):
 
 
 class TestSolisCloudControlEntity:
-    def test_available_when_coordinator_last_update_failed(self, mock_coordinator):
+    def test_available_when_coordinator_last_update_failed(self, mock_coordinator: Mock) -> None:
         mock_coordinator.last_update_success = False
 
         entity = SolisCloudControlEntity(
@@ -32,7 +37,9 @@ class TestSolisCloudControlEntity:
             ({2: "any value"}, False),
         ],
     )
-    def test_available_single_cid(self, mock_coordinator, coordinator_data, expected_available):
+    def test_available_single_cid(
+        self, mock_coordinator: Mock, coordinator_data: dict[int, str | None], expected_available: bool
+    ) -> None:
         entity = SolisCloudControlEntity(
             coordinator=mock_coordinator,
             entity_description=EntityDescription(key="any_key", name="any name"),
@@ -52,10 +59,10 @@ class TestSolisCloudControlEntity:
     )
     def test_available_multiple_cids(
         self,
-        mock_coordinator,
-        coordinator_data,
-        expected_available,
-    ):
+        mock_coordinator: Mock,
+        coordinator_data: dict[int, str | None],
+        expected_available: bool,
+    ) -> None:
         entity = SolisCloudControlEntity(
             coordinator=mock_coordinator,
             entity_description=EntityDescription(key="any_key", name="any name"),
@@ -74,7 +81,9 @@ class TestRefreshAttrs:
             ({1: "any value", 2: None}, 0),
         ],
     )
-    def test_updates_attrs_only_when_data_present(self, mock_coordinator, coordinator_data, expected_calls):
+    def test_updates_attrs_only_when_data_present(
+        self, mock_coordinator: Mock, coordinator_data: dict[int, str | None], expected_calls: int
+    ) -> None:
         entity = _CountingEntity(
             coordinator=mock_coordinator,
             entity_description=EntityDescription(key="any_key", name="any name"),

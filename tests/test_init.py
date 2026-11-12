@@ -1,6 +1,6 @@
 from collections import Counter
-from typing import TYPE_CHECKING
-from unittest.mock import patch
+from typing import TYPE_CHECKING, Protocol, cast
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
@@ -11,31 +11,44 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.solis_cloud_control import async_migrate_entry, async_remove_config_entry_device
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
-from custom_components.solis_cloud_control.inverters.inverter import Inverter
+from custom_components.solis_cloud_control.inverters.inverter import Inverter, InverterInfo
+from tests.helpers import ensure
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
+    from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry
 
-async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_inverter, integration_patches):
+
+class CreateConfigEntry(Protocol):
+    def __call__(self, *, version: int, data: dict[str, str]) -> MockConfigEntry: ...
+
+
+async def test_async_setup_entry(
+    hass: HomeAssistant,
+    mock_api_client: AsyncMock,
+    mock_config_entry: MockConfigEntry,
+    any_inverter: Inverter,
+    integration_patches: None,
+) -> None:
     read_batch_cids = dict.fromkeys(any_inverter.read_batch_cids, "0")
 
-    for cid in [any_inverter.on_off.on_cid, any_inverter.on_off.off_cid]:
+    for cid in [ensure(any_inverter.on_off).on_cid, ensure(any_inverter.on_off).off_cid]:
         read_batch_cids[cid] = "190"
 
     for cid in [
-        any_inverter.charge_discharge_slots.charge_slot1.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot2.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot3.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot4.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot5.time_cid,
-        any_inverter.charge_discharge_slots.charge_slot6.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot1.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot2.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot3.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot4.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot5.time_cid,
-        any_inverter.charge_discharge_slots.discharge_slot6.time_cid,
+        ensure(any_inverter.charge_discharge_slots).charge_slot1.time_cid,
+        ensure(any_inverter.charge_discharge_slots).charge_slot2.time_cid,
+        ensure(any_inverter.charge_discharge_slots).charge_slot3.time_cid,
+        ensure(any_inverter.charge_discharge_slots).charge_slot4.time_cid,
+        ensure(any_inverter.charge_discharge_slots).charge_slot5.time_cid,
+        ensure(any_inverter.charge_discharge_slots).charge_slot6.time_cid,
+        ensure(any_inverter.charge_discharge_slots).discharge_slot1.time_cid,
+        ensure(any_inverter.charge_discharge_slots).discharge_slot2.time_cid,
+        ensure(any_inverter.charge_discharge_slots).discharge_slot3.time_cid,
+        ensure(any_inverter.charge_discharge_slots).discharge_slot4.time_cid,
+        ensure(any_inverter.charge_discharge_slots).discharge_slot5.time_cid,
+        ensure(any_inverter.charge_discharge_slots).discharge_slot6.time_cid,
     ]:
         read_batch_cids[cid] = "00:00-00:00"
 
@@ -94,7 +107,9 @@ async def test_async_setup_entry(hass, mock_api_client, mock_config_entry, any_i
     assert platform_disabled_counts[Platform.TEXT] == 0
 
 
-async def test_async_setup_entry_undefined_inverter(hass, mock_api_client, mock_config_entry, any_inverter_info):
+async def test_async_setup_entry_undefined_inverter(
+    hass: HomeAssistant, mock_api_client: AsyncMock, mock_config_entry: MockConfigEntry, any_inverter_info: InverterInfo
+) -> None:
     undefined_inverter = Inverter(info=any_inverter_info)
 
     with (
@@ -121,7 +136,7 @@ async def test_async_setup_entry_undefined_inverter(hass, mock_api_client, mock_
 
 
 @pytest.fixture
-def create_config_entry(hass: HomeAssistant):
+def create_config_entry(hass: HomeAssistant) -> CreateConfigEntry:
     def _create(version: int, data: dict[str, str]) -> MockConfigEntry:
         config_entry = MockConfigEntry(domain=DOMAIN, version=version, data=data)
         config_entry.add_to_hass(hass)
@@ -130,7 +145,7 @@ def create_config_entry(hass: HomeAssistant):
     return _create
 
 
-async def test_migrate_config_entry_v1(hass: HomeAssistant, create_config_entry):
+async def test_migrate_config_entry_v1(hass: HomeAssistant, create_config_entry: CreateConfigEntry) -> None:
     config_entry = create_config_entry(
         version=1,
         data={
@@ -140,7 +155,7 @@ async def test_migrate_config_entry_v1(hass: HomeAssistant, create_config_entry)
         },
     )
 
-    assert await async_migrate_entry(hass, config_entry)
+    assert await async_migrate_entry(hass, cast("SolisCloudControlConfigEntry", config_entry))
 
     assert config_entry.version == 3
     assert dict(config_entry.data) == {
@@ -150,7 +165,9 @@ async def test_migrate_config_entry_v1(hass: HomeAssistant, create_config_entry)
     }
 
 
-async def test_migrate_config_entry_v2_removes_grid_peak_shaving_switch(hass: HomeAssistant, create_config_entry):
+async def test_migrate_config_entry_v2_removes_grid_peak_shaving_switch(
+    hass: HomeAssistant, create_config_entry: CreateConfigEntry
+) -> None:
     config_entry = create_config_entry(
         version=2,
         data={
@@ -171,14 +188,16 @@ async def test_migrate_config_entry_v2_removes_grid_peak_shaving_switch(hass: Ho
             config_entry=config_entry,
         )
 
-    assert await async_migrate_entry(hass, config_entry)
+    assert await async_migrate_entry(hass, cast("SolisCloudControlConfigEntry", config_entry))
 
     assert config_entry.version == 3
     assert entity_registry.async_get_entity_id(Platform.SWITCH, DOMAIN, grid_peak_shaving_unique_id) is None
     assert entity_registry.async_get_entity_id(Platform.SWITCH, DOMAIN, battery_reserve_unique_id) is not None
 
 
-async def test_migrate_config_entry_v2_without_grid_peak_shaving_switch(hass: HomeAssistant, create_config_entry):
+async def test_migrate_config_entry_v2_without_grid_peak_shaving_switch(
+    hass: HomeAssistant, create_config_entry: CreateConfigEntry
+) -> None:
     config_entry = create_config_entry(
         version=2,
         data={
@@ -188,12 +207,14 @@ async def test_migrate_config_entry_v2_without_grid_peak_shaving_switch(hass: Ho
         },
     )
 
-    assert await async_migrate_entry(hass, config_entry)
+    assert await async_migrate_entry(hass, cast("SolisCloudControlConfigEntry", config_entry))
 
     assert config_entry.version == 3
 
 
-async def test_migrate_config_entry_current_version(hass: HomeAssistant, create_config_entry):
+async def test_migrate_config_entry_current_version(
+    hass: HomeAssistant, create_config_entry: CreateConfigEntry
+) -> None:
     config_entry = create_config_entry(
         version=3,
         data={
@@ -203,7 +224,7 @@ async def test_migrate_config_entry_current_version(hass: HomeAssistant, create_
         },
     )
 
-    assert await async_migrate_entry(hass, config_entry)
+    assert await async_migrate_entry(hass, cast("SolisCloudControlConfigEntry", config_entry))
 
     assert config_entry.version == 3
     assert dict(config_entry.data) == {
@@ -213,10 +234,10 @@ async def test_migrate_config_entry_current_version(hass: HomeAssistant, create_
     }
 
 
-async def test_remove_config_entry_device(hass: HomeAssistant, mock_config_entry: MockConfigEntry):
+async def test_remove_config_entry_device(hass: HomeAssistant, mock_config_entry: MockConfigEntry) -> None:
     result = await async_remove_config_entry_device(
         hass,
-        mock_config_entry,
+        cast("SolisCloudControlConfigEntry", mock_config_entry),
         dr.DeviceEntry(config_entry_id=mock_config_entry.entry_id),
     )
     assert result is True

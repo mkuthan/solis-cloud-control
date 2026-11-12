@@ -40,10 +40,7 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = [
-    "ANN001",
-    "ANN101",
-    "ANN201",
-    "ANN202",
+    # pytest fixtures are requested by name, so test signatures often have unused arguments
     "ARG001",
 ]
 
@@ -51,4 +48,4 @@ select = [
 exclude_also = ["raise NotImplementedError"]
 
 [tool.ty.src]
-include = ["custom_components/**"]
+include = ["custom_components/**", "tests/**"]

@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING
 import pytest
 from homeassistant.const import PERCENTAGE, Platform, UnitOfElectricCurrent
 
+from tests.helpers import GetEntityId, SetData, get_state
+
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
@@ -10,37 +12,37 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def battery_reserve_soc_entity_id(get_entity_id) -> str:
+def battery_reserve_soc_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SENSOR, "battery_reserve_soc")
 
 
 @pytest.fixture
-def battery_over_discharge_soc_entity_id(get_entity_id) -> str:
+def battery_over_discharge_soc_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SENSOR, "battery_over_discharge_soc")
 
 
 @pytest.fixture
-def battery_force_charge_soc_entity_id(get_entity_id) -> str:
+def battery_force_charge_soc_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SENSOR, "battery_force_charge_soc")
 
 
 @pytest.fixture
-def battery_recovery_soc_entity_id(get_entity_id) -> str:
+def battery_recovery_soc_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SENSOR, "battery_recovery_soc")
 
 
 @pytest.fixture
-def battery_max_charge_soc_entity_id(get_entity_id) -> str:
+def battery_max_charge_soc_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SENSOR, "battery_max_charge_soc")
 
 
 @pytest.fixture
-def battery_max_charge_current_entity_id(get_entity_id) -> str:
+def battery_max_charge_current_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SENSOR, "battery_max_charge_current")
 
 
 @pytest.fixture
-def battery_max_discharge_current_entity_id(get_entity_id) -> str:
+def battery_max_discharge_current_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SENSOR, "battery_max_discharge_current")
 
 
@@ -61,7 +63,7 @@ class TestBatterySocSensorsIntegration:
         hass: HomeAssistant,
         entity_id_fixture: str,
         request: pytest.FixtureRequest,
-    ):
+    ) -> None:
         entity_id = request.getfixturevalue(entity_id_fixture)
         state = hass.states.get(entity_id)
         assert state is not None
@@ -88,19 +90,19 @@ class TestBatterySocSensorsIntegration:
     async def test_native_value_valid(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         entity_id_fixture: str,
         cid_attr: str,
-        value,
-        expected,
+        value: str,
+        expected: float,
         request: pytest.FixtureRequest,
-    ):
+    ) -> None:
         cid = getattr(any_inverter, cid_attr).cid
         await set_data({cid: value})
 
         entity_id = request.getfixturevalue(entity_id_fixture)
-        state = hass.states.get(entity_id)
+        state = get_state(hass, entity_id)
         assert float(state.state) == expected
 
     @pytest.mark.parametrize(
@@ -123,19 +125,19 @@ class TestBatterySocSensorsIntegration:
     async def test_native_value_invalid(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         entity_id_fixture: str,
         cid_attr: str,
-        value,
-        expected_state,
+        value: None | str,
+        expected_state: str,
         request: pytest.FixtureRequest,
-    ):
+    ) -> None:
         cid = getattr(any_inverter, cid_attr).cid
         await set_data({cid: value})
 
         entity_id = request.getfixturevalue(entity_id_fixture)
-        state = hass.states.get(entity_id)
+        state = get_state(hass, entity_id)
         assert state.state == expected_state
 
 
@@ -153,7 +155,7 @@ class TestBatteryCurrentSensorsIntegration:
         hass: HomeAssistant,
         entity_id_fixture: str,
         request: pytest.FixtureRequest,
-    ):
+    ) -> None:
         entity_id = request.getfixturevalue(entity_id_fixture)
         state = hass.states.get(entity_id)
         assert state is not None
@@ -177,19 +179,19 @@ class TestBatteryCurrentSensorsIntegration:
     async def test_native_value_valid(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         entity_id_fixture: str,
         cid_attr: str,
-        value,
-        expected,
+        value: str,
+        expected: float,
         request: pytest.FixtureRequest,
-    ):
+    ) -> None:
         cid = getattr(any_inverter, cid_attr).cid
         await set_data({cid: value})
 
         entity_id = request.getfixturevalue(entity_id_fixture)
-        state = hass.states.get(entity_id)
+        state = get_state(hass, entity_id)
         assert float(state.state) == expected
 
     @pytest.mark.parametrize(
@@ -209,17 +211,17 @@ class TestBatteryCurrentSensorsIntegration:
     async def test_native_value_invalid(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         entity_id_fixture: str,
         cid_attr: str,
-        value,
-        expected_state,
+        value: None | str,
+        expected_state: str,
         request: pytest.FixtureRequest,
-    ):
+    ) -> None:
         cid = getattr(any_inverter, cid_attr).cid
         await set_data({cid: value})
 
         entity_id = request.getfixturevalue(entity_id_fixture)
-        state = hass.states.get(entity_id)
+        state = get_state(hass, entity_id)
         assert state.state == expected_state

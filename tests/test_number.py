@@ -16,73 +16,77 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterMpptScanInterval,
     InverterPowerLimit,
 )
+from tests.helpers import GetEntityId, SetData, assert_control, ensure, get_state
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from unittest.mock import AsyncMock
+
     from homeassistant.core import HomeAssistant
 
 
 @pytest.fixture
-def slot1_charge_current_v1_entity_id(get_entity_id) -> str:
+def slot1_charge_current_v1_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "slot1_charge_current_v1")
 
 
 @pytest.fixture
-def slot1_discharge_current_v1_entity_id(get_entity_id) -> str:
+def slot1_discharge_current_v1_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "slot1_discharge_current_v1")
 
 
 @pytest.fixture
-def slot1_charge_current_v2_entity_id(get_entity_id) -> str:
+def slot1_charge_current_v2_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "slot1_charge_current")
 
 
 @pytest.fixture
-def slot1_discharge_current_v2_entity_id(get_entity_id) -> str:
+def slot1_discharge_current_v2_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "slot1_discharge_current")
 
 
 @pytest.fixture
-def slot1_charge_soc_v2_entity_id(get_entity_id) -> str:
+def slot1_charge_soc_v2_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "slot1_charge_soc")
 
 
 @pytest.fixture
-def slot1_discharge_soc_v2_entity_id(get_entity_id) -> str:
+def slot1_discharge_soc_v2_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "slot1_discharge_soc")
 
 
 @pytest.fixture
-def max_output_power_entity_id(get_entity_id) -> str:
+def max_output_power_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "max_output_power")
 
 
 @pytest.fixture
-def max_export_power_entity_id(get_entity_id) -> str:
+def max_export_power_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "max_export_power")
 
 
 @pytest.fixture
-def export_calibration_entity_id(get_entity_id) -> str:
+def export_calibration_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "export_calibration")
 
 
 @pytest.fixture
-def power_limit_entity_id(get_entity_id) -> str:
+def power_limit_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "power_limit")
 
 
 @pytest.fixture
-def battery_force_charge_soc_entity_id(get_entity_id) -> str:
+def battery_force_charge_soc_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "battery_force_charge_soc")
 
 
 @pytest.fixture
-def battery_max_charge_current_entity_id(get_entity_id) -> str:
+def battery_max_charge_current_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "battery_max_charge_current")
 
 
 @pytest.fixture
-def mppt_scan_interval_entity_id(get_entity_id) -> str:
+def mppt_scan_interval_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "mppt_scan_interval")
 
 
@@ -120,43 +124,43 @@ class TestBatteryCurrentV1:
     async def test_charge_current_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_charge_current_v1_entity_id: str,
-        value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        value: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: value})
 
-        state = hass.states.get(slot1_charge_current_v1_entity_id)
+        state = get_state(hass, slot1_charge_current_v1_entity_id)
         assert state.state == "50.0"
 
     @pytest.mark.parametrize("value", [VARIANT1_VALUE, VARIANT2_VALUE])
     async def test_discharge_current_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_discharge_current_v1_entity_id: str,
-        value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        value: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: value})
 
-        state = hass.states.get(slot1_discharge_current_v1_entity_id)
+        state = get_state(hass, slot1_discharge_current_v1_entity_id)
         assert state.state == "0.0"
 
     async def test_charge_current_native_value_no_data(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_charge_current_v1_entity_id: str,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: None})
 
-        state = hass.states.get(slot1_charge_current_v1_entity_id)
+        state = get_state(hass, slot1_charge_current_v1_entity_id)
         assert state.state == "unavailable"
 
     @pytest.mark.parametrize(
@@ -175,14 +179,14 @@ class TestBatteryCurrentV1:
     async def test_async_set_value_charge_current(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_charge_current_v1_entity_id: str,
-        initial_value,
-        expected_value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        initial_value: str,
+        expected_value: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: initial_value})
 
         await hass.services.async_call(
@@ -192,12 +196,7 @@ class TestBatteryCurrentV1:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_value,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_value)
 
     @pytest.mark.parametrize(
         ("initial_value", "expected_value"),
@@ -215,14 +214,14 @@ class TestBatteryCurrentV1:
     async def test_async_set_value_discharge_current(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_discharge_current_v1_entity_id: str,
-        initial_value,
-        expected_value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        initial_value: str,
+        expected_value: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: initial_value})
 
         await hass.services.async_call(
@@ -232,24 +231,19 @@ class TestBatteryCurrentV1:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_value,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_value)
 
     @pytest.mark.parametrize("initial_value", ["invalid format", None])
     async def test_async_set_value_invalid_initial(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_charge_current_v1_entity_id: str,
-        initial_value,
-    ):
-        cid = any_inverter.charge_discharge_settings.cid
+        initial_value: None | str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_settings).cid
         await set_data({cid: initial_value})
 
         await hass.services.async_call(
@@ -302,16 +296,16 @@ class TestBatteryCurrentV2:
     async def test_charge_current_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_charge_current_v2_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.charge_discharge_slots.charge_slot1.current_cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).charge_slot1.current_cid
         await set_data({cid: value})
 
-        state = hass.states.get(slot1_charge_current_v2_entity_id)
+        state = get_state(hass, slot1_charge_current_v2_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -325,14 +319,14 @@ class TestBatteryCurrentV2:
     async def test_async_set_value_charge_current(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_charge_current_v2_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.charge_discharge_slots.charge_slot1.current_cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).charge_slot1.current_cid
         await set_data({cid: "10:00-12:00"})
 
         await hass.services.async_call(
@@ -342,12 +336,7 @@ class TestBatteryCurrentV2:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -362,16 +351,16 @@ class TestBatteryCurrentV2:
     async def test_discharge_current_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_discharge_current_v2_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.charge_discharge_slots.discharge_slot1.current_cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).discharge_slot1.current_cid
         await set_data({cid: value})
 
-        state = hass.states.get(slot1_discharge_current_v2_entity_id)
+        state = get_state(hass, slot1_discharge_current_v2_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -385,14 +374,14 @@ class TestBatteryCurrentV2:
     async def test_async_set_value_discharge_current(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_discharge_current_v2_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.charge_discharge_slots.discharge_slot1.current_cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).discharge_slot1.current_cid
         await set_data({cid: "50"})
 
         await hass.services.async_call(
@@ -402,12 +391,7 @@ class TestBatteryCurrentV2:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
 
 class TestBatterySocV2:
@@ -450,16 +434,16 @@ class TestBatterySocV2:
     async def test_charge_soc_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_charge_soc_v2_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.charge_discharge_slots.charge_slot1.soc_cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).charge_slot1.soc_cid
         await set_data({cid: value})
 
-        state = hass.states.get(slot1_charge_soc_v2_entity_id)
+        state = get_state(hass, slot1_charge_soc_v2_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -473,14 +457,14 @@ class TestBatterySocV2:
     async def test_async_set_value_charge_soc(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_charge_soc_v2_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.charge_discharge_slots.charge_slot1.soc_cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).charge_slot1.soc_cid
         await set_data({cid: "50"})
 
         await hass.services.async_call(
@@ -490,12 +474,7 @@ class TestBatterySocV2:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -510,16 +489,16 @@ class TestBatterySocV2:
     async def test_discharge_soc_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_discharge_soc_v2_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.charge_discharge_slots.discharge_slot1.soc_cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).discharge_slot1.soc_cid
         await set_data({cid: value})
 
-        state = hass.states.get(slot1_discharge_soc_v2_entity_id)
+        state = get_state(hass, slot1_discharge_soc_v2_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -533,14 +512,14 @@ class TestBatterySocV2:
     async def test_async_set_value_discharge_soc(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_discharge_soc_v2_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.charge_discharge_slots.discharge_slot1.soc_cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.charge_discharge_slots).discharge_slot1.soc_cid
         await set_data({cid: "50"})
 
         await hass.services.async_call(
@@ -550,12 +529,7 @@ class TestBatterySocV2:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
     @pytest.mark.parametrize(
         ("entity_id_fixture", "slot_attr"),
@@ -568,21 +542,21 @@ class TestBatterySocV2:
         self,
         request: pytest.FixtureRequest,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         entity_id_fixture: str,
         slot_attr: str,
-    ):
+    ) -> None:
         # bounds are refreshed only while the entity has its own data
         await set_data(
             {
                 getattr(any_inverter.charge_discharge_slots, slot_attr).soc_cid: "50",
-                any_inverter.battery_over_discharge_soc.cid: "20",
-                any_inverter.battery_max_charge_soc.cid: "90",
+                ensure(any_inverter.battery_over_discharge_soc).cid: "20",
+                ensure(any_inverter.battery_max_charge_soc).cid: "90",
             }
         )
 
-        state = hass.states.get(request.getfixturevalue(entity_id_fixture))
+        state = get_state(hass, request.getfixturevalue(entity_id_fixture))
         assert state.attributes.get("min") == 21
         assert state.attributes.get("max") == 90
 
@@ -614,16 +588,16 @@ class TestMaxOutputPower:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         max_output_power_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.max_output_power.cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.max_output_power).cid
         await set_data({cid: value})
 
-        state = hass.states.get(max_output_power_entity_id)
+        state = get_state(hass, max_output_power_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -637,14 +611,14 @@ class TestMaxOutputPower:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         max_output_power_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.max_output_power.cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.max_output_power).cid
         await set_data({cid: "50"})
 
         await hass.services.async_call(
@@ -654,12 +628,7 @@ class TestMaxOutputPower:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
 
 class TestMaxExportPower:
@@ -689,16 +658,16 @@ class TestMaxExportPower:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         max_export_power_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.max_export_power.cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.max_export_power).cid
         await set_data({cid: value})
 
-        state = hass.states.get(max_export_power_entity_id)
+        state = get_state(hass, max_export_power_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -712,14 +681,14 @@ class TestMaxExportPower:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         max_export_power_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.max_export_power.cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.max_export_power).cid
         await set_data({cid: "50"})
 
         await hass.services.async_call(
@@ -729,12 +698,7 @@ class TestMaxExportPower:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
 
 class TestExportCalibration:
@@ -765,16 +729,16 @@ class TestExportCalibration:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         export_calibration_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.export_calibration.cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.export_calibration).cid
         await set_data({cid: value})
 
-        state = hass.states.get(export_calibration_entity_id)
+        state = get_state(hass, export_calibration_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -788,14 +752,14 @@ class TestExportCalibration:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         export_calibration_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.export_calibration.cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.export_calibration).cid
         await set_data({cid: "50"})
 
         await hass.services.async_call(
@@ -805,12 +769,7 @@ class TestExportCalibration:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
 
 class TestPowerLimit:
@@ -840,16 +799,16 @@ class TestPowerLimit:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         power_limit_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.power_limit.cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.power_limit).cid
         await set_data({cid: value})
 
-        state = hass.states.get(power_limit_entity_id)
+        state = get_state(hass, power_limit_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -863,14 +822,14 @@ class TestPowerLimit:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         power_limit_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.power_limit.cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.power_limit).cid
         await set_data({cid: "50"})
 
         await hass.services.async_call(
@@ -880,12 +839,7 @@ class TestPowerLimit:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
 
 class TestBatterySocNumber:
@@ -915,16 +869,16 @@ class TestBatterySocNumber:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         battery_force_charge_soc_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.battery_force_charge_soc.cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.battery_force_charge_soc).cid
         await set_data({cid: value})
 
-        state = hass.states.get(battery_force_charge_soc_entity_id)
+        state = get_state(hass, battery_force_charge_soc_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -938,14 +892,14 @@ class TestBatterySocNumber:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         battery_force_charge_soc_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.battery_force_charge_soc.cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.battery_force_charge_soc).cid
         await set_data({cid: "50"})
 
         await hass.services.async_call(
@@ -955,12 +909,7 @@ class TestBatterySocNumber:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
 
 class TestBatteryMaxCurrentNumber:
@@ -990,16 +939,16 @@ class TestBatteryMaxCurrentNumber:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         battery_max_charge_current_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.battery_max_charge_current.cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.battery_max_charge_current).cid
         await set_data({cid: value})
 
-        state = hass.states.get(battery_max_charge_current_entity_id)
+        state = get_state(hass, battery_max_charge_current_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -1013,14 +962,14 @@ class TestBatteryMaxCurrentNumber:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         battery_max_charge_current_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.battery_max_charge_current.cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.battery_max_charge_current).cid
         await set_data({cid: "50"})
 
         await hass.services.async_call(
@@ -1030,12 +979,7 @@ class TestBatteryMaxCurrentNumber:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
 
 class TestMpptScanIntervalNumber:
@@ -1065,16 +1009,16 @@ class TestMpptScanIntervalNumber:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         mppt_scan_interval_entity_id: str,
-        value,
-        expected,
-    ):
-        cid = any_inverter.mppt_scan_interval.cid
+        value: None | str,
+        expected: str,
+    ) -> None:
+        cid = ensure(any_inverter.mppt_scan_interval).cid
         await set_data({cid: value})
 
-        state = hass.states.get(mppt_scan_interval_entity_id)
+        state = get_state(hass, mppt_scan_interval_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -1088,14 +1032,14 @@ class TestMpptScanIntervalNumber:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         mppt_scan_interval_entity_id: str,
-        value,
-        expected_str,
-    ):
-        cid = any_inverter.mppt_scan_interval.cid
+        value: float,
+        expected_str: str,
+    ) -> None:
+        cid = ensure(any_inverter.mppt_scan_interval).cid
         await set_data({cid: "1800"})
 
         await hass.services.async_call(
@@ -1105,12 +1049,7 @@ class TestMpptScanIntervalNumber:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_str)
 
 
 class TestParallelBatteries:
@@ -1119,8 +1058,12 @@ class TestParallelBatteries:
     def any_inverter(self, any_inverter: Inverter) -> Inverter:
         return replace(
             any_inverter,
-            battery_max_charge_current=replace(any_inverter.battery_max_charge_current, parallel_battery_count=2),
-            battery_max_discharge_current=replace(any_inverter.battery_max_discharge_current, parallel_battery_count=2),
+            battery_max_charge_current=replace(
+                ensure(any_inverter.battery_max_charge_current), parallel_battery_count=2
+            ),
+            battery_max_discharge_current=replace(
+                ensure(any_inverter.battery_max_discharge_current), parallel_battery_count=2
+            ),
         )
 
     @pytest.mark.parametrize(
@@ -1152,23 +1095,23 @@ class TestParallelBatteries:
         self,
         request: pytest.FixtureRequest,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         entity_id_fixture: str,
-        entity_cid,
+        entity_cid: Callable[[Inverter], int],
         max_current_attr: str,
-    ):
+    ) -> None:
         # bounds are refreshed only while the entity has its own data
         await set_data({entity_cid(any_inverter): "1", getattr(any_inverter, max_current_attr).cid: "50"})
 
-        state = hass.states.get(request.getfixturevalue(entity_id_fixture))
+        state = get_state(hass, request.getfixturevalue(entity_id_fixture))
         assert state.attributes.get("max") == 100
 
 
 class TestMaxExportPowerScaled:
     @pytest.fixture
     def any_inverter(self, any_inverter: Inverter) -> Inverter:
-        return replace(any_inverter, max_export_power=replace(any_inverter.max_export_power, scale=0.1))
+        return replace(any_inverter, max_export_power=replace(ensure(any_inverter.max_export_power), scale=0.1))
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -1183,15 +1126,15 @@ class TestMaxExportPowerScaled:
     async def test_native_value(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         max_export_power_entity_id: str,
-        value,
-        expected,
-    ):
-        await set_data({any_inverter.max_export_power.cid: value})
+        value: None | str,
+        expected: str,
+    ) -> None:
+        await set_data({ensure(any_inverter.max_export_power).cid: value})
 
-        state = hass.states.get(max_export_power_entity_id)
+        state = get_state(hass, max_export_power_entity_id)
         assert state.state == expected
 
     @pytest.mark.parametrize(
@@ -1205,14 +1148,14 @@ class TestMaxExportPowerScaled:
     async def test_async_set_value(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         max_export_power_entity_id: str,
-        value,
-        expected_str,
-    ):
-        await set_data({any_inverter.max_export_power.cid: "50"})
+        value: int,
+        expected_str: str,
+    ) -> None:
+        await set_data({ensure(any_inverter.max_export_power).cid: "50"})
 
         await hass.services.async_call(
             Platform.NUMBER,
@@ -1221,9 +1164,4 @@ class TestMaxExportPowerScaled:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            any_inverter.max_export_power.cid,
-            expected_str,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, ensure(any_inverter.max_export_power).cid, expected_str)

@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN
@@ -9,6 +9,9 @@ from custom_components.solis_cloud_control.api.solis_api import SolisCloudContro
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from homeassistant.config_entries import ConfigFlowResult
     from homeassistant.core import HomeAssistant
 
 _TEST_API_KEY = "any api key"
@@ -27,17 +30,17 @@ def inverter_select_step_input() -> dict[str, str]:
 
 
 @pytest.fixture
-async def config_flow_init(hass: HomeAssistant):
+async def config_flow_init(hass: HomeAssistant) -> ConfigFlowResult:
     return await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
 
 
 @pytest.fixture
-def flow_id(config_flow_init) -> str:
+def flow_id(config_flow_init: ConfigFlowResult) -> str:
     return config_flow_init["flow_id"]
 
 
 @pytest.fixture
-def mock_setup_entry():
+def mock_setup_entry() -> Generator[Mock]:
     with patch(
         "custom_components.solis_cloud_control.async_setup_entry",
         return_value=True,
@@ -46,7 +49,11 @@ def mock_setup_entry():
 
 
 async def test_all_steps(
-    hass: HomeAssistant, flow_id, user_step_input, inverter_select_step_input, mock_setup_entry
+    hass: HomeAssistant,
+    flow_id: str,
+    user_step_input: dict[str, str],
+    inverter_select_step_input: dict[str, str],
+    mock_setup_entry: Mock,
 ) -> None:
     inverters = [{"sn": _TEST_INVERTER_SN, "stationName": "any test station name"}]
 
@@ -75,7 +82,11 @@ async def test_all_steps(
 
 
 async def test_all_steps_duplicate_inverter(
-    hass: HomeAssistant, flow_id, user_step_input, inverter_select_step_input, mock_setup_entry
+    hass: HomeAssistant,
+    flow_id: str,
+    user_step_input: dict[str, str],
+    inverter_select_step_input: dict[str, str],
+    mock_setup_entry: Mock,
 ) -> None:
     inverters = [{"sn": _TEST_INVERTER_SN, "stationName": "any test station name"}]
 
@@ -110,7 +121,7 @@ async def test_all_steps_duplicate_inverter(
         assert result["type"] == FlowResultType.ABORT
 
 
-async def test_flow_user_step_unknown_error(hass: HomeAssistant, flow_id, user_step_input) -> None:
+async def test_flow_user_step_unknown_error(hass: HomeAssistant, flow_id: str, user_step_input: dict[str, str]) -> None:
     with patch(
         "custom_components.solis_cloud_control.config_flow.SolisCloudControlFlowHandler._inverter_list",
         side_effect=Exception("any error"),
@@ -122,7 +133,9 @@ async def test_flow_user_step_unknown_error(hass: HomeAssistant, flow_id, user_s
         assert result["errors"] == {"base": "unknown"}
 
 
-async def test_flow_user_step_cannot_connect(hass: HomeAssistant, flow_id, user_step_input) -> None:
+async def test_flow_user_step_cannot_connect(
+    hass: HomeAssistant, flow_id: str, user_step_input: dict[str, str]
+) -> None:
     with patch(
         "custom_components.solis_cloud_control.config_flow.SolisCloudControlFlowHandler._inverter_list",
         side_effect=SolisCloudControlApiError("any error"),
@@ -134,7 +147,7 @@ async def test_flow_user_step_cannot_connect(hass: HomeAssistant, flow_id, user_
         assert result["errors"] == {"base": "cannot_connect"}
 
 
-async def test_flow_user_step_invalid_auth(hass: HomeAssistant, flow_id, user_step_input) -> None:
+async def test_flow_user_step_invalid_auth(hass: HomeAssistant, flow_id: str, user_step_input: dict[str, str]) -> None:
     with patch(
         "custom_components.solis_cloud_control.config_flow.SolisCloudControlFlowHandler._inverter_list",
         side_effect=SolisCloudControlApiError("any error", response_code="Z0001"),
@@ -146,7 +159,7 @@ async def test_flow_user_step_invalid_auth(hass: HomeAssistant, flow_id, user_st
         assert result["errors"] == {"base": "invalid_auth"}
 
 
-async def test_flow_user_step_no_inverters(hass: HomeAssistant, flow_id, user_step_input) -> None:
+async def test_flow_user_step_no_inverters(hass: HomeAssistant, flow_id: str, user_step_input: dict[str, str]) -> None:
     with patch(
         "custom_components.solis_cloud_control.config_flow.SolisCloudControlFlowHandler._inverter_list",
         return_value=[],
@@ -158,7 +171,9 @@ async def test_flow_user_step_no_inverters(hass: HomeAssistant, flow_id, user_st
         assert result["errors"] == {"base": "no_inverters"}
 
 
-async def test_flow_user_step_inverter_without_sn(hass: HomeAssistant, flow_id, user_step_input) -> None:
+async def test_flow_user_step_inverter_without_sn(
+    hass: HomeAssistant, flow_id: str, user_step_input: dict[str, str]
+) -> None:
     with patch(
         "custom_components.solis_cloud_control.config_flow.SolisCloudControlFlowHandler._inverter_list",
         return_value=[{"stationName": "any test station name"}],

@@ -1,4 +1,5 @@
 from dataclasses import replace
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -29,10 +30,14 @@ from custom_components.solis_cloud_control.inverters.inverter_factory import (
     create_inverter,
     create_inverter_info,
 )
+from tests.helpers import ensure
+
+if TYPE_CHECKING:
+    from unittest.mock import AsyncMock
 
 
 @pytest.mark.asyncio
-async def test_create_inverter_info(mock_api_client):
+async def test_create_inverter_info(mock_api_client: AsyncMock) -> None:
     mock_api_client.inverter_details.return_value = {
         "model": "any model",
         "version": "any version",
@@ -68,7 +73,7 @@ async def test_create_inverter_info(mock_api_client):
 
 
 @pytest.mark.asyncio
-async def test_create_inverter_info_missing_fields(mock_api_client):
+async def test_create_inverter_info_missing_fields(mock_api_client: AsyncMock) -> None:
     mock_api_client.inverter_details.return_value = {}
     mock_api_client.read.return_value = None
     inverter_sn = "any serial number"
@@ -89,7 +94,7 @@ async def test_create_inverter_info_missing_fields(mock_api_client):
 
 
 @pytest.mark.asyncio
-async def test_create_inverter_info_string_inverter(mock_api_client):
+async def test_create_inverter_info_string_inverter(mock_api_client: AsyncMock) -> None:
     mock_api_client.inverter_details.return_value = {
         "energyStorageControl": "0",
     }
@@ -104,7 +109,7 @@ async def test_create_inverter_info_string_inverter(mock_api_client):
     mock_api_client.read.assert_not_called()
 
 
-def test_create_string_inverter(any_inverter_info):
+def test_create_string_inverter(any_inverter_info: InverterInfo) -> None:
     inverter_info = replace(any_inverter_info, energy_storage_control="0")
     result = create_inverter(inverter_info)
 
@@ -118,7 +123,7 @@ def test_create_string_inverter(any_inverter_info):
     assert result == expected
 
 
-def test_create_hybrid_inverter(any_inverter_info):
+def test_create_hybrid_inverter(any_inverter_info: InverterInfo) -> None:
     inverter_info = replace(any_inverter_info, energy_storage_control="1")
     result = create_inverter(inverter_info)
 
@@ -147,7 +152,7 @@ def test_create_hybrid_inverter(any_inverter_info):
     assert result == expected
 
 
-def test_create_hybrid_inverter_tou_v2_enabled(any_inverter_info):
+def test_create_hybrid_inverter_tou_v2_enabled(any_inverter_info: InverterInfo) -> None:
     inverter_info = replace(any_inverter_info, energy_storage_control="1", tou_v2_mode=InverterInfo.TOU_V2_MODE)
     result = create_inverter(inverter_info)
 
@@ -155,26 +160,26 @@ def test_create_hybrid_inverter_tou_v2_enabled(any_inverter_info):
     assert result.charge_discharge_settings is None
 
 
-def test_create_hybrid_inverter_max_export_power(any_inverter_info):
+def test_create_hybrid_inverter_max_export_power(any_inverter_info: InverterInfo) -> None:
     inverter_info = replace(
         any_inverter_info, energy_storage_control="1", power="10", power_unit="kW", parallel_number="2.0"
     )
     result = create_inverter(inverter_info)
 
-    assert result.max_export_power.max_value == 2 * 10_000
+    assert ensure(result.max_export_power).max_value == 2 * 10_000
 
 
 @pytest.mark.parametrize("model", ["3105", "3173", "3315", "3316", "3331", "3332", "4104", "5305"])
-def test_create_hybrid_inverter_max_export_power_scale(any_inverter_info, model):
+def test_create_hybrid_inverter_max_export_power_scale(any_inverter_info: InverterInfo, model: str) -> None:
     inverter_info = replace(any_inverter_info, energy_storage_control="1", model=model)
     result = create_inverter(inverter_info)
 
-    assert result.max_export_power.scale == 0.01
+    assert ensure(result.max_export_power).scale == 0.01
 
 
-def test_create_hybrid_inverter_battery_max_current(any_inverter_info):
+def test_create_hybrid_inverter_battery_max_current(any_inverter_info: InverterInfo) -> None:
     inverter_info = replace(any_inverter_info, energy_storage_control="1", parallel_battery="2.0")
     result = create_inverter(inverter_info)
 
-    assert result.battery_max_charge_current.parallel_battery_count == 3
-    assert result.battery_max_discharge_current.parallel_battery_count == 3
+    assert ensure(result.battery_max_charge_current).parallel_battery_count == 3
+    assert ensure(result.battery_max_discharge_current).parallel_battery_count == 3

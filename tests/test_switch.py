@@ -4,16 +4,19 @@ import pytest
 from homeassistant.const import Platform
 
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
+from tests.helpers import GetEntityId, SetData, assert_control, ensure, get_state
 
 if TYPE_CHECKING:
+    from unittest.mock import AsyncMock
+
     from homeassistant.core import HomeAssistant
 
-    from custom_components.solis_cloud_control.inverters.inverter import Inverter
+    from custom_components.solis_cloud_control.inverters.inverter import Inverter, InverterChargeDischargeSlots
 
 
-def _slot_data(slots) -> dict:
+def _slot_data(slots: InverterChargeDischargeSlots) -> dict[int, str]:
     # Valid defaults for every slot CID so that all slot entities are available
-    data = {}
+    data: dict[int, str] = {}
     for slot in [
         slots.charge_slot1,
         slots.charge_slot2,
@@ -36,42 +39,42 @@ def _slot_data(slots) -> dict:
 
 
 @pytest.fixture
-def inverter_on_off_entity_id(get_entity_id) -> str:
+def inverter_on_off_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "on_off_switch")
 
 
 @pytest.fixture
-def allow_export_entity_id(get_entity_id) -> str:
+def allow_export_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "allow_export_switch")
 
 
 @pytest.fixture
-def slot1_charge_switch_entity_id(get_entity_id) -> str:
+def slot1_charge_switch_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "slot1_charge_switch")
 
 
 @pytest.fixture
-def slot1_discharge_switch_entity_id(get_entity_id) -> str:
+def slot1_discharge_switch_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "slot1_discharge_switch")
 
 
 @pytest.fixture
-def battery_reserve_entity_id(get_entity_id) -> str:
+def battery_reserve_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "battery_reserve")
 
 
 @pytest.fixture
-def allow_grid_charging_entity_id(get_entity_id) -> str:
+def allow_grid_charging_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "allow_grid_charging")
 
 
 @pytest.fixture
-def time_of_use_entity_id(get_entity_id) -> str:
+def time_of_use_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "time_of_use_switch")
 
 
 @pytest.fixture
-def mppt_scanning_entity_id(get_entity_id) -> str:
+def mppt_scanning_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "mppt_scanning_switch")
 
 
@@ -81,7 +84,7 @@ class TestOnOffSwitch:
         self,
         hass: HomeAssistant,
         inverter_on_off_entity_id: str,
-    ):
+    ) -> None:
         state = hass.states.get(inverter_on_off_entity_id)
         assert state is not None
 
@@ -97,15 +100,15 @@ class TestOnOffSwitch:
     async def test_state_from_coordinator(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         inverter_on_off_entity_id: str,
-        on_value,
-        off_value,
-        expected_state,
-    ):
-        on_cid = any_inverter.on_off.on_cid
-        off_cid = any_inverter.on_off.off_cid
+        on_value: str,
+        off_value: str,
+        expected_state: str,
+    ) -> None:
+        on_cid = ensure(any_inverter.on_off).on_cid
+        off_cid = ensure(any_inverter.on_off).off_cid
         await set_data(
             {
                 on_cid: on_value,
@@ -113,19 +116,19 @@ class TestOnOffSwitch:
             }
         )
 
-        state = hass.states.get(inverter_on_off_entity_id)
+        state = get_state(hass, inverter_on_off_entity_id)
         assert state.state == expected_state
 
     async def test_turn_on(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         inverter_on_off_entity_id: str,
-    ):
-        on_cid = any_inverter.on_off.on_cid
-        off_cid = any_inverter.on_off.off_cid
+    ) -> None:
+        on_cid = ensure(any_inverter.on_off).on_cid
+        off_cid = ensure(any_inverter.on_off).off_cid
         await set_data(
             {
                 on_cid: "222",
@@ -140,23 +143,18 @@ class TestOnOffSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            on_cid,
-            any_inverter.on_off.on_value,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, on_cid, ensure(any_inverter.on_off).on_value)
 
     async def test_turn_off(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         inverter_on_off_entity_id: str,
-    ):
-        on_cid = any_inverter.on_off.on_cid
-        off_cid = any_inverter.on_off.off_cid
+    ) -> None:
+        on_cid = ensure(any_inverter.on_off).on_cid
+        off_cid = ensure(any_inverter.on_off).off_cid
         await set_data(
             {
                 on_cid: "190",
@@ -171,12 +169,7 @@ class TestOnOffSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            off_cid,
-            any_inverter.on_off.off_value,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, off_cid, ensure(any_inverter.on_off).off_value)
 
 
 class TestAllowExportSwitch:
@@ -185,7 +178,7 @@ class TestAllowExportSwitch:
         self,
         hass: HomeAssistant,
         allow_export_entity_id: str,
-    ):
+    ) -> None:
         state = hass.states.get(allow_export_entity_id)
         assert state is not None
 
@@ -200,14 +193,14 @@ class TestAllowExportSwitch:
     async def test_state_from_coordinator(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         allow_export_entity_id: str,
-        value,
-        expected_state,
-    ):
-        cid = any_inverter.allow_export.cid
-        storage_cid = any_inverter.storage_mode.cid
+        value: None | str,
+        expected_state: str,
+    ) -> None:
+        cid = ensure(any_inverter.allow_export).cid
+        storage_cid = ensure(any_inverter.storage_mode).cid
         await set_data(
             {
                 cid: value,
@@ -215,7 +208,7 @@ class TestAllowExportSwitch:
             }
         )
 
-        state = hass.states.get(allow_export_entity_id)
+        state = get_state(hass, allow_export_entity_id)
         assert state.state == expected_state
 
     @pytest.mark.parametrize(
@@ -230,14 +223,14 @@ class TestAllowExportSwitch:
     async def test_availability(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         allow_export_entity_id: str,
-        storage_mode_value,
-        expected_state,
-    ):
-        storage_cid = any_inverter.storage_mode.cid
-        export_cid = any_inverter.allow_export.cid
+        storage_mode_value: str | None,
+        expected_state: str,
+    ) -> None:
+        storage_cid = ensure(any_inverter.storage_mode).cid
+        export_cid = ensure(any_inverter.allow_export).cid
         await set_data(
             {
                 storage_cid: storage_mode_value,
@@ -245,19 +238,19 @@ class TestAllowExportSwitch:
             }
         )
 
-        state = hass.states.get(allow_export_entity_id)
+        state = get_state(hass, allow_export_entity_id)
         assert state.state == expected_state
 
     async def test_turn_on(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         allow_export_entity_id: str,
-    ):
-        cid = any_inverter.allow_export.cid
-        storage_cid = any_inverter.storage_mode.cid
+    ) -> None:
+        cid = ensure(any_inverter.allow_export).cid
+        storage_cid = ensure(any_inverter.storage_mode).cid
         await set_data(
             {
                 cid: "1",
@@ -272,23 +265,18 @@ class TestAllowExportSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            "0",
-            any_inverter.allow_export.off_value,
-        )
+        assert_control(mock_api_client, any_inverter, cid, "0", ensure(any_inverter.allow_export).off_value)
 
     async def test_turn_off(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         allow_export_entity_id: str,
-    ):
-        cid = any_inverter.allow_export.cid
-        storage_cid = any_inverter.storage_mode.cid
+    ) -> None:
+        cid = ensure(any_inverter.allow_export).cid
+        storage_cid = ensure(any_inverter.storage_mode).cid
         await set_data(
             {
                 cid: "0",
@@ -303,12 +291,7 @@ class TestAllowExportSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            "1",
-            any_inverter.allow_export.on_value,
-        )
+        assert_control(mock_api_client, any_inverter, cid, "1", ensure(any_inverter.allow_export).on_value)
 
 
 class TestSlotV2Switch:
@@ -317,7 +300,7 @@ class TestSlotV2Switch:
         self,
         hass: HomeAssistant,
         slot1_charge_switch_entity_id: str,
-    ):
+    ) -> None:
         state = hass.states.get(slot1_charge_switch_entity_id)
         assert state is not None
 
@@ -326,7 +309,7 @@ class TestSlotV2Switch:
         self,
         hass: HomeAssistant,
         slot1_discharge_switch_entity_id: str,
-    ):
+    ) -> None:
         state = hass.states.get(slot1_discharge_switch_entity_id)
         assert state is not None
 
@@ -341,13 +324,13 @@ class TestSlotV2Switch:
     async def test_charge_state_from_coordinator(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         slot1_charge_switch_entity_id: str,
-        value,
-        expected_state,
-    ):
-        slots = any_inverter.charge_discharge_slots
+        value: None | str,
+        expected_state: str,
+    ) -> None:
+        slots = ensure(any_inverter.charge_discharge_slots)
         cid = slots.charge_slot1.switch_cid
 
         await set_data(
@@ -357,18 +340,18 @@ class TestSlotV2Switch:
             }
         )
 
-        state = hass.states.get(slot1_charge_switch_entity_id)
+        state = get_state(hass, slot1_charge_switch_entity_id)
         assert state.state == expected_state
 
     async def test_charge_turn_on(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_charge_switch_entity_id: str,
-    ):
-        slots = any_inverter.charge_discharge_slots
+    ) -> None:
+        slots = ensure(any_inverter.charge_discharge_slots)
         cid = slots.charge_slot1.switch_cid
 
         await set_data(
@@ -385,22 +368,17 @@ class TestSlotV2Switch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            "1",
-            "0",
-        )
+        assert_control(mock_api_client, any_inverter, cid, "1", "0")
 
     async def test_charge_turn_off(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_charge_switch_entity_id: str,
-    ):
-        slots = any_inverter.charge_discharge_slots
+    ) -> None:
+        slots = ensure(any_inverter.charge_discharge_slots)
         cid = slots.charge_slot1.switch_cid
 
         await set_data(
@@ -417,12 +395,7 @@ class TestSlotV2Switch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            "0",
-            "1",
-        )
+        assert_control(mock_api_client, any_inverter, cid, "0", "1")
 
     @pytest.mark.parametrize(
         ("service", "initial_value", "new_value"),
@@ -434,15 +407,15 @@ class TestSlotV2Switch:
     async def test_discharge_turn_on_off(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_discharge_switch_entity_id: str,
         service: str,
         initial_value: str,
         new_value: str,
-    ):
-        slots = any_inverter.charge_discharge_slots
+    ) -> None:
+        slots = ensure(any_inverter.charge_discharge_slots)
         cid = slots.discharge_slot1.switch_cid
         await set_data(
             {
@@ -459,22 +432,19 @@ class TestSlotV2Switch:
         )
 
         # old_value is a bitfield of all slot switches, so it must carry the target slot's own bit
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            new_value,
-            str(int(initial_value) << slots.bit_discharge_slot1),
+        assert_control(
+            mock_api_client, any_inverter, cid, new_value, str(int(initial_value) << slots.bit_discharge_slot1)
         )
 
     async def test_old_value_combines_other_slots(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         slot1_discharge_switch_entity_id: str,
-    ):
-        slots = any_inverter.charge_discharge_slots
+    ) -> None:
+        slots = ensure(any_inverter.charge_discharge_slots)
         await set_data(
             {
                 **_slot_data(slots),
@@ -490,11 +460,12 @@ class TestSlotV2Switch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
+        assert_control(
+            mock_api_client,
+            any_inverter,
             slots.discharge_slot1.switch_cid,
             "1",
-            str((1 << slots.bit_charge_slot1) | (1 << slots.bit_discharge_slot2)),
+            str(1 << slots.bit_charge_slot1 | 1 << slots.bit_discharge_slot2),
         )
 
 
@@ -504,7 +475,7 @@ class TestBatteryReserveSwitch:
         self,
         hass: HomeAssistant,
         battery_reserve_entity_id: str,
-    ):
+    ) -> None:
         state = hass.states.get(battery_reserve_entity_id)
         assert state is not None
 
@@ -520,27 +491,27 @@ class TestBatteryReserveSwitch:
     async def test_state_from_coordinator(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         battery_reserve_entity_id: str,
-        value,
-        expected_state,
-    ):
-        cid = any_inverter.storage_mode.cid
+        value: None | str,
+        expected_state: str,
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         await set_data({cid: value})
 
-        state = hass.states.get(battery_reserve_entity_id)
+        state = get_state(hass, battery_reserve_entity_id)
         assert state.state == expected_state
 
     async def test_turn_on(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         battery_reserve_entity_id: str,
-    ):
-        cid = any_inverter.storage_mode.cid
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         bit = StorageMode.BIT_BACKUP_MODE
         await set_data({cid: "0"})
 
@@ -551,22 +522,17 @@ class TestBatteryReserveSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            str(1 << bit),
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, str(1 << bit))
 
     async def test_turn_off(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         battery_reserve_entity_id: str,
-    ):
-        cid = any_inverter.storage_mode.cid
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         bit = StorageMode.BIT_BACKUP_MODE
         await set_data({cid: str(1 << bit)})
 
@@ -577,22 +543,17 @@ class TestBatteryReserveSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            str(0),
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, str(0))
 
     async def test_turn_on_off_invalid_initial(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         battery_reserve_entity_id: str,
-    ):
-        await set_data({any_inverter.storage_mode.cid: "not a number"})
+    ) -> None:
+        await set_data({ensure(any_inverter.storage_mode).cid: "not a number"})
 
         for service in ("turn_on", "turn_off"):
             await hass.services.async_call(
@@ -611,7 +572,7 @@ class TestAllowGridChargingSwitch:
         self,
         hass: HomeAssistant,
         allow_grid_charging_entity_id: str,
-    ):
+    ) -> None:
         state = hass.states.get(allow_grid_charging_entity_id)
         assert state is not None
 
@@ -626,27 +587,27 @@ class TestAllowGridChargingSwitch:
     async def test_state_from_coordinator(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         allow_grid_charging_entity_id: str,
-        value,
-        expected_state,
-    ):
-        cid = any_inverter.storage_mode.cid
+        value: None | str,
+        expected_state: str,
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         await set_data({cid: value})
 
-        state = hass.states.get(allow_grid_charging_entity_id)
+        state = get_state(hass, allow_grid_charging_entity_id)
         assert state.state == expected_state
 
     async def test_turn_on(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         allow_grid_charging_entity_id: str,
-    ):
-        cid = any_inverter.storage_mode.cid
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         bit = StorageMode.BIT_GRID_CHARGING
         await set_data({cid: "0"})
 
@@ -657,22 +618,17 @@ class TestAllowGridChargingSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            str(1 << bit),
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, str(1 << bit))
 
     async def test_turn_off(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         allow_grid_charging_entity_id: str,
-    ):
-        cid = any_inverter.storage_mode.cid
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         bit = StorageMode.BIT_GRID_CHARGING
         await set_data({cid: str(1 << bit)})
 
@@ -683,22 +639,17 @@ class TestAllowGridChargingSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            str(0),
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, str(0))
 
     async def test_turn_on_off_invalid_initial(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         allow_grid_charging_entity_id: str,
-    ):
-        await set_data({any_inverter.storage_mode.cid: "not a number"})
+    ) -> None:
+        await set_data({ensure(any_inverter.storage_mode).cid: "not a number"})
 
         for service in ("turn_on", "turn_off"):
             await hass.services.async_call(
@@ -717,7 +668,7 @@ class TestTimeOfUseSwitch:
         self,
         hass: HomeAssistant,
         time_of_use_entity_id: str,
-    ):
+    ) -> None:
         state = hass.states.get(time_of_use_entity_id)
         assert state is not None
 
@@ -732,27 +683,27 @@ class TestTimeOfUseSwitch:
     async def test_state_from_coordinator(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         time_of_use_entity_id: str,
-        value,
-        expected_state,
-    ):
-        cid = any_inverter.storage_mode.cid
+        value: None | str,
+        expected_state: str,
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         await set_data({cid: value})
 
-        state = hass.states.get(time_of_use_entity_id)
+        state = get_state(hass, time_of_use_entity_id)
         assert state.state == expected_state
 
     async def test_turn_on(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         time_of_use_entity_id: str,
-    ):
-        cid = any_inverter.storage_mode.cid
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         bit = StorageMode.BIT_TOU_MODE
         await set_data({cid: "0"})
 
@@ -763,22 +714,17 @@ class TestTimeOfUseSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            str(1 << bit),
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, str(1 << bit))
 
     async def test_turn_off(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         time_of_use_entity_id: str,
-    ):
-        cid = any_inverter.storage_mode.cid
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         bit = StorageMode.BIT_TOU_MODE
         await set_data({cid: str(1 << bit)})
 
@@ -789,22 +735,17 @@ class TestTimeOfUseSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            str(0),
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, str(0))
 
     async def test_turn_on_off_invalid_initial(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         time_of_use_entity_id: str,
-    ):
-        await set_data({any_inverter.storage_mode.cid: "not a number"})
+    ) -> None:
+        await set_data({ensure(any_inverter.storage_mode).cid: "not a number"})
 
         for service in ("turn_on", "turn_off"):
             await hass.services.async_call(
@@ -823,7 +764,7 @@ class TestMpptScanningSwitch:
         self,
         hass: HomeAssistant,
         mppt_scanning_entity_id: str,
-    ):
+    ) -> None:
         state = hass.states.get(mppt_scanning_entity_id)
         assert state is not None
 
@@ -838,27 +779,27 @@ class TestMpptScanningSwitch:
     async def test_state_from_coordinator(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         mppt_scanning_entity_id: str,
-        value,
-        expected_state,
-    ):
-        cid = any_inverter.mppt_scanning.cid
+        value: None | str,
+        expected_state: str,
+    ) -> None:
+        cid = ensure(any_inverter.mppt_scanning).cid
         await set_data({cid: value})
 
-        state = hass.states.get(mppt_scanning_entity_id)
+        state = get_state(hass, mppt_scanning_entity_id)
         assert state.state == expected_state
 
     async def test_turn_on(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         mppt_scanning_entity_id: str,
-    ):
-        cid = any_inverter.mppt_scanning.cid
+    ) -> None:
+        cid = ensure(any_inverter.mppt_scanning).cid
         await set_data({cid: "0"})
 
         await hass.services.async_call(
@@ -868,22 +809,17 @@ class TestMpptScanningSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            "1",
-            any_inverter.mppt_scanning.off_value,
-        )
+        assert_control(mock_api_client, any_inverter, cid, "1", ensure(any_inverter.mppt_scanning).off_value)
 
     async def test_turn_off(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         mppt_scanning_entity_id: str,
-    ):
-        cid = any_inverter.mppt_scanning.cid
+    ) -> None:
+        cid = ensure(any_inverter.mppt_scanning).cid
         await set_data({cid: "1"})
 
         await hass.services.async_call(
@@ -893,9 +829,4 @@ class TestMpptScanningSwitch:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            "0",
-            any_inverter.mppt_scanning.on_value,
-        )
+        assert_control(mock_api_client, any_inverter, cid, "0", ensure(any_inverter.mppt_scanning).on_value)

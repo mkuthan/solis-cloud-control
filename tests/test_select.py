@@ -4,21 +4,24 @@ import pytest
 from homeassistant.const import Platform
 
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
+from tests.helpers import GetEntityId, SetData, assert_control, ensure, get_state
 
 if TYPE_CHECKING:
+    from unittest.mock import AsyncMock
+
     from homeassistant.core import HomeAssistant
 
     from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 @pytest.fixture
-def storage_mode_entity_id(get_entity_id) -> str:
+def storage_mode_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SELECT, "storage_mode")
 
 
 class TestStorageModeSelectIntegration:
     @pytest.mark.usefixtures("setup_integration")
-    async def test_entity_registered(self, hass: HomeAssistant, storage_mode_entity_id: str):
+    async def test_entity_registered(self, hass: HomeAssistant, storage_mode_entity_id: str) -> None:
         state = hass.states.get(storage_mode_entity_id)
         assert state is not None
         assert state.attributes.get("options") == ["Self-Use", "Feed-In Priority", "Off-Grid", "Peak Shaving"]
@@ -35,16 +38,16 @@ class TestStorageModeSelectIntegration:
     async def test_current_option_valid(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         storage_mode_entity_id: str,
-        value,
-        expected_mode,
-    ):
-        cid = any_inverter.storage_mode.cid
+        value: str,
+        expected_mode: str,
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         await set_data({cid: value})
 
-        state = hass.states.get(storage_mode_entity_id)
+        state = get_state(hass, storage_mode_entity_id)
         assert state.state == expected_mode
 
     @pytest.mark.parametrize(
@@ -58,16 +61,16 @@ class TestStorageModeSelectIntegration:
     async def test_current_option_invalid(
         self,
         hass: HomeAssistant,
-        set_data,
+        set_data: SetData,
         any_inverter: Inverter,
         storage_mode_entity_id: str,
-        value,
-        expected_state,
-    ):
-        cid = any_inverter.storage_mode.cid
+        value: None | str,
+        expected_state: str,
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         await set_data({cid: value})
 
-        state = hass.states.get(storage_mode_entity_id)
+        state = get_state(hass, storage_mode_entity_id)
         assert state.state == expected_state
 
     @pytest.mark.parametrize(
@@ -82,14 +85,14 @@ class TestStorageModeSelectIntegration:
     async def test_async_select_option(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         storage_mode_entity_id: str,
-        mode,
-        expected_value,
-    ):
-        cid = any_inverter.storage_mode.cid
+        mode: str,
+        expected_value: str,
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         await set_data({cid: str(0)})
 
         await hass.services.async_call(
@@ -99,12 +102,7 @@ class TestStorageModeSelectIntegration:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_value,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_value)
 
     @pytest.mark.parametrize(
         ("initial_mode", "expected_value"),
@@ -124,14 +122,14 @@ class TestStorageModeSelectIntegration:
     async def test_async_select_peak_shaving_clears_other_base_modes(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         storage_mode_entity_id: str,
-        initial_mode,
-        expected_value,
-    ):
-        cid = any_inverter.storage_mode.cid
+        initial_mode: str,
+        expected_value: str,
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         await set_data({cid: initial_mode})
 
         await hass.services.async_call(
@@ -141,12 +139,7 @@ class TestStorageModeSelectIntegration:
             blocking=True,
         )
 
-        mock_api_client.control.assert_awaited_once_with(
-            any_inverter.info.serial_number,
-            cid,
-            expected_value,
-            None,
-        )
+        assert_control(mock_api_client, any_inverter, cid, expected_value)
 
     @pytest.mark.parametrize(
         "initial_value",
@@ -158,13 +151,13 @@ class TestStorageModeSelectIntegration:
     async def test_async_select_option_invalid_initial(
         self,
         hass: HomeAssistant,
-        set_data,
-        mock_api_client,
+        set_data: SetData,
+        mock_api_client: AsyncMock,
         any_inverter: Inverter,
         storage_mode_entity_id: str,
-        initial_value,
-    ):
-        cid = any_inverter.storage_mode.cid
+        initial_value: None | str,
+    ) -> None:
+        cid = ensure(any_inverter.storage_mode).cid
         await set_data({cid: initial_value})
 
         await hass.services.async_call(

@@ -5,7 +5,7 @@ import pytest
 from custom_components.solis_cloud_control.utils.datetime_utils import format_inverter_time, parse_inverter_time
 
 
-def test_parse_inverter_time():
+def test_parse_inverter_time() -> None:
     result = parse_inverter_time("2025-12-11 17:00:00")
 
     assert result is not None
@@ -13,9 +13,9 @@ def test_parse_inverter_time():
 
 
 @pytest.mark.parametrize("value", [None, "invalid", "2025-12-11T17:00:00"])
-def test_parse_inverter_time_invalid(value):
+def test_parse_inverter_time_invalid(value: None | str) -> None:
     assert parse_inverter_time(value) is None
 
 
-def test_format_inverter_time():
+def test_format_inverter_time() -> None:
     assert format_inverter_time(datetime(2025, 12, 11, 17, 0, 0)) == "2025-12-11 17:00:00"

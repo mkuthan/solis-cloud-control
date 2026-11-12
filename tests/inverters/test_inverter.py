@@ -15,7 +15,9 @@ from custom_components.solis_cloud_control.inverters.inverter import InverterInf
         ("unexpected", False),
     ],
 )
-def test_inverter_info_is_string_inverter(any_inverter_info, energy_storage_control, expected):
+def test_inverter_info_is_string_inverter(
+    any_inverter_info: InverterInfo, energy_storage_control: None | str, expected: bool
+) -> None:
     inverter = replace(any_inverter_info, energy_storage_control=energy_storage_control)
     assert inverter.is_string_inverter == expected
 
@@ -29,7 +31,9 @@ def test_inverter_info_is_string_inverter(any_inverter_info, energy_storage_cont
         ("unexpected", False),
     ],
 )
-def test_inverter_info_is_tou_v2_enabled(any_inverter_info, tou_v2_mode, expected):
+def test_inverter_info_is_tou_v2_enabled(
+    any_inverter_info: InverterInfo, tou_v2_mode: None | str, expected: bool
+) -> None:
     inverter = replace(any_inverter_info, tou_v2_mode=tou_v2_mode)
     assert inverter.is_tou_v2_enabled == expected
 
@@ -53,7 +57,13 @@ def test_inverter_info_is_tou_v2_enabled(any_inverter_info, tou_v2_mode, expecte
         (None, None, "2", InverterInfo.MAX_EXPORT_POWER_DEFAULT),
     ],
 )
-def test_inverter_max_export_power(any_inverter_info, power, power_unit, parallel_inverter_count, expected_power):
+def test_inverter_max_export_power(
+    any_inverter_info: InverterInfo,
+    power: None | str,
+    power_unit: None | str,
+    parallel_inverter_count: str,
+    expected_power: None | float,
+) -> None:
     inverter = replace(any_inverter_info, power=power, power_unit=power_unit, parallel_number=parallel_inverter_count)
 
     assert inverter.max_export_power == expected_power
@@ -73,7 +83,9 @@ def test_inverter_max_export_power(any_inverter_info, power, power_unit, paralle
         ("any_model", 1.0),
     ],
 )
-def test_inverter_info_max_export_power_scale(any_inverter_info, model, expected_scale):
+def test_inverter_info_max_export_power_scale(
+    any_inverter_info: InverterInfo, model: str, expected_scale: float
+) -> None:
     inverter = replace(any_inverter_info, model=model)
     assert inverter.max_export_power_scale == expected_scale
 
@@ -97,7 +109,9 @@ def test_inverter_info_max_export_power_scale(any_inverter_info, model, expected
         (None, 1),
     ],
 )
-def test_inverter_info_parallel_inverter_count(any_inverter_info, parallel_number, expected):
+def test_inverter_info_parallel_inverter_count(
+    any_inverter_info: InverterInfo, parallel_number: None | str, expected: int
+) -> None:
     inverter = replace(any_inverter_info, parallel_number=parallel_number)
     assert inverter.parallel_inverter_count == expected
 
@@ -119,7 +133,9 @@ def test_inverter_info_parallel_inverter_count(any_inverter_info, parallel_numbe
         (None, 1),
     ],
 )
-def test_inverter_info_parallel_battery_count(any_inverter_info, parallel_battery, expected):
+def test_inverter_info_parallel_battery_count(
+    any_inverter_info: InverterInfo, parallel_battery: None | str, expected: int
+) -> None:
     inverter = replace(any_inverter_info, parallel_battery=parallel_battery)
     assert inverter.parallel_battery_count == expected
 
@@ -135,6 +151,6 @@ def test_inverter_info_parallel_battery_count(any_inverter_info, parallel_batter
         (None, False),
     ],
 )
-def test_inverter_on_off_is_valid_value(value, expected):
+def test_inverter_on_off_is_valid_value(value: None | str, expected: bool) -> None:
     inverter_on_off = InverterOnOff()
     assert inverter_on_off.is_valid_value(value) == expected

@@ -21,7 +21,7 @@ def any_max_retry_time() -> float:
     return 0.0
 
 
-async def test_run_retry():
+async def test_run_retry() -> None:
     sleep_delays: list[float] = []
     simulated_time = 0.0
     attempts = 0
@@ -56,7 +56,7 @@ async def test_run_retry():
 
 async def test_run_returns_without_retry_on_success(
     any_monotonic_time_provider: MonotonicTimeProvider, any_max_retry_time: float
-):
+) -> None:
     sleep_delays: list[float] = []
 
     async def fake_sleep(delay: float) -> None:
@@ -79,7 +79,7 @@ async def test_run_returns_without_retry_on_success(
 
 async def test_run_does_not_retry_non_retryable_exception(
     any_monotonic_time_provider: MonotonicTimeProvider, any_max_retry_time: float
-):
+) -> None:
     sleep_delays: list[float] = []
 
     async def fake_sleep(delay: float) -> None:

@@ -5,14 +5,20 @@ import pytest
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
-from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
+from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator, SolisCloudControlData
+from tests.helpers import assert_control
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 
 @pytest.fixture
-def coordinator(hass: HomeAssistant, mock_config_entry, mock_api_client, any_inverter):
+def coordinator(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_api_client: AsyncMock, any_inverter: Inverter
+) -> SolisCloudControlCoordinator:
     return SolisCloudControlCoordinator(
         hass=hass,
         config_entry=mock_config_entry,
@@ -21,7 +27,9 @@ def coordinator(hass: HomeAssistant, mock_config_entry, mock_api_client, any_inv
     )
 
 
-async def test_async_update_data(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
+async def test_async_update_data(
+    hass: HomeAssistant, coordinator: SolisCloudControlCoordinator, mock_api_client: AsyncMock, any_inverter: Inverter
+) -> None:
     read_batch_cids = any_inverter.read_batch_cids
     read_cids = any_inverter.read_cids
 
@@ -49,7 +57,9 @@ async def test_async_update_data(hass: HomeAssistant, coordinator, mock_api_clie
     assert data == {cid: f"value_{cid}" for cid in any_inverter.all_cids}
 
 
-async def test_async_update_data_api_error(hass: HomeAssistant, coordinator, mock_api_client):
+async def test_async_update_data_api_error(
+    hass: HomeAssistant, coordinator: SolisCloudControlCoordinator, mock_api_client: AsyncMock
+) -> None:
     any_error = "any error"
     mock_api_client.read_batch.side_effect = SolisCloudControlApiError(any_error)
 
@@ -65,13 +75,15 @@ async def test_async_update_data_api_error(hass: HomeAssistant, coordinator, moc
     )
 
 
-async def test_control_success(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
+async def test_control_success(
+    hass: HomeAssistant, coordinator: SolisCloudControlCoordinator, mock_api_client: AsyncMock, any_inverter: Inverter
+) -> None:
     any_cid = 123
     any_value = "any_value"
     any_old_value = "any_old_value"
     any_initial_value = "initial_value"
 
-    coordinator.data = {any_cid: any_initial_value}
+    coordinator.data = SolisCloudControlData({any_cid: any_initial_value})
 
     mock_api_client.control.return_value = None
 
@@ -82,13 +94,13 @@ async def test_control_success(hass: HomeAssistant, coordinator, mock_api_client
         await coordinator.control(any_cid, any_value, any_old_value)
 
         mock_set_updated_data.assert_called_once_with({any_cid: any_value})
-        mock_api_client.control.assert_called_once_with(
-            any_inverter.info.serial_number, any_cid, any_value, any_old_value
-        )
+        assert_control(mock_api_client, any_inverter, any_cid, any_value, any_old_value)
         mock_request_refresh.assert_called_once()
 
 
-async def test_control_success_without_data(hass: HomeAssistant, coordinator, mock_api_client, any_inverter):
+async def test_control_success_without_data(
+    hass: HomeAssistant, coordinator: SolisCloudControlCoordinator, mock_api_client: AsyncMock, any_inverter: Inverter
+) -> None:
     any_cid = 123
     any_value = "any_value"
     any_old_value = "any_old_value"
@@ -102,20 +114,20 @@ async def test_control_success_without_data(hass: HomeAssistant, coordinator, mo
         await coordinator.control(any_cid, any_value, any_old_value)
 
         mock_set_updated_data.assert_not_called()
-        mock_api_client.control.assert_called_once_with(
-            any_inverter.info.serial_number, any_cid, any_value, any_old_value
-        )
+        assert_control(mock_api_client, any_inverter, any_cid, any_value, any_old_value)
         mock_request_refresh.assert_called_once()
 
 
-async def test_control_api_error(hass: HomeAssistant, coordinator, mock_api_client):
+async def test_control_api_error(
+    hass: HomeAssistant, coordinator: SolisCloudControlCoordinator, mock_api_client: AsyncMock
+) -> None:
     any_cid = 123
     any_value = "any_value"
     any_old_value = "any_old_value"
     any_initial_value = "initial_value"
     any_error = "any error"
 
-    coordinator.data = {any_cid: any_initial_value}
+    coordinator.data = SolisCloudControlData({any_cid: any_initial_value})
 
     mock_api_client.control.side_effect = SolisCloudControlApiError(any_error)
 
@@ -129,7 +141,5 @@ async def test_control_api_error(hass: HomeAssistant, coordinator, mock_api_clie
         assert str(exc_info.value) == any_error
 
         mock_set_updated_data.assert_called_once_with({any_cid: any_value})
-        mock_api_client.control.assert_called_once_with(
-            coordinator._inverter.info.serial_number, any_cid, any_value, any_old_value
-        )
+        assert_control(mock_api_client, coordinator._inverter, any_cid, any_value, any_old_value)
         mock_request_refresh.assert_called_once()

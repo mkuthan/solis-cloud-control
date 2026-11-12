@@ -38,26 +38,28 @@ if TYPE_CHECKING:
 
     from homeassistant.core import HomeAssistant
 
+    from tests.helpers import GetEntityId, SetData
+
 
 # https://github.com/MatthewFlamm/pytest-homeassistant-custom-component/issues/154
 @pytest.hookimpl(trylast=True)
-def pytest_runtest_setup():
+def pytest_runtest_setup() -> None:
     enable_socket()
     socket_allow_hosts(["127.0.0.1", "localhost", "::1"], allow_unix_socket=True)
 
 
 @pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations):
+def auto_enable_custom_integrations(enable_custom_integrations: None) -> Generator[None]:
     yield
 
 
 @pytest.fixture
-def mock_api_client():
+def mock_api_client() -> AsyncMock:
     return AsyncMock()
 
 
 @pytest.fixture
-def mock_coordinator():
+def mock_coordinator() -> Mock:
     coordinator = Mock()
     coordinator.control = AsyncMock()
     coordinator.control_no_check = AsyncMock()
@@ -71,7 +73,7 @@ def mock_coordinator():
 
 
 @pytest.fixture
-def mock_config_entry(hass: HomeAssistant):
+def mock_config_entry(hass: HomeAssistant) -> MockConfigEntry:
     config_entry = MockConfigEntry(
         domain=DOMAIN,
         version=3,
@@ -160,7 +162,7 @@ async def setup_integration(
 
 
 @pytest.fixture
-def get_entity_id(hass: HomeAssistant, setup_integration: MockConfigEntry):
+def get_entity_id(hass: HomeAssistant, setup_integration: MockConfigEntry) -> GetEntityId:
     def _get_entity_id(platform: Platform, key: str) -> str:
         entity_id = er.async_get(hass).async_get_entity_id(platform, DOMAIN, f"{setup_integration.entry_id}_{key}")
         assert entity_id is not None, f"no {platform} entity registered with key '{key}'"
@@ -170,7 +172,7 @@ def get_entity_id(hass: HomeAssistant, setup_integration: MockConfigEntry):
 
 
 @pytest.fixture
-def set_data(hass: HomeAssistant, setup_integration: MockConfigEntry):
+def set_data(hass: HomeAssistant, setup_integration: MockConfigEntry) -> SetData:
     # Merges into the coordinator data and waits for entities to process the update
     async def _set_data(values: dict[int, str | None]) -> None:
         coordinator = setup_integration.runtime_data.coordinator
