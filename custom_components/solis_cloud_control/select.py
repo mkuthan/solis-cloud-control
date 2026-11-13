@@ -49,7 +49,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
     MODE_SELF_USE: str = "Self-Use"
     MODE_FEED_IN_PRIORITY: str = "Feed-In Priority"
     MODE_OFF_GRID: str = "Off-Grid"
-    MODE_PEAK_SHAVING: str = "Peak Shaving"
+    MODE_PEAK_SHAVING: str = "Peak-Shaving"
 
     def __init__(
         self,

@@ -84,15 +84,15 @@ All Solis inverters should be supported, although the integration has been teste
 
 The integration provides a user-friendly interface to control your inverter settings. It allows you to:
 
-- ⚡ Control storage modes: "Self-Use", "Feed-In Priority", "Off-Grid" and "Peak Shaving" 🟢
+- ⚡ Control storage modes: "Self-Use", "Feed-In Priority", "Off-Grid" and "Peak-Shaving" 🟢
 - ⏱️ Schedule charge and discharge slots 🟢
 - Switch the inverter on or off 🟢 ⚪️
 - Set the inverter time 🟢 ⚪️
 - Toggle "Battery Reserve" 🟢
 - Toggle "Allow Grid Charging" 🟢
-- Toggle "Allow Export" 🟢
-- Set "Max Usable Grid Power" and "Baseline SOC" (in "Peak Shaving" storage mode) 🟢
-- Toggle "Grid Peak Shaving" and set "Grid Peak Shaving Power" 🟢
+- Toggle "Allow Export" 🟢 (for Self-Use mode)
+- Set "Max Usable Grid Power" and "Baseline SOC" (for "Peak-Shaving" storage mode) 🟢
+- Toggle "Grid Peak Shaving" and set "Grid Peak Shaving Power" (for Self-Use and Feed-In Priority modes) 🟢
 - Set maximum output power 🟢
 - Set maximum export power 🟢
 - Control export calibration 🟢
@@ -138,23 +138,24 @@ To disable polling for changes:
 Most likely, your data logger is not supported by the integration, for example the "DLS-W" model.
 Replace your data logger with a supported model, such as "S2-WL-ST" or "S3-WiFi-ST", to use the integration.
 
-### How does the "Peak Shaving" storage mode work?
+### Can I use this integration together with local Modbus integration?
 
-In "Peak Shaving" storage mode the inverter uses the battery to keep power imported from the grid at or below
-"Peak Shaving Max Usable Grid Power".
-When household load exceeds this limit, the battery covers the difference.
+Yes, this is a perfect combination I use in my setup.
+[Solis Modbus](https://github.com/Pho3niX90/solis_modbus) for real-time monitoring of inverter data, and this integration for controlling the inverter settings using the official Solis Cloud API. With `100121d0` S2-WL-ST datalogger firmware update you don't even need additional hardware like Waveshare Modbus gateway.
 
-"Peak Shaving Baseline SOC" is the level the battery is allowed to discharge to while peak shaving.
-Once the battery reaches it, peak shaving stops and the grid supplies any additional load.
-If the battery is below the baseline and grid import is under the limit,
-the spare import capacity is used to charge the battery back up to the baseline.
-
-### What is the difference between "Peak Shaving" storage mode and "Grid Peak Shaving"?
+### What is the difference between "Peak-Shaving" storage mode and "Grid Peak Shaving"?
 
 They are two independent features:
 
-- "Peak Shaving" is a storage mode, selected instead of "Self-Use", "Feed-In Priority" or "Off-Grid".
+- "Peak-Shaving" is a storage mode, selected instead of "Self-Use", "Feed-In Priority" or "Off-Grid".
   It is configured with "Peak Shaving Max Usable Grid Power" and "Peak Shaving Baseline SOC".
+  In "Peak-Shaving" storage mode the inverter uses the battery to keep power imported from the grid at or below
+  "Peak Shaving Max Usable Grid Power".
+  When household load exceeds this limit, the battery covers the difference.
+  "Peak Shaving Baseline SOC" is the level the battery is allowed to discharge to while peak shaving.
+  Once the battery reaches it, peak shaving stops and the grid supplies any additional load.
+  If the battery is below the baseline and grid import is under the limit,
+  the spare import capacity is used to charge the battery back up to the baseline.
 - "Grid Peak Shaving" is an on/off import cap applied on top of the "Self-Use" or "Feed-In Priority" storage mode,
   configured with "Grid Peak Shaving Power".
   While the load stays below the cap, the inverter imports what it needs and keeps the battery idle to preserve stored
@@ -165,8 +166,3 @@ They are two independent features:
 
 The integration doesn't enforce any relationship between these entities, it's up to you to use them in a meaningful
 combination.
-
-### Can I use this integration together with local Modbus integration?
-
-Yes, this is a perfect combination I use in my setup.
-[Solis Modbus](https://github.com/Pho3niX90/solis_modbus) for real-time monitoring of inverter data, and this integration for controlling the inverter settings using the official Solis Cloud API. With `100121d0` S2-WL-ST datalogger firmware update you don't even need additional hardware like Waveshare Modbus gateway.
