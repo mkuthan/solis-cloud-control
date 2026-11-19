@@ -2,11 +2,12 @@ import logging
 from typing import TYPE_CHECKING
 
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN, Platform
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
-from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient, SolisCloudControlApiError
 from custom_components.solis_cloud_control.const import API_BASE_URL, CONF_INVERTER_SN
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry, SolisCloudControlData
@@ -36,7 +37,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: SolisCloudControl
     api_client = _create_api_client(hass, api_key, api_token)
 
     # create inverter
-    inverter_info = await create_inverter_info(api_client, inverter_sn)
+    try:
+        inverter_info = await create_inverter_info(api_client, inverter_sn)
+    except SolisCloudControlApiError as error:
+        raise ConfigEntryNotReady(f"Unable to read inverter info for '{inverter_sn}': {error}") from error
     inverter = create_inverter(inverter_info)
 
     # register the inverter in the device registry
