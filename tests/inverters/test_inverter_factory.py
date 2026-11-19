@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
     InverterAllowExport,
@@ -95,6 +96,16 @@ async def test_create_inverter_info_missing_fields(mock_api_client: AsyncMock) -
     assert result.power is None
     assert result.power_unit is None
     assert result.tou_v2_mode is None
+
+
+@pytest.mark.asyncio
+async def test_create_inverter_info_tou_v2_read_error(mock_api_client: AsyncMock) -> None:
+    mock_api_client.inverter_details.return_value = {"energyStorageControl": "1"}
+    mock_api_client.read.side_effect = SolisCloudControlApiError("any error")
+    inverter_sn = "any serial number"
+
+    with pytest.raises(SolisCloudControlApiError):
+        await create_inverter_info(mock_api_client, inverter_sn)
 
 
 @pytest.mark.asyncio

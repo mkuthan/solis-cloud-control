@@ -5,11 +5,17 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_API_KEY, CONF_API_TOKEN, CONF_TOKEN, Platform
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.solis_cloud_control import async_migrate_entry, async_remove_config_entry_device
+from custom_components.solis_cloud_control import (
+    async_migrate_entry,
+    async_remove_config_entry_device,
+    async_setup_entry,
+)
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 from custom_components.solis_cloud_control.inverters.inverter import Inverter, InverterInfo
 from tests.helpers import ensure
@@ -133,6 +139,25 @@ async def test_async_setup_entry_undefined_inverter(
     entity_registry = er.async_get(hass)
     entries = er.async_entries_for_config_entry(entity_registry, mock_config_entry.entry_id)
     assert len(entries) == 0
+
+
+async def test_async_setup_entry_inverter_info_api_error(
+    hass: HomeAssistant,
+    mock_api_client: AsyncMock,
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    with (
+        patch(
+            "custom_components.solis_cloud_control._create_api_client",
+            return_value=mock_api_client,
+        ),
+        patch(
+            "custom_components.solis_cloud_control.create_inverter_info",
+            side_effect=SolisCloudControlApiError("any error"),
+        ),
+        pytest.raises(ConfigEntryNotReady),
+    ):
+        await async_setup_entry(hass, cast("SolisCloudControlConfigEntry", mock_config_entry))
 
 
 @pytest.fixture
