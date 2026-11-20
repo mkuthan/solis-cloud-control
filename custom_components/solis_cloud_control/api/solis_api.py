@@ -113,6 +113,35 @@ class SolisCloudControlApiClient:
 
         return await self._retry_policy(read_batch_operation, max_retry_time)
 
+    async def read_register(
+        self, inverter_sn: str, addr: int, function_code: str = "03", max_retry_time: float = _MAX_RETRY_TIME_SECONDS
+    ) -> str:
+        async def read_operation() -> str:
+            payload = {"inverterSn": inverter_sn, "modbusAddr": addr, "functionCode": function_code}
+            data_array = await self._execute_request(self._READ_ENDPOINT, payload)
+
+            if data_array is None:
+                raise SolisCloudControlApiError("ReadRegister failed: missing 'data' field")
+
+            if not isinstance(data_array, list):
+                raise SolisCloudControlApiError("ReadRegister failed: 'data' field is not an array")
+
+            result = ""
+            for data in data_array:
+                code = data.get("code")
+
+                if code is not None and str(code) != "0":
+                    error_msg = data.get("msg", "Unknown error")
+                    raise SolisCloudControlApiError(f"ReadRegister failed: {error_msg}", response_code=str(code))
+
+                # TODO: improve
+                result = data["detail"][0]["value"]
+                break
+
+            return result
+
+        return await self._retry_policy(read_operation, max_retry_time)
+
     async def control(
         self,
         inverter_sn: str,
@@ -144,6 +173,26 @@ class SolisCloudControlApiClient:
             return
 
         return await self._retry_policy(control_operation, max_retry_time)
+
+    async def control_at_command(
+        self,
+        inverter_sn: str,
+        frame: str,
+        max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
+    ) -> None:
+        async def operation() -> None:
+            payload = {"inverterSn": inverter_sn, "atCommand": f"AT+TEST=GIN485:{frame}"}
+            data_array = await self._execute_request(self._CONTROL_ENDPOINT, payload)
+            if not isinstance(data_array, list):
+                raise SolisCloudControlApiError("Control failed: 'data' field is not an array")
+            for data in data_array:
+                code = data.get("code")
+                if code is not None and str(code) != "0":
+                    raise SolisCloudControlApiError(
+                        f"Control failed: {data.get('msg', 'Unknown error')}", response_code=str(code)
+                    )
+
+        return await self._retry_policy(operation, max_retry_time)
 
     async def inverter_list(
         self,
