@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
+from custom_components.solis_cloud_control.api.solis_api_error import SolisCloudControlApiError
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator, SolisCloudControlData
 from tests.helpers import assert_control
 

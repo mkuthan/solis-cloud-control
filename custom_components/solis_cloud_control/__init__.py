@@ -7,7 +7,8 @@ from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
-from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient, SolisCloudControlApiError
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
+from custom_components.solis_cloud_control.api.solis_api_error import SolisCloudControlApiError
 from custom_components.solis_cloud_control.const import API_BASE_URL, CONF_INVERTER_SN
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry, SolisCloudControlData
