@@ -5,6 +5,11 @@ from typing import Any
 
 import aiohttp
 
+from custom_components.solis_cloud_control.api.solis_api_error import (
+    SolisCloudControlApiError,
+    SolisCloudControlPermanentApiError,
+    SolisCloudControlTransientApiError,
+)
 from custom_components.solis_cloud_control.api.solis_api_utils import (
     current_date,
     digest,
@@ -14,24 +19,6 @@ from custom_components.solis_cloud_control.api.solis_api_utils import (
 from custom_components.solis_cloud_control.utils.retry_policy import RetryPolicy
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class SolisCloudControlApiError(Exception):
-    def __init__(
-        self,
-        message: str,
-        status_code: int | None = None,
-        response_code: str | None = None,
-    ) -> None:
-        self.status_code = status_code
-        self.response_code = response_code
-        final_message = message
-        if status_code is not None:
-            final_message = f"{final_message} (HTTP status code: {status_code})"
-        if response_code is not None:
-            final_message = f"{final_message} (API response code: {response_code})"
-
-        super().__init__(final_message)
 
 
 class SolisCloudControlApiClient:
@@ -44,7 +31,7 @@ class SolisCloudControlApiClient:
     _CONCURRENT_REQUESTS = 1
     _MAX_RETRY_TIME_SECONDS = 30
 
-    _RETRY_POLICY = RetryPolicy(retryable_exception=SolisCloudControlApiError)
+    _RETRY_POLICY = RetryPolicy(retryable_exception=SolisCloudControlTransientApiError)
 
     def __init__(
         self,
@@ -70,10 +57,10 @@ class SolisCloudControlApiClient:
             data = await self._execute_request(self._READ_ENDPOINT, payload)
 
             if data is None:
-                raise SolisCloudControlApiError("Read failed: missing 'data' field")
+                raise SolisCloudControlPermanentApiError("Read failed: missing 'data' field")
 
             if "msg" not in data:
-                raise SolisCloudControlApiError("Read failed: missing 'msg' field")
+                raise SolisCloudControlPermanentApiError("Read failed: missing 'msg' field")
 
             return data["msg"]
 
@@ -91,21 +78,21 @@ class SolisCloudControlApiClient:
             data = await self._execute_request(self._READ_BATCH_ENDPOINT, payload)
 
             if data is None:
-                raise SolisCloudControlApiError("ReadBatch failed: missing 'data' field")
+                raise SolisCloudControlPermanentApiError("ReadBatch failed: missing 'data' field")
 
             if not isinstance(data, list):
-                raise SolisCloudControlApiError("ReadBatch failed: 'data' field is not an array")
+                raise SolisCloudControlPermanentApiError("ReadBatch failed: 'data' field is not an array")
 
             result = {}
             for outer_item in data:
                 if not isinstance(outer_item, list):
-                    raise SolisCloudControlApiError("ReadBatch failed: 'data' field element is not an array")
+                    raise SolisCloudControlPermanentApiError("ReadBatch failed: 'data' field element is not an array")
 
                 for item in outer_item:
                     if "msg" not in item:
-                        raise SolisCloudControlApiError("ReadBatch failed: missing 'msg' field")
+                        raise SolisCloudControlPermanentApiError("ReadBatch failed: missing 'msg' field")
                     if "cid" not in item:
-                        raise SolisCloudControlApiError("ReadBatch failed: missing 'cid' field")
+                        raise SolisCloudControlPermanentApiError("ReadBatch failed: missing 'cid' field")
 
                     result[int(item["cid"])] = item["msg"]
 
@@ -129,17 +116,17 @@ class SolisCloudControlApiClient:
             data_array = await self._execute_request(self._CONTROL_ENDPOINT, payload)
 
             if data_array is None:
-                raise SolisCloudControlApiError("Control failed: missing 'data' field")
+                raise SolisCloudControlPermanentApiError("Control failed: missing 'data' field")
 
             if not isinstance(data_array, list):
-                raise SolisCloudControlApiError("Control failed: 'data' field is not an array")
+                raise SolisCloudControlPermanentApiError("Control failed: 'data' field is not an array")
 
             for data in data_array:
                 code = data.get("code")
 
                 if code is not None and str(code) != "0":
                     error_msg = data.get("msg", "Unknown error")
-                    raise SolisCloudControlApiError(f"Control failed: {error_msg}", response_code=str(code))
+                    raise SolisCloudControlApiError.create(f"Control failed: {error_msg}", response_code=str(code))
 
             return
 
@@ -154,13 +141,13 @@ class SolisCloudControlApiClient:
             data = await self._execute_request(self._INVERTER_LIST_ENDPOINT, payload)
 
             if data is None:
-                raise SolisCloudControlApiError("InverterList failed: missing 'data' field")
+                raise SolisCloudControlPermanentApiError("InverterList failed: missing 'data' field")
 
             if "page" not in data:
-                raise SolisCloudControlApiError("InverterList failed: missing 'page' field")
+                raise SolisCloudControlPermanentApiError("InverterList failed: missing 'page' field")
 
             if "records" not in data["page"]:
-                raise SolisCloudControlApiError("InverterList failed: missing 'records' field")
+                raise SolisCloudControlPermanentApiError("InverterList failed: missing 'records' field")
 
             return data["page"]["records"]
 
@@ -176,7 +163,7 @@ class SolisCloudControlApiClient:
             data = await self._execute_request(self._INVERTER_DETAILS_ENDPOINT, payload)
 
             if data is None:
-                raise SolisCloudControlApiError("InverterDetails failed: missing 'data' field")
+                raise SolisCloudControlPermanentApiError("InverterDetails failed: missing 'data' field")
 
             return data
 
@@ -214,7 +201,7 @@ class SolisCloudControlApiClient:
                     async with self._session.post(url, headers=headers, json=payload) as response:
                         if response.status != 200:
                             error_text = await response.text()
-                            raise SolisCloudControlApiError(error_text, status_code=response.status)
+                            raise SolisCloudControlApiError.create(error_text, status_code=response.status)
 
                         response_json = await response.json()
 
@@ -223,10 +210,12 @@ class SolisCloudControlApiClient:
                         code = response_json.get("code", "Unknown code")
                         if str(code) != "0":
                             error_msg = response_json.get("msg", "Unknown error")
-                            raise SolisCloudControlApiError(f"API operation failed: {error_msg}", response_code=code)
+                            raise SolisCloudControlApiError.create(
+                                f"API operation failed: {error_msg}", response_code=str(code)
+                            )
 
                         return response_json.get("data")
         except TimeoutError as err:
-            raise SolisCloudControlApiError(f"Timeout accessing {url}") from err
+            raise SolisCloudControlTransientApiError(f"Timeout accessing {url}") from err
         except aiohttp.ClientError as err:
-            raise SolisCloudControlApiError(f"Error accessing {url}: {str(err)}") from err
+            raise SolisCloudControlTransientApiError(f"Error accessing {url}: {str(err)}") from err

@@ -5,7 +5,12 @@ import pytest
 from aiohttp import ClientSession, web
 from aiohttp.test_utils import TestClient
 
-from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient, SolisCloudControlApiError
+from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
+from custom_components.solis_cloud_control.api.solis_api_error import (
+    SolisCloudControlApiError,
+    SolisCloudControlPermanentApiError,
+    SolisCloudControlTransientApiError,
+)
 
 if TYPE_CHECKING:
     from pytest_aiohttp.plugin import AiohttpClient
@@ -159,18 +164,18 @@ async def mock_read_endpoint_missing_msg_field(request: web.Request) -> web.Resp
 @pytest.mark.parametrize(
     "mock_endpoint,expected_error",
     [
-        (mock_read_endpoint_http_error, SolisCloudControlApiError("Internal Server Error", status_code=500)),
+        (mock_read_endpoint_http_error, SolisCloudControlTransientApiError("Internal Server Error", status_code=500)),
         (
             mock_read_endpoint_api_error,
-            SolisCloudControlApiError("API operation failed: API Error", response_code="100"),
+            SolisCloudControlPermanentApiError("API operation failed: API Error", response_code="100"),
         ),
         (
             mock_read_endpoint_missing_data_field,
-            SolisCloudControlApiError("Read failed: missing 'data' field"),
+            SolisCloudControlPermanentApiError("Read failed: missing 'data' field"),
         ),
         (
             mock_read_endpoint_missing_msg_field,
-            SolisCloudControlApiError("Read failed: missing 'msg' field"),
+            SolisCloudControlPermanentApiError("Read failed: missing 'msg' field"),
         ),
     ],
 )
@@ -186,7 +191,7 @@ async def test_read_errors(
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    with pytest.raises(SolisCloudControlApiError) as excinfo:
+    with pytest.raises(type(expected_error)) as excinfo:
         await api_client.read(inverter_sn="any inverter", cid=-1, max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)
@@ -223,30 +228,33 @@ async def mock_read_batch_endpoint_missing_cid_field(request: web.Request) -> we
 @pytest.mark.parametrize(
     "mock_endpoint,expected_error",
     [
-        (mock_read_batch_endpoint_http_error, SolisCloudControlApiError("Internal Server Error", status_code=500)),
+        (
+            mock_read_batch_endpoint_http_error,
+            SolisCloudControlTransientApiError("Internal Server Error", status_code=500),
+        ),
         (
             mock_read_batch_endpoint_api_error,
-            SolisCloudControlApiError("API operation failed: API Error", response_code="100"),
+            SolisCloudControlPermanentApiError("API operation failed: API Error", response_code="100"),
         ),
         (
             mock_read_batch_endpoint_missing_data_field,
-            SolisCloudControlApiError("ReadBatch failed: missing 'data' field"),
+            SolisCloudControlPermanentApiError("ReadBatch failed: missing 'data' field"),
         ),
         (
             mock_read_batch_endpoint_invalid_data_format,
-            SolisCloudControlApiError("ReadBatch failed: 'data' field is not an array"),
+            SolisCloudControlPermanentApiError("ReadBatch failed: 'data' field is not an array"),
         ),
         (
             mock_read_batch_endpoint_invalid_outer_data_format,
-            SolisCloudControlApiError("ReadBatch failed: 'data' field element is not an array"),
+            SolisCloudControlPermanentApiError("ReadBatch failed: 'data' field element is not an array"),
         ),
         (
             mock_read_batch_endpoint_missing_msg_field,
-            SolisCloudControlApiError("ReadBatch failed: missing 'msg' field"),
+            SolisCloudControlPermanentApiError("ReadBatch failed: missing 'msg' field"),
         ),
         (
             mock_read_batch_endpoint_missing_cid_field,
-            SolisCloudControlApiError("ReadBatch failed: missing 'cid' field"),
+            SolisCloudControlPermanentApiError("ReadBatch failed: missing 'cid' field"),
         ),
     ],
 )
@@ -262,7 +270,7 @@ async def test_read_batch_errors(
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    with pytest.raises(SolisCloudControlApiError) as excinfo:
+    with pytest.raises(type(expected_error)) as excinfo:
         await api_client.read_batch(inverter_sn="any inverter", cids=[-1], max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)
@@ -291,22 +299,25 @@ async def mock_control_endpoint_invalid_data_format(request: web.Request) -> web
 @pytest.mark.parametrize(
     "mock_endpoint,expected_error",
     [
-        (mock_control_endpoint_http_error, SolisCloudControlApiError("Internal Server Error", status_code=500)),
+        (
+            mock_control_endpoint_http_error,
+            SolisCloudControlTransientApiError("Internal Server Error", status_code=500),
+        ),
         (
             mock_control_endpoint_api_error,
-            SolisCloudControlApiError("API operation failed: API Error", response_code="100"),
+            SolisCloudControlPermanentApiError("API operation failed: API Error", response_code="100"),
         ),
         (
             mock_control_endpoint_control_error,
-            SolisCloudControlApiError("Control failed: Any Error", response_code="100"),
+            SolisCloudControlPermanentApiError("Control failed: Any Error", response_code="100"),
         ),
         (
             mock_control_endpoint_missing_data_field,
-            SolisCloudControlApiError("Control failed: missing 'data' field"),
+            SolisCloudControlPermanentApiError("Control failed: missing 'data' field"),
         ),
         (
             mock_control_endpoint_invalid_data_format,
-            SolisCloudControlApiError("Control failed: 'data' field is not an array"),
+            SolisCloudControlPermanentApiError("Control failed: 'data' field is not an array"),
         ),
     ],
 )
@@ -322,7 +333,7 @@ async def test_control_errors(
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    with pytest.raises(SolisCloudControlApiError) as excinfo:
+    with pytest.raises(type(expected_error)) as excinfo:
         await api_client.control(inverter_sn="any inverter", cid=-1, value="any value", max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)
@@ -343,22 +354,22 @@ async def mock_inverter_list_endpoint_missing_records(request: web.Request) -> w
 @pytest.mark.parametrize(
     "mock_endpoint,expected_error",
     [
-        (mock_read_endpoint_http_error, SolisCloudControlApiError("Internal Server Error", status_code=500)),
+        (mock_read_endpoint_http_error, SolisCloudControlTransientApiError("Internal Server Error", status_code=500)),
         (
             mock_read_endpoint_api_error,
-            SolisCloudControlApiError("API operation failed: API Error", response_code="100"),
+            SolisCloudControlPermanentApiError("API operation failed: API Error", response_code="100"),
         ),
         (
             mock_inverter_list_endpoint_missing_data_field,
-            SolisCloudControlApiError("InverterList failed: missing 'data' field"),
+            SolisCloudControlPermanentApiError("InverterList failed: missing 'data' field"),
         ),
         (
             mock_inverter_list_endpoint_missing_page,
-            SolisCloudControlApiError("InverterList failed: missing 'page' field"),
+            SolisCloudControlPermanentApiError("InverterList failed: missing 'page' field"),
         ),
         (
             mock_inverter_list_endpoint_missing_records,
-            SolisCloudControlApiError("InverterList failed: missing 'records' field"),
+            SolisCloudControlPermanentApiError("InverterList failed: missing 'records' field"),
         ),
     ],
 )
@@ -374,7 +385,7 @@ async def test_inverter_list_errors(
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    with pytest.raises(SolisCloudControlApiError) as excinfo:
+    with pytest.raises(type(expected_error)) as excinfo:
         await api_client.inverter_list(max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)
@@ -387,14 +398,14 @@ async def mock_inverter_details_endpoint_missing_data_field(request: web.Request
 @pytest.mark.parametrize(
     "mock_endpoint,expected_error",
     [
-        (mock_read_endpoint_http_error, SolisCloudControlApiError("Internal Server Error", status_code=500)),
+        (mock_read_endpoint_http_error, SolisCloudControlTransientApiError("Internal Server Error", status_code=500)),
         (
             mock_read_endpoint_api_error,
-            SolisCloudControlApiError("API operation failed: API Error", response_code="100"),
+            SolisCloudControlPermanentApiError("API operation failed: API Error", response_code="100"),
         ),
         (
             mock_inverter_details_endpoint_missing_data_field,
-            SolisCloudControlApiError("InverterDetails failed: missing 'data' field"),
+            SolisCloudControlPermanentApiError("InverterDetails failed: missing 'data' field"),
         ),
     ],
 )
@@ -410,7 +421,47 @@ async def test_inverter_details_errors(
     client = await aiohttp_client(app)
     api_client = create_api_client(client)
 
-    with pytest.raises(SolisCloudControlApiError) as excinfo:
+    with pytest.raises(type(expected_error)) as excinfo:
         await api_client.inverter_details(inverter_sn="any_inverter_sn", max_retry_time=0)
 
     assert str(excinfo.value) == str(expected_error)
+
+
+async def mock_read_endpoint_disconnect(request: web.Request) -> web.Response:
+    assert request.transport is not None
+    request.transport.close()
+    return web.Response()
+
+
+async def mock_read_endpoint_success(request: web.Request) -> web.Response:
+    return web.json_response({"code": "0", "msg": "Success", "data": {"msg": "any result"}})
+
+
+async def test_read_connection_error_is_transient(
+    create_api_client: ApiClientFactory, aiohttp_client: AiohttpClient
+) -> None:
+    app = web.Application()
+    app.router.add_route("POST", SolisCloudControlApiClient._READ_ENDPOINT, mock_read_endpoint_disconnect)
+
+    client = await aiohttp_client(app)
+    api_client = create_api_client(client)
+
+    with pytest.raises(SolisCloudControlTransientApiError):
+        await api_client.read(inverter_sn="any inverter", cid=-1, max_retry_time=0)
+
+
+async def test_read_timeout_is_transient(aiohttp_client: AiohttpClient) -> None:
+    app = web.Application()
+    app.router.add_route("POST", SolisCloudControlApiClient._READ_ENDPOINT, mock_read_endpoint_success)
+
+    client = await aiohttp_client(app)
+    api_client = SolisCloudControlApiClient(
+        base_url="",
+        api_key="any key",
+        api_token="any token",
+        session=cast("ClientSession", client),
+        timeout=0,
+    )
+
+    with pytest.raises(SolisCloudControlTransientApiError):
+        await api_client.read(inverter_sn="any inverter", cid=-1, max_retry_time=0)

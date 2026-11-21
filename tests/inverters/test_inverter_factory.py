@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
+from custom_components.solis_cloud_control.api.solis_api_error import SolisCloudControlApiError
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
     InverterAllowExport,

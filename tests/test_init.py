@@ -15,7 +15,7 @@ from custom_components.solis_cloud_control import (
     async_remove_config_entry_device,
     async_setup_entry,
 )
-from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiError
+from custom_components.solis_cloud_control.api.solis_api_error import SolisCloudControlApiError
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
 from custom_components.solis_cloud_control.inverters.inverter import Inverter, InverterInfo
 from tests.helpers import ensure

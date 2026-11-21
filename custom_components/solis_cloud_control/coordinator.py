@@ -5,12 +5,13 @@ from typing import TYPE_CHECKING
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient, SolisCloudControlApiError
+from custom_components.solis_cloud_control.api.solis_api_error import SolisCloudControlApiError
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
+    from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
     from custom_components.solis_cloud_control.inverters.inverter import Inverter
 
 _LOGGER = logging.getLogger(__name__)
