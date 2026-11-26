@@ -8,6 +8,7 @@ class SolisCloudControlApiError(Exception):
             "S9999",  # system busy (concurrency limit)
             "B0072",  # inverter offline
             "B0119",  # request frequency too high
+            "B0173",  # device has timed out
             "B0250",  # device unresponsive, please retry
             "B0115",  # command dispatch failed
             "B0180",  # read result timeout
