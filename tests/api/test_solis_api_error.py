@@ -21,7 +21,7 @@ def test_create_transient_from_status_code(status_code: int) -> None:
 
 @pytest.mark.parametrize(
     "response_code",
-    ["S9999", "B0072", "B0119", "B0250", "B0115", "B0180"],
+    ["S9999", "B0072", "B0119", "B0173", "B0250", "B0115", "B0180"],
 )
 def test_create_transient_from_response_code(response_code: str) -> None:
     error = SolisCloudControlApiError.create("any message", response_code=response_code)
