@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import ClassVar
 
+from custom_components.solis_cloud_control.utils.modbus import to_u16
 from custom_components.solis_cloud_control.utils.safe_converters import (
     safe_convert_power_to_watts,
     safe_get_float_value,
@@ -11,6 +12,8 @@ from custom_components.solis_cloud_control.utils.safe_converters import (
 class InverterInfo:
     ENERGY_STORAGE_CONTROL_DISABLED: ClassVar[str] = "0"
     TOU_V2_MODE: ClassVar[str] = "43605"  # 0xAA55
+    REMOTE_DISPATCH_CAPABLE: ClassVar[int] = 0xAA55
+    REMOTE_DISPATCH_VERSION_DEFAULT: ClassVar[int] = 0
     MAX_EXPORT_POWER_DEFAULT: ClassVar[float] = 1_000_000
     MAX_EXPORT_POWER_STEP_DEFAULT: ClassVar[float] = 100
     MAX_EXPORT_POWER_SCALE_DEFAULT: ClassVar[float] = 1.0
@@ -33,6 +36,7 @@ class InverterInfo:
     parallel_number: str | None
     parallel_battery: str | None
     tou_v2_mode: str | None = None
+    remote_dispatch: list[int] | None = None
 
     @property
     def is_string_inverter(self) -> bool:
@@ -44,6 +48,21 @@ class InverterInfo:
     @property
     def is_tou_v2_enabled(self) -> bool:
         return self.tou_v2_mode is not None and self.tou_v2_mode == self.TOU_V2_MODE
+
+    @property
+    def is_remote_dispatch_enabled(self) -> bool:
+        return (
+            self.remote_dispatch is not None
+            and len(self.remote_dispatch) >= 2
+            and to_u16(self.remote_dispatch[0]) == self.REMOTE_DISPATCH_CAPABLE
+        )
+
+    @property
+    def remote_dispatch_version(self) -> int:
+        if self.is_remote_dispatch_enabled:
+            assert self.remote_dispatch is not None
+            return to_u16(self.remote_dispatch[1])
+        return self.REMOTE_DISPATCH_VERSION_DEFAULT
 
     @property
     def max_export_power(self) -> float:
@@ -448,6 +467,82 @@ class InverterGridPeakShavingPower:
 
 
 @dataclass(frozen=True)
+class InverterRemoteDispatchMaster:
+    """Presence enables the Remote Dispatch master switch."""
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchFailsafe:
+    min_value: int = 1
+    max_value: int = 1440
+    step: int = 1
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchPowerLimit:
+    min_value: int = 0
+    max_value: int = 6_553_400
+    step: int = 100
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchRange:
+    min_value: float
+    max_value: float
+    step: float
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchFunctions:
+    pv_shutdown: bool = True
+    digital_output: bool = True
+    allow_grid_charge: bool = True
+    off_grid_battery_standby: bool = True
+    battery_reserve: bool = False
+    disable_discharge: bool = False
+    demand_control: bool = False
+    pv_limit: bool = False
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchCommandConfig:
+    power: InverterRemoteDispatchRange
+    soc: InverterRemoteDispatchRange
+    reserve_soc: InverterRemoteDispatchRange | None = None
+    pv_limit: InverterRemoteDispatchRange | None = None
+    functions: InverterRemoteDispatchFunctions = field(default_factory=InverterRemoteDispatchFunctions)
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchCommand:
+    """Remote Dispatch command configuration; the domain owns the register layout."""
+
+    config: InverterRemoteDispatchCommandConfig | None = None
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchPeriod:
+    number: int = 1
+    config: InverterRemoteDispatchCommandConfig | None = None
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchPeriods:
+    config: InverterRemoteDispatchCommandConfig | None = None
+
+    @property
+    def periods(self) -> tuple[InverterRemoteDispatchPeriod, ...]:
+        return (
+            InverterRemoteDispatchPeriod(number=1, config=self.config),
+            InverterRemoteDispatchPeriod(number=2, config=self.config),
+            InverterRemoteDispatchPeriod(number=3, config=self.config),
+            InverterRemoteDispatchPeriod(number=4, config=self.config),
+            InverterRemoteDispatchPeriod(number=5, config=self.config),
+            InverterRemoteDispatchPeriod(number=6, config=self.config),
+        )
+
+
+@dataclass(frozen=True)
 class Inverter:
     info: InverterInfo
     on_off: InverterOnOff | None = None
@@ -473,68 +568,9 @@ class Inverter:
     peak_shaving_baseline_soc: InverterPeakShavingBaselineSOC | None = None
     grid_peak_shaving: InverterGridPeakShaving | None = None
     grid_peak_shaving_power: InverterGridPeakShavingPower | None = None
-
-    @property
-    def read_batch_cids(self) -> list[int]:
-        cids: list[int] = []
-
-        if self.on_off:
-            cids.append(self.on_off.on_cid)
-            cids.append(self.on_off.off_cid)
-        if self.time:
-            cids.append(self.time.cid)
-        if self.storage_mode:
-            cids.append(self.storage_mode.cid)
-        if self.charge_discharge_slots:
-            cids.extend(self.charge_discharge_slots.all_cids)
-        if self.max_output_power:
-            cids.append(self.max_output_power.cid)
-        if self.max_export_power:
-            cids.append(self.max_export_power.cid)
-        if self.export_calibration:
-            cids.append(self.export_calibration.cid)
-        if self.power_limit:
-            cids.append(self.power_limit.cid)
-        if self.allow_export:
-            cids.append(self.allow_export.cid)
-        if self.battery_reserve_soc:
-            cids.append(self.battery_reserve_soc.cid)
-        if self.battery_over_discharge_soc:
-            cids.append(self.battery_over_discharge_soc.cid)
-        if self.battery_force_charge_soc:
-            cids.append(self.battery_force_charge_soc.cid)
-        if self.battery_recovery_soc:
-            cids.append(self.battery_recovery_soc.cid)
-        if self.battery_max_charge_soc:
-            cids.append(self.battery_max_charge_soc.cid)
-        if self.battery_max_charge_current:
-            cids.append(self.battery_max_charge_current.cid)
-        if self.battery_max_discharge_current:
-            cids.append(self.battery_max_discharge_current.cid)
-        if self.mppt_scan_interval:
-            cids.append(self.mppt_scan_interval.cid)
-        if self.mppt_scanning:
-            cids.append(self.mppt_scanning.cid)
-        if self.peak_shaving_max_usable_grid_power:
-            cids.append(self.peak_shaving_max_usable_grid_power.cid)
-        if self.peak_shaving_baseline_soc:
-            cids.append(self.peak_shaving_baseline_soc.cid)
-        if self.grid_peak_shaving:
-            cids.append(self.grid_peak_shaving.cid)
-        if self.grid_peak_shaving_power:
-            cids.append(self.grid_peak_shaving_power.cid)
-
-        return cids
-
-    @property
-    def read_cids(self) -> list[int]:
-        cids = []
-
-        if self.charge_discharge_settings:
-            cids.append(self.charge_discharge_settings.cid)
-
-        return cids
-
-    @property
-    def all_cids(self) -> list[int]:
-        return [*self.read_batch_cids, *self.read_cids]
+    remote_dispatch_master: InverterRemoteDispatchMaster | None = None
+    remote_dispatch_failsafe: InverterRemoteDispatchFailsafe | None = None
+    remote_dispatch_import_limit: InverterRemoteDispatchPowerLimit | None = None
+    remote_dispatch_export_limit: InverterRemoteDispatchPowerLimit | None = None
+    remote_dispatch_realtime: InverterRemoteDispatchCommand | None = None
+    remote_dispatch_periods: InverterRemoteDispatchPeriods | None = None

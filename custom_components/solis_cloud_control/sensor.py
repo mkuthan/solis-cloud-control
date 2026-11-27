@@ -147,7 +147,7 @@ class BatterySocSensor(SolisCloudControlEntity, SensorEntity):
         self.inverter_battery_soc = inverter_battery_soc
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_battery_soc.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_battery_soc.cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -164,5 +164,5 @@ class BatteryCurrentSensor(SolisCloudControlEntity, SensorEntity):
         self.inverter_battery_current = inverter_battery_current
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_battery_current.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_battery_current.cid)
         self._attr_native_value = safe_get_float_value(value_str)

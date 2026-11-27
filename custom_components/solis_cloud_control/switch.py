@@ -1,11 +1,11 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
 
-from .entity import SolisCloudControlEntity
+from .entity import RemoteDispatchEntity, SolisCloudControlEntity
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -19,6 +19,8 @@ if TYPE_CHECKING:
         InverterGridPeakShaving,
         InverterMpptScanning,
         InverterOnOff,
+        InverterRemoteDispatchMaster,
+        InverterRemoteDispatchPowerLimit,
         InverterStorageMode,
     )
 
@@ -155,6 +157,47 @@ async def async_setup_entry(
             )
         )
 
+    if inverter.remote_dispatch_master is not None:
+        entities.append(
+            RemoteDispatchMasterSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="remote_dispatch_master",
+                    name="Remote Dispatch",
+                    icon="mdi:timer-play-outline",
+                ),
+                inverter_remote_dispatch_master=inverter.remote_dispatch_master,
+            )
+        )
+
+    if inverter.remote_dispatch_import_limit is not None:
+        entities.append(
+            RemoteDispatchLimitEnabledSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="remote_dispatch_import_limit_enabled",
+                    name="Remote Dispatch Import Limit Enabled",
+                    icon="mdi:transmission-tower-import",
+                ),
+                inverter_remote_dispatch_power_limit=inverter.remote_dispatch_import_limit,
+                limit_type="import",
+            )
+        )
+
+    if inverter.remote_dispatch_export_limit is not None:
+        entities.append(
+            RemoteDispatchLimitEnabledSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="remote_dispatch_export_limit_enabled",
+                    name="Remote Dispatch Export Limit Enabled",
+                    icon="mdi:transmission-tower-export",
+                ),
+                inverter_remote_dispatch_power_limit=inverter.remote_dispatch_export_limit,
+                limit_type="export",
+            )
+        )
+
     async_add_entities(entities)
 
 
@@ -177,8 +220,8 @@ class OnOffSwitch(SolisCloudControlEntity, SwitchEntity):
         await self.coordinator.control(self.inverter_on_off.off_cid, self.inverter_on_off.off_value)
 
     def _update_attrs(self) -> None:
-        on_value = self.coordinator.data.get(self.inverter_on_off.on_cid)
-        off_value = self.coordinator.data.get(self.inverter_on_off.off_cid)
+        on_value = self.coordinator.data.cids.get(self.inverter_on_off.on_cid)
+        off_value = self.coordinator.data.cids.get(self.inverter_on_off.off_cid)
 
         same_values = on_value == off_value
         valid_values = self.inverter_on_off.is_valid_value(on_value) and self.inverter_on_off.is_valid_value(off_value)
@@ -214,7 +257,7 @@ class AllowExportSwitch(SolisCloudControlEntity, SwitchEntity):
             return self.inverter_allow_export.off_value
 
     def _update_attrs(self) -> None:
-        value = self.coordinator.data.get(self.inverter_allow_export.cid)
+        value = self.coordinator.data.cids.get(self.inverter_allow_export.cid)
         self._attr_is_on = value == "0" if value is not None else None
 
 
@@ -243,7 +286,7 @@ class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):
 
     def _calculate_old_value(self) -> str:
         slots = self.inverter_charge_discharge_slots
-        data = self.coordinator.data
+        data = self.coordinator.data.cids
 
         slot_states = {
             slots.bit_charge_slot1: data.get(slots.charge_slot1.switch_cid) == "1",
@@ -268,7 +311,7 @@ class SlotV2Switch(SolisCloudControlEntity, SwitchEntity):
         return str(value)
 
     def _update_attrs(self) -> None:
-        value = self.coordinator.data.get(self.inverter_charge_discharge_slot.switch_cid)
+        value = self.coordinator.data.cids.get(self.inverter_charge_discharge_slot.switch_cid)
         self._attr_is_on = value == "1" if value is not None else None
 
 
@@ -283,7 +326,7 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
         self.inverter_storage_mode = inverter_storage_mode
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -298,7 +341,7 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
     async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -313,7 +356,7 @@ class BatteryReserveSwitch(SolisCloudControlEntity, SwitchEntity):
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
     def _update_attrs(self) -> None:
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -334,7 +377,7 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
         self.inverter_storage_mode = inverter_storage_mode
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -349,7 +392,7 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
     async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -364,7 +407,7 @@ class AllowGridChargingSwitch(SolisCloudControlEntity, SwitchEntity):
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
     def _update_attrs(self) -> None:
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -385,7 +428,7 @@ class TimeOfUseSwitch(SolisCloudControlEntity, SwitchEntity):
         self.inverter_storage_mode = inverter_storage_mode
 
     async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -400,7 +443,7 @@ class TimeOfUseSwitch(SolisCloudControlEntity, SwitchEntity):
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
     async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -415,7 +458,7 @@ class TimeOfUseSwitch(SolisCloudControlEntity, SwitchEntity):
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
     def _update_attrs(self) -> None:
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -452,7 +495,7 @@ class MpptScanningSwitch(SolisCloudControlEntity, SwitchEntity):
             return self.inverter_mppt_scanning.off_value
 
     def _update_attrs(self) -> None:
-        value = self.coordinator.data.get(self.inverter_mppt_scanning.cid)
+        value = self.coordinator.data.cids.get(self.inverter_mppt_scanning.cid)
         self._attr_is_on = value == self.inverter_mppt_scanning.on_value if value is not None else None
 
 
@@ -487,5 +530,64 @@ class GridPeakShavingSwitch(SolisCloudControlEntity, SwitchEntity):
             return self.inverter_grid_peak_shaving.off_value
 
     def _update_attrs(self) -> None:
-        value = self.coordinator.data.get(self.inverter_grid_peak_shaving.cid)
+        value = self.coordinator.data.cids.get(self.inverter_grid_peak_shaving.cid)
         self._attr_is_on = value == self.inverter_grid_peak_shaving.on_value if value is not None else None
+
+
+class RemoteDispatchMasterSwitch(RemoteDispatchEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        inverter_remote_dispatch_master: InverterRemoteDispatchMaster,
+    ) -> None:
+        super().__init__(coordinator, entity_description)
+        self.inverter_remote_dispatch_master = inverter_remote_dispatch_master
+
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        _LOGGER.info("Turn on '%s'", self.name)
+        await self.coordinator.async_start_dispatch()
+
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        _LOGGER.info("Turn off '%s'", self.name)
+        await self.coordinator.async_stop_dispatch()
+
+    def _update_attrs(self) -> None:
+        dispatch = self.dispatch
+        self._attr_is_on = dispatch.settings.enabled if dispatch is not None and dispatch.settings is not None else None
+
+
+class RemoteDispatchLimitEnabledSwitch(RemoteDispatchEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        inverter_remote_dispatch_power_limit: InverterRemoteDispatchPowerLimit,
+        limit_type: Literal["import", "export"],
+    ) -> None:
+        super().__init__(coordinator, entity_description)
+        self.inverter_remote_dispatch_power_limit = inverter_remote_dispatch_power_limit
+        self.limit_type = limit_type
+
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        await self._set_enabled(True)
+
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        await self._set_enabled(False)
+
+    async def _set_enabled(self, enabled: bool) -> None:
+        _LOGGER.info("Set '%s' to %s", self.name, enabled)
+        if self.limit_type == "import":
+            await self.coordinator.async_update_dispatch(lambda dispatch: dispatch.with_import_limit_enabled(enabled))
+        else:
+            await self.coordinator.async_update_dispatch(lambda dispatch: dispatch.with_export_limit_enabled(enabled))
+
+    def _update_attrs(self) -> None:
+        dispatch = self.dispatch
+        settings = dispatch.settings if dispatch is not None else None
+        if settings is None:
+            self._attr_is_on = None
+        elif self.limit_type == "import":
+            self._attr_is_on = settings.import_limit_enabled
+        else:
+            self._attr_is_on = settings.export_limit_enabled

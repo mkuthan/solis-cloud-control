@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 type SetData = Callable[[dict[int, str | None]], Awaitable[None]]
 
+type SetRegisters = Callable[[dict[int, int | None]], Awaitable[None]]
+
 type GetEntityId = Callable[[Platform, str], str]
 
 

@@ -2,7 +2,13 @@ from dataclasses import replace
 
 import pytest
 
-from custom_components.solis_cloud_control.inverters.inverter import InverterInfo, InverterOnOff
+from custom_components.solis_cloud_control.inverters.inverter import (
+    InverterInfo,
+    InverterOnOff,
+    InverterRemoteDispatchCommandConfig,
+    InverterRemoteDispatchPeriods,
+    InverterRemoteDispatchRange,
+)
 
 
 @pytest.mark.parametrize(
@@ -36,6 +42,31 @@ def test_inverter_info_is_tou_v2_enabled(
 ) -> None:
     inverter = replace(any_inverter_info, tou_v2_mode=tou_v2_mode)
     assert inverter.is_tou_v2_enabled == expected
+
+
+@pytest.mark.parametrize(
+    "remote_dispatch,enabled,version",
+    [
+        ([0xAA55, 1], True, 1),
+        ([0xAA55, 2], True, 2),
+        ([0xAA55, 3], True, 3),
+        ([0xAA55, 4], True, 4),
+        ([0xAA55, 7], True, 7),
+        ([-21931, 2], True, 2),
+        ([0xAA55, 0], True, 0),
+        ([0xAA55], False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+        ([0, 0], False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+        ([0, 5], False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+        ([5, 0], False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+        (None, False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+    ],
+)
+def test_inverter_info_remote_dispatch(
+    any_inverter_info: InverterInfo, remote_dispatch: list[int] | None, enabled: bool, version: int
+) -> None:
+    inverter = replace(any_inverter_info, remote_dispatch=remote_dispatch)
+    assert inverter.is_remote_dispatch_enabled == enabled
+    assert inverter.remote_dispatch_version == version
 
 
 @pytest.mark.parametrize(
@@ -154,3 +185,21 @@ def test_inverter_info_parallel_battery_count(
 def test_inverter_on_off_is_valid_value(value: None | str, expected: bool) -> None:
     inverter_on_off = InverterOnOff()
     assert inverter_on_off.is_valid_value(value) == expected
+
+
+def test_remote_dispatch_periods() -> None:
+    periods = InverterRemoteDispatchPeriods()
+
+    assert [period.number for period in periods.periods] == [1, 2, 3, 4, 5, 6]
+
+
+def test_remote_dispatch_period_config() -> None:
+    config = InverterRemoteDispatchCommandConfig(
+        power=InverterRemoteDispatchRange(-10_000, 10_000, 10),
+        soc=InverterRemoteDispatchRange(0, 100, 1),
+    )
+    periods = InverterRemoteDispatchPeriods(config=config)
+
+    period = periods.periods[0]
+
+    assert period.config is config

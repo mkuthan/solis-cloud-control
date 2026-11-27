@@ -115,7 +115,7 @@ class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
         self.slot_type = slot_type
 
     async def async_set_value(self, value: str) -> None:
-        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_charge_discharge_settings.cid)
         charge_discharge_settings = ChargeDischargeSettings.create(current_value)
 
         if charge_discharge_settings is None:
@@ -133,7 +133,7 @@ class TimeSlotV1Text(SolisCloudControlEntity, TextEntity):
         await self.coordinator.control(self.inverter_charge_discharge_settings.cid, value_str)
 
     def _update_attrs(self) -> None:
-        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_charge_discharge_settings.cid)
 
         charge_discharge_settings = ChargeDischargeSettings.create(current_value)
         if charge_discharge_settings is None:
@@ -167,4 +167,4 @@ class TimeSlotV2Text(SolisCloudControlEntity, TextEntity):
         await self.coordinator.control(self.inverter_charge_discharge_slot.time_cid, value)
 
     def _update_attrs(self) -> None:
-        self._attr_native_value = self.coordinator.data.get(self.inverter_charge_discharge_slot.time_cid)
+        self._attr_native_value = self.coordinator.data.cids.get(self.inverter_charge_discharge_slot.time_cid)

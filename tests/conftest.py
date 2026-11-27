@@ -9,6 +9,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_socket import enable_socket, socket_allow_hosts
 
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
+from custom_components.solis_cloud_control.coordinator import SolisCloudControlData
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
     InverterAllowExport,
@@ -33,6 +34,14 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterPeakShavingBaselineSOC,
     InverterPeakShavingMaxUsableGridPower,
     InverterPowerLimit,
+    InverterRemoteDispatchCommand,
+    InverterRemoteDispatchCommandConfig,
+    InverterRemoteDispatchFailsafe,
+    InverterRemoteDispatchFunctions,
+    InverterRemoteDispatchMaster,
+    InverterRemoteDispatchPeriods,
+    InverterRemoteDispatchPowerLimit,
+    InverterRemoteDispatchRange,
     InverterStorageMode,
     InverterTime,
 )
@@ -42,7 +51,7 @@ if TYPE_CHECKING:
 
     from homeassistant.core import HomeAssistant
 
-    from tests.helpers import GetEntityId, SetData
+    from tests.helpers import GetEntityId, SetData, SetRegisters
 
 
 # https://github.com/MatthewFlamm/pytest-homeassistant-custom-component/issues/154
@@ -67,7 +76,7 @@ def mock_coordinator() -> Mock:
     coordinator = Mock()
     coordinator.control = AsyncMock()
     coordinator.control_no_check = AsyncMock()
-    coordinator.data = {}
+    coordinator.data = SolisCloudControlData()
     coordinator.last_update_success = True
     coordinator.config_entry = Mock()
     coordinator.config_entry.entry_id = "any_entry_id"
@@ -107,11 +116,28 @@ def any_inverter_info() -> InverterInfo:
         parallel_number="any_parallel_number",
         parallel_battery="any_parallel_battery",
         tou_v2_mode="any_tou_v2_mode",
+        remote_dispatch=[0xAA55, 3],
+    )
+
+
+def _remote_dispatch_command_config() -> InverterRemoteDispatchCommandConfig:
+    return InverterRemoteDispatchCommandConfig(
+        power=InverterRemoteDispatchRange(-10_000, 10_000, 10),
+        soc=InverterRemoteDispatchRange(0, 100, 1),
+        reserve_soc=InverterRemoteDispatchRange(0, 100, 1),
+        pv_limit=InverterRemoteDispatchRange(0, 100, 0.01),
+        functions=InverterRemoteDispatchFunctions(
+            battery_reserve=True,
+            disable_discharge=True,
+            demand_control=True,
+            pv_limit=True,
+        ),
     )
 
 
 @pytest.fixture
 def any_inverter(any_inverter_info: InverterInfo) -> Inverter:
+    command_config = _remote_dispatch_command_config()
     return Inverter(
         info=any_inverter_info,
         on_off=InverterOnOff(),
@@ -137,6 +163,12 @@ def any_inverter(any_inverter_info: InverterInfo) -> Inverter:
         peak_shaving_baseline_soc=InverterPeakShavingBaselineSOC(),
         grid_peak_shaving=InverterGridPeakShaving(),
         grid_peak_shaving_power=InverterGridPeakShavingPower(),
+        remote_dispatch_master=InverterRemoteDispatchMaster(),
+        remote_dispatch_failsafe=InverterRemoteDispatchFailsafe(),
+        remote_dispatch_import_limit=InverterRemoteDispatchPowerLimit(),
+        remote_dispatch_export_limit=InverterRemoteDispatchPowerLimit(),
+        remote_dispatch_realtime=InverterRemoteDispatchCommand(config=command_config),
+        remote_dispatch_periods=InverterRemoteDispatchPeriods(config=command_config),
     )
 
 
@@ -160,6 +192,7 @@ async def setup_integration(
 ) -> AsyncGenerator[MockConfigEntry]:
     mock_api_client.read_batch.return_value = {}
     mock_api_client.read.return_value = None
+    mock_api_client.read_registers.side_effect = lambda _sn, _register, **kw: [0] * kw["register_number"]
 
     with patch("homeassistant.helpers.entity.Entity.entity_registry_enabled_default", new=True):
         await hass.config_entries.async_setup(mock_config_entry.entry_id)
@@ -184,7 +217,25 @@ def set_data(hass: HomeAssistant, setup_integration: MockConfigEntry) -> SetData
     # Merges into the coordinator data and waits for entities to process the update
     async def _set_data(values: dict[int, str | None]) -> None:
         coordinator = setup_integration.runtime_data.coordinator
-        coordinator.async_set_updated_data({**coordinator.data, **values})
+        coordinator.async_set_updated_data(
+            SolisCloudControlData(
+                cids={**coordinator.data.cids, **values},
+                remote_dispatch=coordinator.data.remote_dispatch,
+            )
+        )
         await hass.async_block_till_done()
 
     return _set_data
+
+
+@pytest.fixture
+def set_registers(hass: HomeAssistant, setup_integration: MockConfigEntry) -> SetRegisters:
+    # Merges into the coordinator register cache, re-decodes the snapshot and waits for entities
+    async def _set_registers(values: dict[int, int | None]) -> None:
+        coordinator = setup_integration.runtime_data.coordinator
+        data = coordinator.data
+        assert data is not None
+        coordinator.async_set_updated_data(coordinator._snapshot(data.cids, {**coordinator._registers, **values}))
+        await hass.async_block_till_done()
+
+    return _set_registers

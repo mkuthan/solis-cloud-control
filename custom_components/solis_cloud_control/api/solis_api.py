@@ -100,6 +100,64 @@ class SolisCloudControlApiClient:
 
         return await self._retry_policy(read_batch_operation, max_retry_time)
 
+    async def read_registers(
+        self,
+        inverter_sn: str,
+        addr: int,
+        function_code: str = "03",
+        register_number: int = 1,
+        max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
+    ) -> list[int]:
+        async def read_operation() -> list[int]:
+            payload = {
+                "inverterSn": inverter_sn,
+                "modbusAddr": addr,
+                "functionCode": function_code,
+                "registerNumber": register_number,
+            }
+            data_array = await self._execute_request(self._READ_ENDPOINT, payload)
+
+            if data_array is None:
+                raise SolisCloudControlPermanentApiError("ReadRegisters failed: missing 'data' field")
+
+            if not isinstance(data_array, list):
+                raise SolisCloudControlPermanentApiError("ReadRegisters failed: 'data' field is not an array")
+
+            if not data_array:
+                raise SolisCloudControlPermanentApiError("ReadRegisters failed: empty 'data' array")
+
+            data = data_array[0]
+            if not isinstance(data, dict):
+                raise SolisCloudControlPermanentApiError("ReadRegisters failed: invalid 'data' element")
+
+            code = data.get("code")
+            if code is not None and str(code) != "0":
+                error_msg = data.get("msg", "Unknown error")
+                raise SolisCloudControlApiError.create(f"ReadRegisters failed: {error_msg}", response_code=str(code))
+
+            detail = data.get("detail")
+            if not isinstance(detail, list):
+                raise SolisCloudControlPermanentApiError("ReadRegisters failed: missing 'detail' field")
+
+            if not detail:
+                raise SolisCloudControlPermanentApiError("ReadRegisters failed: empty 'detail' array")
+
+            if not isinstance(detail[0], dict):
+                raise SolisCloudControlPermanentApiError("ReadRegisters failed: invalid 'detail' element")
+
+            values = detail[0].get("values")
+            if not isinstance(values, list):
+                raise SolisCloudControlPermanentApiError("ReadRegisters failed: missing 'values' field")
+
+            if len(values) != register_number:
+                raise SolisCloudControlPermanentApiError(
+                    f"ReadRegisters failed: expected {register_number} values, got {len(values)}"
+                )
+
+            return [int(value) for value in values]
+
+        return await self._retry_policy(read_operation, max_retry_time)
+
     async def control(
         self,
         inverter_sn: str,
@@ -131,6 +189,33 @@ class SolisCloudControlApiClient:
             return
 
         return await self._retry_policy(control_operation, max_retry_time)
+
+    async def control_at_command(
+        self,
+        inverter_sn: str,
+        frame: str,
+        max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
+    ) -> None:
+        async def control_at_command_operation() -> None:
+            payload = {"inverterSn": inverter_sn, "atCommand": f"AT+TEST=GIN485:{frame}"}
+            data_array = await self._execute_request(self._CONTROL_ENDPOINT, payload)
+
+            if data_array is None:
+                raise SolisCloudControlPermanentApiError("ControlAtCommand failed: missing 'data' field")
+
+            if not isinstance(data_array, list):
+                raise SolisCloudControlPermanentApiError("ControlAtCommand failed: 'data' field is not an array")
+
+            for data in data_array:
+                code = data.get("code")
+
+                if code is not None and str(code) != "0":
+                    error_msg = data.get("msg", "Unknown error")
+                    raise SolisCloudControlApiError.create(
+                        f"ControlAtCommand failed: {error_msg}", response_code=str(code)
+                    )
+
+        return await self._retry_policy(control_at_command_operation, max_retry_time)
 
     async def inverter_list(
         self,

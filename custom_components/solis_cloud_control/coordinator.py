@@ -1,18 +1,32 @@
 import logging
+from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from custom_components.solis_cloud_control.api.solis_api_error import SolisCloudControlApiError
+from custom_components.solis_cloud_control.domain.remote_dispatch import (
+    DispatchCapabilities,
+    RegisterWrite,
+    RemoteDispatch,
+    apply_writes,
+    encode_changes,
+    encode_start,
+    encode_stop,
+    holding_from_registers,
+)
+from custom_components.solis_cloud_control.services.cid_service import CidServiceError
+from custom_components.solis_cloud_control.services.register_service import RegisterServiceError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
-    from custom_components.solis_cloud_control.api.solis_api import SolisCloudControlApiClient
-    from custom_components.solis_cloud_control.inverters.inverter import Inverter
+    from custom_components.solis_cloud_control.services.cid_service import CidService
+    from custom_components.solis_cloud_control.services.register_service import RegisterService
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,12 +36,11 @@ _UPDATE_INTERVAL = timedelta(minutes=5)
 
 _REQUEST_REFRESH_COOLDOWN_SECONDS = 10
 
-_UPDATE_BATCH_DATA_MAX_RETRY_TIME_SECONDS = 180
-_UPDATE_DATA_MAX_RETRY_TIME_SECONDS = 60
 
-
-class SolisCloudControlData(dict[int, str | None]):
-    pass
+@dataclass
+class SolisCloudControlData:
+    cids: dict[int, str | None] = field(default_factory=dict)
+    remote_dispatch: RemoteDispatch | None = None
 
 
 class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData]):
@@ -35,8 +48,9 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
         self,
         hass: HomeAssistant,
         config_entry: ConfigEntry,
-        api_client: SolisCloudControlApiClient,
-        inverter: Inverter,
+        cid_service: CidService,
+        register_service: RegisterService,
+        dispatch_capabilities: DispatchCapabilities,
     ) -> None:
         super().__init__(
             hass,
@@ -51,29 +65,26 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
                 immediate=False,
             ),
         )
-        self._api_client = api_client
-        self._inverter = inverter
+        self._cid_service = cid_service
+        self._register_service = register_service
+        self._dispatch_capabilities = dispatch_capabilities
+        self._registers: dict[int, int | None] = {}
+
+    def _snapshot(self, cids: dict[int, str | None], registers: dict[int, int | None]) -> SolisCloudControlData:
+        self._registers = registers
+        return SolisCloudControlData(
+            cids=cids,
+            remote_dispatch=RemoteDispatch.from_registers(registers, self._dispatch_capabilities),
+        )
 
     async def _async_update_data(self) -> SolisCloudControlData:
-        inverter_sn = self._inverter.info.serial_number
         try:
-            results = await self._api_client.read_batch(
-                inverter_sn,
-                self._inverter.read_batch_cids,
-                max_retry_time=_UPDATE_BATCH_DATA_MAX_RETRY_TIME_SECONDS,
-            )
-
-            for read_cid in self._inverter.read_cids:
-                results[read_cid] = await self._api_client.read(
-                    inverter_sn,
-                    read_cid,
-                    max_retry_time=_UPDATE_DATA_MAX_RETRY_TIME_SECONDS,
-                )
-
-            data = SolisCloudControlData({cid: results.get(cid) for cid in self._inverter.all_cids})
+            cids = await self._cid_service.read_all()
+            registers = await self._register_service.read_all()
+            data = self._snapshot(cids, registers)
             _LOGGER.debug("Data read from API: %s", data)
             return data
-        except SolisCloudControlApiError as error:
+        except (CidServiceError, RegisterServiceError) as error:
             raise UpdateFailed(error) from error
 
     async def control(
@@ -83,12 +94,43 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
         old_value: str | None = None,
     ) -> None:
         if self.data:
-            new_data = SolisCloudControlData(self.data)
-            new_data[cid] = value
+            cids = {**self.data.cids, cid: value}
+            new_data = SolisCloudControlData(cids=cids, remote_dispatch=self.data.remote_dispatch)
             self.async_set_updated_data(new_data)
 
         try:
-            inverter_sn = self._inverter.info.serial_number
-            await self._api_client.control(inverter_sn, cid, value, old_value)
+            await self._cid_service.control(cid, value, old_value)
         finally:
             await self.async_request_refresh()
+
+    def _require_dispatch(self) -> tuple[RemoteDispatch, list[int]]:
+        holding = holding_from_registers(self._registers)
+        if self.data is None or self.data.remote_dispatch is None or holding is None:
+            raise RegisterServiceError("Remote Dispatch state is not available")
+        return self.data.remote_dispatch, holding
+
+    async def _write_dispatch(self, cids: dict[int, str | None], writes: list[RegisterWrite]) -> None:
+        if not writes:
+            return
+
+        await self._register_service.write(writes)
+        self.async_set_updated_data(self._snapshot(cids, apply_writes(self._registers, writes)))
+        await self.async_request_refresh()
+
+    async def async_update_dispatch(self, edit: Callable[[RemoteDispatch], RemoteDispatch]) -> None:
+        before, holding = self._require_dispatch()
+        data = self.data
+        assert data is not None
+        await self._write_dispatch(data.cids, encode_changes(before, edit(before), holding))
+
+    async def async_start_dispatch(self) -> None:
+        before, holding = self._require_dispatch()
+        data = self.data
+        assert data is not None
+        await self._write_dispatch(data.cids, [encode_start(before, holding)])
+
+    async def async_stop_dispatch(self) -> None:
+        _, holding = self._require_dispatch()
+        data = self.data
+        assert data is not None
+        await self._write_dispatch(data.cids, [encode_stop(holding)])
