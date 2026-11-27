@@ -6,14 +6,16 @@ from typing import TYPE_CHECKING
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from custom_components.solis_cloud_control.domain.remote_dispatch import DispatchCapabilities, RemoteDispatch
 from custom_components.solis_cloud_control.services.cid_service import CidServiceError
+from custom_components.solis_cloud_control.services.register_service import RegisterServiceError
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
-    from custom_components.solis_cloud_control.domain.remote_dispatch import RemoteDispatch
     from custom_components.solis_cloud_control.services.cid_service import CidService
+    from custom_components.solis_cloud_control.services.register_service import RegisterService
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,6 +38,8 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
         hass: HomeAssistant,
         config_entry: ConfigEntry,
         cid_service: CidService,
+        register_service: RegisterService,
+        dispatch_capabilities: DispatchCapabilities,
     ) -> None:
         super().__init__(
             hass,
@@ -51,14 +55,25 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
             ),
         )
         self._cid_service = cid_service
+        self._register_service = register_service
+        self._dispatch_capabilities = dispatch_capabilities
+        self._registers: dict[int, int | None] = {}
+
+    def _snapshot(self, cids: dict[int, str | None], registers: dict[int, int | None]) -> SolisCloudControlData:
+        self._registers = registers
+        return SolisCloudControlData(
+            cids=cids,
+            remote_dispatch=RemoteDispatch.from_registers(registers, self._dispatch_capabilities),
+        )
 
     async def _async_update_data(self) -> SolisCloudControlData:
         try:
             cids = await self._cid_service.read_all()
-            data = SolisCloudControlData(cids=cids)
+            registers = await self._register_service.read_all()
+            data = self._snapshot(cids, registers)
             _LOGGER.debug("Data read from API: %s", data)
             return data
-        except CidServiceError as error:
+        except (CidServiceError, RegisterServiceError) as error:
             raise UpdateFailed(error) from error
 
     async def control(

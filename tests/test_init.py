@@ -63,6 +63,8 @@ async def test_async_setup_entry(
         charge_discharge_settings if cid == 103 else None
     )
 
+    mock_api_client.read_registers.side_effect = lambda _sn, _register, **kw: [0] * kw["register_number"]
+
     await hass.config_entries.async_setup(mock_config_entry.entry_id)
     await hass.async_block_till_done()
 
@@ -71,6 +73,10 @@ async def test_async_setup_entry(
 
     # coordinator.async_config_entry_first_refresh()
     assert mock_api_client.read_batch.called
+    coordinator = mock_config_entry.runtime_data.coordinator
+    assert mock_api_client.read_registers.await_count == 1
+    assert len(coordinator._registers) == 100
+    assert coordinator.data.remote_dispatch is not None
 
     assert hasattr(mock_config_entry, "runtime_data")
     assert mock_config_entry.runtime_data.coordinator is not None
