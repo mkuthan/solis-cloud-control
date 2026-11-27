@@ -54,7 +54,7 @@ class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
         super()._handle_coordinator_update()
 
     def _has_data(self) -> bool:
-        return all(self.coordinator.data.get(cid) is not None for cid in self.cids)
+        return all(self.coordinator.data.cids.get(cid) is not None for cid in self.cids)
 
     def _refresh_attrs(self) -> None:
         # HA does not read state of unavailable entities, parsing missing data would only log noise

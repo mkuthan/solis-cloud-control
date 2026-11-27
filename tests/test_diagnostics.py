@@ -1,6 +1,7 @@
 from dataclasses import asdict
 from typing import TYPE_CHECKING, cast
 
+from custom_components.solis_cloud_control.coordinator import SolisCloudControlData as CoordinatorData
 from custom_components.solis_cloud_control.data import SolisCloudControlData
 from custom_components.solis_cloud_control.diagnostics import async_get_config_entry_diagnostics
 
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 async def test_diagnostics(
     hass: HomeAssistant, mock_coordinator: Mock, mock_config_entry: MockConfigEntry, any_inverter: Inverter
 ) -> None:
-    mock_coordinator.data = {1: "any value"}
+    mock_coordinator.data = CoordinatorData(cids={1: "any value"})
     mock_config_entry.runtime_data = SolisCloudControlData(inverter=any_inverter, coordinator=mock_coordinator)
 
     diagnostics = await async_get_config_entry_diagnostics(
@@ -29,5 +30,5 @@ async def test_diagnostics(
 
     assert diagnostics == {
         "inverter_info": expected_inverter_info,
-        "coordinator_data": mock_coordinator.data,
+        "coordinator_data": {"cids": {1: "any value"}, "remote_dispatch": None},
     }

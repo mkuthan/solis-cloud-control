@@ -68,7 +68,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         self.inverter_storage_mode = inverter_storage_mode
 
     async def async_select_option(self, option: str) -> None:
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:
@@ -90,7 +90,7 @@ class StorageModeSelect(SolisCloudControlEntity, SelectEntity):
         await self.coordinator.control(self.inverter_storage_mode.cid, value_str)
 
     def _update_attrs(self) -> None:
-        current_value = self.coordinator.data.get(self.inverter_storage_mode.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_storage_mode.cid)
 
         storage_mode = StorageMode.create(current_value)
         if storage_mode is None:

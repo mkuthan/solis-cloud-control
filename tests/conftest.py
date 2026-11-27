@@ -9,6 +9,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_socket import enable_socket, socket_allow_hosts
 
 from custom_components.solis_cloud_control.const import CONF_INVERTER_SN, DOMAIN
+from custom_components.solis_cloud_control.coordinator import SolisCloudControlData
 from custom_components.solis_cloud_control.inverters.inverter import (
     Inverter,
     InverterAllowExport,
@@ -67,7 +68,7 @@ def mock_coordinator() -> Mock:
     coordinator = Mock()
     coordinator.control = AsyncMock()
     coordinator.control_no_check = AsyncMock()
-    coordinator.data = {}
+    coordinator.data = SolisCloudControlData()
     coordinator.last_update_success = True
     coordinator.config_entry = Mock()
     coordinator.config_entry.entry_id = "any_entry_id"
@@ -184,7 +185,12 @@ def set_data(hass: HomeAssistant, setup_integration: MockConfigEntry) -> SetData
     # Merges into the coordinator data and waits for entities to process the update
     async def _set_data(values: dict[int, str | None]) -> None:
         coordinator = setup_integration.runtime_data.coordinator
-        coordinator.async_set_updated_data({**coordinator.data, **values})
+        coordinator.async_set_updated_data(
+            SolisCloudControlData(
+                cids={**coordinator.data.cids, **values},
+                remote_dispatch=coordinator.data.remote_dispatch,
+            )
+        )
         await hass.async_block_till_done()
 
     return _set_data

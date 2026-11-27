@@ -351,7 +351,7 @@ class BatteryCurrentV1(SolisCloudControlEntity, NumberEntity):
         self.slot_type = slot_type
 
     async def async_set_native_value(self, value: float) -> None:
-        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_charge_discharge_settings.cid)
         charge_discharge_settings = ChargeDischargeSettings.create(current_value)
 
         if charge_discharge_settings is None:
@@ -372,7 +372,7 @@ class BatteryCurrentV1(SolisCloudControlEntity, NumberEntity):
         self._attr_native_max_value = self.inverter_charge_discharge_settings.current_max_value
 
         if self.inverter_battery_max_charge_discharge_current is not None:
-            battery_max_charge_discharge_current_str = self.coordinator.data.get(
+            battery_max_charge_discharge_current_str = self.coordinator.data.cids.get(
                 self.inverter_battery_max_charge_discharge_current.cid
             )
             battery_max_charge_discharge_current = safe_get_float_value(battery_max_charge_discharge_current_str)
@@ -381,7 +381,7 @@ class BatteryCurrentV1(SolisCloudControlEntity, NumberEntity):
                 parallel_battery_count = self.inverter_battery_max_charge_discharge_current.parallel_battery_count
                 self._attr_native_max_value = battery_max_charge_discharge_current * parallel_battery_count
 
-        current_value = self.coordinator.data.get(self.inverter_charge_discharge_settings.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_charge_discharge_settings.cid)
 
         charge_discharge_settings = ChargeDischargeSettings.create(current_value)
         if charge_discharge_settings is None:
@@ -423,7 +423,7 @@ class BatteryCurrentV2(SolisCloudControlEntity, NumberEntity):
         self._attr_native_max_value = self.inverter_charge_discharge_slot.current_max_value
 
         if self.inverter_battery_max_charge_discharge_current is not None:
-            battery_max_charge_discharge_current_str = self.coordinator.data.get(
+            battery_max_charge_discharge_current_str = self.coordinator.data.cids.get(
                 self.inverter_battery_max_charge_discharge_current.cid
             )
             battery_max_charge_discharge_current = safe_get_float_value(battery_max_charge_discharge_current_str)
@@ -432,7 +432,7 @@ class BatteryCurrentV2(SolisCloudControlEntity, NumberEntity):
                 parallel_battery_count = self.inverter_battery_max_charge_discharge_current.parallel_battery_count
                 self._attr_native_max_value = battery_max_charge_discharge_current * parallel_battery_count
 
-        value_str = self.coordinator.data.get(self.inverter_charge_discharge_slot.current_cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_charge_discharge_slot.current_cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -465,7 +465,7 @@ class BatterySocV2(SolisCloudControlEntity, NumberEntity):
     def _update_attrs(self) -> None:
         battery_over_discharge = None
         if self.inverter_battery_over_discharge_soc is not None:
-            battery_over_discharge_str = self.coordinator.data.get(self.inverter_battery_over_discharge_soc.cid)
+            battery_over_discharge_str = self.coordinator.data.cids.get(self.inverter_battery_over_discharge_soc.cid)
             battery_over_discharge = safe_get_float_value(battery_over_discharge_str)
 
         if battery_over_discharge is not None:
@@ -475,7 +475,7 @@ class BatterySocV2(SolisCloudControlEntity, NumberEntity):
 
         battery_max_charge = None
         if self.inverter_battery_max_charge_soc is not None:
-            battery_max_charge_str = self.coordinator.data.get(self.inverter_battery_max_charge_soc.cid)
+            battery_max_charge_str = self.coordinator.data.cids.get(self.inverter_battery_max_charge_soc.cid)
             battery_max_charge = safe_get_float_value(battery_max_charge_str)
 
         if battery_max_charge is not None:
@@ -483,7 +483,7 @@ class BatterySocV2(SolisCloudControlEntity, NumberEntity):
         else:
             self._attr_native_max_value = self.inverter_charge_discharge_slot.soc_max_value
 
-        value_str = self.coordinator.data.get(self.inverter_charge_discharge_slot.soc_cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_charge_discharge_slot.soc_cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -510,7 +510,7 @@ class MaxOutputPower(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_max_output_power.cid, value_str)
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_max_output_power.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_max_output_power.cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -537,7 +537,7 @@ class MaxExportPower(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_max_export_power.cid, value_str)
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_max_export_power.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_max_export_power.cid)
         value = safe_get_float_value(value_str)
         self._attr_native_value = value / self.inverter_max_export_power.scale if value is not None else None
 
@@ -565,7 +565,7 @@ class ExportCalibration(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_export_calibration.cid, value_str)
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_export_calibration.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_export_calibration.cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -592,7 +592,7 @@ class PowerLimit(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_power_limit.cid, value_str)
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_power_limit.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_power_limit.cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -624,7 +624,7 @@ class BatterySocNumber(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_battery_soc.cid, value_str)
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_battery_soc.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_battery_soc.cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -651,7 +651,7 @@ class BatteryMaxCurrentNumber(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_battery_max_current.cid, value_str)
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_battery_max_current.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_battery_max_current.cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -678,7 +678,7 @@ class MpptScanIntervalNumber(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_mppt_scan_interval.cid, value_str)
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_mppt_scan_interval.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_mppt_scan_interval.cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -705,7 +705,7 @@ class PeakShavingMaxUsableGridPower(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_peak_shaving_max_usable_grid_power.cid, value_str)
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_peak_shaving_max_usable_grid_power.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_peak_shaving_max_usable_grid_power.cid)
         self._attr_native_value = safe_get_float_value(value_str)
 
 
@@ -732,5 +732,5 @@ class GridPeakShavingPower(SolisCloudControlEntity, NumberEntity):
         await self.coordinator.control(self.inverter_grid_peak_shaving_power.cid, value_str)
 
     def _update_attrs(self) -> None:
-        value_str = self.coordinator.data.get(self.inverter_grid_peak_shaving_power.cid)
+        value_str = self.coordinator.data.cids.get(self.inverter_grid_peak_shaving_power.cid)
         self._attr_native_value = safe_get_float_value(value_str)

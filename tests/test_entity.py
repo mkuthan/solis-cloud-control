@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import pytest
 from homeassistant.helpers.entity import EntityDescription
 
+from custom_components.solis_cloud_control.coordinator import SolisCloudControlData
 from custom_components.solis_cloud_control.entity import SolisCloudControlEntity
 
 if TYPE_CHECKING:
@@ -45,7 +46,7 @@ class TestSolisCloudControlEntity:
             entity_description=EntityDescription(key="any_key", name="any name"),
             cids=1,
         )
-        mock_coordinator.data = coordinator_data
+        mock_coordinator.data = SolisCloudControlData(cids=coordinator_data)
         assert entity.available == expected_available
 
     @pytest.mark.parametrize(
@@ -68,7 +69,7 @@ class TestSolisCloudControlEntity:
             entity_description=EntityDescription(key="any_key", name="any name"),
             cids=[1, 2],
         )
-        mock_coordinator.data = coordinator_data
+        mock_coordinator.data = SolisCloudControlData(cids=coordinator_data)
         assert entity.available == expected_available
 
 
@@ -89,7 +90,7 @@ class TestRefreshAttrs:
             entity_description=EntityDescription(key="any_key", name="any name"),
             cids=[1, 2],
         )
-        mock_coordinator.data = coordinator_data
+        mock_coordinator.data = SolisCloudControlData(cids=coordinator_data)
 
         entity._refresh_attrs()
 

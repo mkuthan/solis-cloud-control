@@ -39,7 +39,8 @@ async def test_async_update_data(
 
     mock_cid_service.read_all.assert_awaited_once_with()
     assert isinstance(data, SolisCloudControlData)
-    assert data == {1: "value_1", 2: None}
+    assert data == SolisCloudControlData(cids={1: "value_1", 2: None})
+    assert data.remote_dispatch is None
 
 
 async def test_async_update_data_cid_service_error(
@@ -63,7 +64,7 @@ async def test_control_success(
     any_old_value = "any_old_value"
     any_initial_value = "initial_value"
 
-    coordinator.data = SolisCloudControlData({any_cid: any_initial_value})
+    coordinator.data = SolisCloudControlData(cids={any_cid: any_initial_value})
 
     with (
         patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_request_refresh,
@@ -71,7 +72,7 @@ async def test_control_success(
     ):
         await coordinator.control(any_cid, any_value, any_old_value)
 
-        mock_set_updated_data.assert_called_once_with({any_cid: any_value})
+        mock_set_updated_data.assert_called_once_with(SolisCloudControlData(cids={any_cid: any_value}))
         mock_cid_service.control.assert_awaited_once_with(any_cid, any_value, any_old_value)
         mock_request_refresh.assert_called_once()
 
@@ -103,7 +104,7 @@ async def test_control_cid_service_error(
     any_initial_value = "initial_value"
     any_error = "any error"
 
-    coordinator.data = SolisCloudControlData({any_cid: any_initial_value})
+    coordinator.data = SolisCloudControlData(cids={any_cid: any_initial_value})
 
     mock_cid_service.control.side_effect = CidServiceError(any_error)
 
@@ -116,6 +117,6 @@ async def test_control_cid_service_error(
 
         assert str(exc_info.value) == any_error
 
-        mock_set_updated_data.assert_called_once_with({any_cid: any_value})
+        mock_set_updated_data.assert_called_once_with(SolisCloudControlData(cids={any_cid: any_value}))
         mock_cid_service.control.assert_awaited_once_with(any_cid, any_value, any_old_value)
         mock_request_refresh.assert_called_once()

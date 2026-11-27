@@ -64,7 +64,7 @@ class InverterTimeEntity(SolisCloudControlEntity, DateTimeEntity):
         await self.coordinator.control(self.inverter_time.cid, value_str)
 
     def _update_attrs(self) -> None:
-        current_value = self.coordinator.data.get(self.inverter_time.cid)
+        current_value = self.coordinator.data.cids.get(self.inverter_time.cid)
         self._attr_native_value = parse_inverter_time(current_value)
 
         if self._attr_native_value is None:
