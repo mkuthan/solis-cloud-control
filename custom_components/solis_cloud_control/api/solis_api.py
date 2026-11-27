@@ -190,6 +190,33 @@ class SolisCloudControlApiClient:
 
         return await self._retry_policy(control_operation, max_retry_time)
 
+    async def control_at_command(
+        self,
+        inverter_sn: str,
+        frame: str,
+        max_retry_time: float = _MAX_RETRY_TIME_SECONDS,
+    ) -> None:
+        async def control_at_command_operation() -> None:
+            payload = {"inverterSn": inverter_sn, "atCommand": f"AT+TEST=GIN485:{frame}"}
+            data_array = await self._execute_request(self._CONTROL_ENDPOINT, payload)
+
+            if data_array is None:
+                raise SolisCloudControlPermanentApiError("ControlAtCommand failed: missing 'data' field")
+
+            if not isinstance(data_array, list):
+                raise SolisCloudControlPermanentApiError("ControlAtCommand failed: 'data' field is not an array")
+
+            for data in data_array:
+                code = data.get("code")
+
+                if code is not None and str(code) != "0":
+                    error_msg = data.get("msg", "Unknown error")
+                    raise SolisCloudControlApiError.create(
+                        f"ControlAtCommand failed: {error_msg}", response_code=str(code)
+                    )
+
+        return await self._retry_policy(control_at_command_operation, max_retry_time)
+
     async def inverter_list(
         self,
         max_retry_time: float = _MAX_RETRY_TIME_SECONDS,

@@ -520,6 +520,76 @@ async def test_control_errors(
     assert str(excinfo.value) == str(expected_error)
 
 
+async def test_control_at_command(create_api_client: ApiClientFactory, aiohttp_client: AiohttpClient) -> None:
+    any_inverter_sn = "any inverter sn"
+    any_frame = "01 10 AA BB"
+
+    async def mock_control_endpoint(request: web.Request) -> web.Response:
+        body = await request.json()
+        assert body.get("inverterSn") == any_inverter_sn
+        assert body.get("atCommand") == f"AT+TEST=GIN485:{any_frame}"
+        return web.json_response({"code": "0", "msg": "Success", "data": [{"code": "0"}]})
+
+    app = web.Application()
+    app.router.add_route("POST", SolisCloudControlApiClient._CONTROL_ENDPOINT, mock_control_endpoint)
+
+    client = await aiohttp_client(app)
+    api_client = create_api_client(client)
+
+    await api_client.control_at_command(inverter_sn=any_inverter_sn, frame=any_frame, max_retry_time=0)
+
+
+async def mock_control_at_command_endpoint_transient_error(request: web.Request) -> web.Response:
+    return web.json_response({"code": "0", "msg": "Success", "data": [{"code": "B0115", "msg": "Dispatch failed"}]})
+
+
+@pytest.mark.parametrize(
+    "mock_endpoint,expected_error",
+    [
+        (
+            mock_control_endpoint_http_error,
+            SolisCloudControlTransientApiError("Internal Server Error", status_code=500),
+        ),
+        (
+            mock_control_endpoint_api_error,
+            SolisCloudControlPermanentApiError("API operation failed: API Error", response_code="100"),
+        ),
+        (
+            mock_control_endpoint_control_error,
+            SolisCloudControlPermanentApiError("ControlAtCommand failed: Any Error", response_code="100"),
+        ),
+        (
+            mock_control_at_command_endpoint_transient_error,
+            SolisCloudControlTransientApiError("ControlAtCommand failed: Dispatch failed", response_code="B0115"),
+        ),
+        (
+            mock_control_endpoint_missing_data_field,
+            SolisCloudControlPermanentApiError("ControlAtCommand failed: missing 'data' field"),
+        ),
+        (
+            mock_control_endpoint_invalid_data_format,
+            SolisCloudControlPermanentApiError("ControlAtCommand failed: 'data' field is not an array"),
+        ),
+    ],
+)
+async def test_control_at_command_errors(
+    mock_endpoint: MockEndpoint,
+    expected_error: SolisCloudControlApiError,
+    create_api_client: ApiClientFactory,
+    aiohttp_client: AiohttpClient,
+) -> None:
+    app = web.Application()
+    app.router.add_route("POST", SolisCloudControlApiClient._CONTROL_ENDPOINT, mock_endpoint)
+
+    client = await aiohttp_client(app)
+    api_client = create_api_client(client)
+
+    with pytest.raises(type(expected_error)) as excinfo:
+        await api_client.control_at_command(inverter_sn="any inverter", frame="any frame", max_retry_time=0)
+
+    assert str(excinfo.value) == str(expected_error)
+
+
 async def mock_inverter_list_endpoint_missing_data_field(request: web.Request) -> web.Response:
     return web.json_response({"code": "0", "msg": "Success"})
 
