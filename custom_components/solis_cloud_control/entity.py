@@ -10,6 +10,8 @@ from custom_components.solis_cloud_control.coordinator import SolisCloudControlC
 if TYPE_CHECKING:
     from homeassistant.helpers.entity import EntityDescription
 
+    from custom_components.solis_cloud_control.domain.remote_dispatch import RemoteDispatch
+
 
 class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
     def __init__(
@@ -63,3 +65,51 @@ class SolisCloudControlEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
 
     def _update_attrs(self) -> None:
         """Derive `_attr_*` state from coordinator data, called only when data for all cids is present."""
+
+
+class RemoteDispatchEntity(CoordinatorEntity[SolisCloudControlCoordinator]):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: EntityDescription,
+    ) -> None:
+        super().__init__(coordinator)
+        self.entity_description = entity_description
+
+        assert coordinator.config_entry is not None
+
+        self._attr_has_entity_name = True
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_{entity_description.key}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={
+                (
+                    coordinator.config_entry.domain,
+                    coordinator.config_entry.data[CONF_INVERTER_SN],
+                ),
+            },
+        )
+
+    @property
+    def dispatch(self) -> RemoteDispatch | None:
+        data = self.coordinator.data
+        return data.remote_dispatch if data is not None else None
+
+    @property
+    def available(self) -> bool:
+        return self.coordinator.last_update_success and self.dispatch is not None
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._refresh_attrs()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._refresh_attrs()
+        super()._handle_coordinator_update()
+
+    def _refresh_attrs(self) -> None:
+        if self.dispatch is not None:
+            self._update_attrs()
+
+    def _update_attrs(self) -> None:
+        """Derive `_attr_*` state from the decoded Remote Dispatch snapshot."""
