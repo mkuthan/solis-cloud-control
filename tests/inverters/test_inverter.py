@@ -39,6 +39,31 @@ def test_inverter_info_is_tou_v2_enabled(
 
 
 @pytest.mark.parametrize(
+    "remote_dispatch,enabled,version",
+    [
+        ([0xAA55, 1], True, 1),
+        ([0xAA55, 2], True, 2),
+        ([0xAA55, 3], True, 3),
+        ([0xAA55, 4], True, 4),
+        ([0xAA55, 7], True, 7),
+        ([-21931, 2], True, 2),
+        ([0xAA55, 0], True, 0),
+        ([0xAA55], False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+        ([0, 0], False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+        ([0, 5], False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+        ([5, 0], False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+        (None, False, InverterInfo.REMOTE_DISPATCH_VERSION_DEFAULT),
+    ],
+)
+def test_inverter_info_remote_dispatch(
+    any_inverter_info: InverterInfo, remote_dispatch: list[int] | None, enabled: bool, version: int
+) -> None:
+    inverter = replace(any_inverter_info, remote_dispatch=remote_dispatch)
+    assert inverter.is_remote_dispatch_enabled == enabled
+    assert inverter.remote_dispatch_version == version
+
+
+@pytest.mark.parametrize(
     "power, power_unit, parallel_inverter_count, expected_power",
     [
         ("5", "kW", "1", 5000.0),

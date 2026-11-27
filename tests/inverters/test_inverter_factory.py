@@ -58,9 +58,15 @@ async def test_create_inverter_info(mock_api_client: AsyncMock) -> None:
     }
 
     mock_api_client.read.return_value = "any tou v2 mode"
+    mock_api_client.read_registers.return_value = [0, 0]
 
     inverter_sn = "any serial number"
     result = await create_inverter_info(mock_api_client, inverter_sn)
+
+    max_retry_time_seconds = 60
+    mock_api_client.inverter_details.assert_awaited_once_with(inverter_sn, max_retry_time_seconds)
+    mock_api_client.read.assert_awaited_once_with(inverter_sn, 6798, max_retry_time_seconds)
+    mock_api_client.read_registers.assert_awaited_once_with(inverter_sn, 34502, "04", 2, max_retry_time_seconds)
 
     assert result.serial_number == inverter_sn
     assert result.model == "any model"
@@ -75,6 +81,7 @@ async def test_create_inverter_info(mock_api_client: AsyncMock) -> None:
     assert result.parallel_number == "any parallel number"
     assert result.parallel_battery == "any parallel battery"
     assert result.tou_v2_mode == "any tou v2 mode"
+    assert result.remote_dispatch == [0, 0]
 
 
 @pytest.mark.asyncio
@@ -109,6 +116,16 @@ async def test_create_inverter_info_tou_v2_read_error(mock_api_client: AsyncMock
 
 
 @pytest.mark.asyncio
+async def test_create_inverter_info_dispatch_registers_read_error(mock_api_client: AsyncMock) -> None:
+    mock_api_client.inverter_details.return_value = {"energyStorageControl": "1"}
+    mock_api_client.read_registers.side_effect = SolisCloudControlApiError("any error")
+    inverter_sn = "any serial number"
+
+    with pytest.raises(SolisCloudControlApiError):
+        await create_inverter_info(mock_api_client, inverter_sn)
+
+
+@pytest.mark.asyncio
 async def test_create_inverter_info_string_inverter(mock_api_client: AsyncMock) -> None:
     mock_api_client.inverter_details.return_value = {
         "energyStorageControl": "0",
@@ -120,8 +137,10 @@ async def test_create_inverter_info_string_inverter(mock_api_client: AsyncMock) 
     assert result.serial_number == inverter_sn
     assert result.energy_storage_control == "0"
     assert result.tou_v2_mode is None
+    assert result.remote_dispatch is None
 
     mock_api_client.read.assert_not_called()
+    mock_api_client.read_registers.assert_not_called()
 
 
 def test_create_string_inverter(any_inverter_info: InverterInfo) -> None:

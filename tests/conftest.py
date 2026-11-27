@@ -108,6 +108,7 @@ def any_inverter_info() -> InverterInfo:
         parallel_number="any_parallel_number",
         parallel_battery="any_parallel_battery",
         tou_v2_mode="any_tou_v2_mode",
+        remote_dispatch=[0xAA55, 3],
     )
 
 
@@ -161,6 +162,7 @@ async def setup_integration(
 ) -> AsyncGenerator[MockConfigEntry]:
     mock_api_client.read_batch.return_value = {}
     mock_api_client.read.return_value = None
+    mock_api_client.read_registers.side_effect = lambda _sn, _register, **kw: [0] * kw["register_number"]
 
     with patch("homeassistant.helpers.entity.Entity.entity_registry_enabled_default", new=True):
         await hass.config_entries.async_setup(mock_config_entry.entry_id)

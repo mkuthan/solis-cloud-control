@@ -58,6 +58,10 @@ async def create_inverter_info(api_client: SolisCloudControlApiClient, inverter_
         tou_v2_mode = await api_client.read(inverter_sn, 6798, _MAX_RETRY_TIME_SECONDS)
         inverter_info = replace(inverter_info, tou_v2_mode=tou_v2_mode)
 
+    if not inverter_info.is_string_inverter:
+        remote_dispatch = await api_client.read_registers(inverter_sn, 34502, "04", 2, _MAX_RETRY_TIME_SECONDS)
+        inverter_info = replace(inverter_info, remote_dispatch=remote_dispatch)
+
     return inverter_info
 
 

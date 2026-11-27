@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import ClassVar
 
+from custom_components.solis_cloud_control.utils.modbus import to_u16
 from custom_components.solis_cloud_control.utils.safe_converters import (
     safe_convert_power_to_watts,
     safe_get_float_value,
@@ -11,6 +12,8 @@ from custom_components.solis_cloud_control.utils.safe_converters import (
 class InverterInfo:
     ENERGY_STORAGE_CONTROL_DISABLED: ClassVar[str] = "0"
     TOU_V2_MODE: ClassVar[str] = "43605"  # 0xAA55
+    REMOTE_DISPATCH_CAPABLE: ClassVar[int] = 0xAA55
+    REMOTE_DISPATCH_VERSION_DEFAULT: ClassVar[int] = 0
     MAX_EXPORT_POWER_DEFAULT: ClassVar[float] = 1_000_000
     MAX_EXPORT_POWER_STEP_DEFAULT: ClassVar[float] = 100
     MAX_EXPORT_POWER_SCALE_DEFAULT: ClassVar[float] = 1.0
@@ -33,6 +36,7 @@ class InverterInfo:
     parallel_number: str | None
     parallel_battery: str | None
     tou_v2_mode: str | None = None
+    remote_dispatch: list[int] | None = None
 
     @property
     def is_string_inverter(self) -> bool:
@@ -44,6 +48,21 @@ class InverterInfo:
     @property
     def is_tou_v2_enabled(self) -> bool:
         return self.tou_v2_mode is not None and self.tou_v2_mode == self.TOU_V2_MODE
+
+    @property
+    def is_remote_dispatch_enabled(self) -> bool:
+        return (
+            self.remote_dispatch is not None
+            and len(self.remote_dispatch) >= 2
+            and to_u16(self.remote_dispatch[0]) == self.REMOTE_DISPATCH_CAPABLE
+        )
+
+    @property
+    def remote_dispatch_version(self) -> int:
+        if self.is_remote_dispatch_enabled:
+            assert self.remote_dispatch is not None
+            return to_u16(self.remote_dispatch[1])
+        return self.REMOTE_DISPATCH_VERSION_DEFAULT
 
     @property
     def max_export_power(self) -> float:
