@@ -101,7 +101,7 @@ async def test_async_setup_entry(
 
     platform_counts = Counter(entry.domain for entry in entries)
     assert platform_counts[Platform.DATETIME] == 1
-    assert platform_counts[Platform.NUMBER] == 45
+    assert platform_counts[Platform.NUMBER] == 48
     assert platform_counts[Platform.SELECT] == 1
     assert platform_counts[Platform.SENSOR] == 7
     assert platform_counts[Platform.SWITCH] == 19

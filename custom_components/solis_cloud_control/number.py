@@ -7,7 +7,7 @@ from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfPower, 
 from custom_components.solis_cloud_control.domain.charge_discharge_settings import ChargeDischargeSettings
 from custom_components.solis_cloud_control.utils.safe_converters import safe_get_float_value
 
-from .entity import SolisCloudControlEntity
+from .entity import RemoteDispatchEntity, SolisCloudControlEntity
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -32,6 +32,8 @@ if TYPE_CHECKING:
         InverterPeakShavingBaselineSOC,
         InverterPeakShavingMaxUsableGridPower,
         InverterPowerLimit,
+        InverterRemoteDispatchFailsafe,
+        InverterRemoteDispatchPowerLimit,
     )
 
     from .coordinator import SolisCloudControlCoordinator
@@ -319,6 +321,47 @@ async def async_setup_entry(
                     icon="mdi:transmission-tower-import",
                 ),
                 inverter_grid_peak_shaving_power=inverter.grid_peak_shaving_power,
+            )
+        )
+
+    if inverter.remote_dispatch_failsafe is not None:
+        entities.append(
+            RemoteDispatchFailsafe(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="remote_dispatch_failsafe",
+                    name="Remote Dispatch Failsafe",
+                    icon="mdi:timer-alert-outline",
+                ),
+                inverter_remote_dispatch_failsafe=inverter.remote_dispatch_failsafe,
+            )
+        )
+
+    if inverter.remote_dispatch_import_limit is not None:
+        entities.append(
+            RemoteDispatchPowerLimit(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="remote_dispatch_import_limit",
+                    name="Remote Dispatch Import Limit",
+                    icon="mdi:transmission-tower-import",
+                ),
+                inverter_remote_dispatch_power_limit=inverter.remote_dispatch_import_limit,
+                limit_type="import",
+            )
+        )
+
+    if inverter.remote_dispatch_export_limit is not None:
+        entities.append(
+            RemoteDispatchPowerLimit(
+                coordinator=coordinator,
+                entity_description=NumberEntityDescription(
+                    key="remote_dispatch_export_limit",
+                    name="Remote Dispatch Export Limit",
+                    icon="mdi:transmission-tower-export",
+                ),
+                inverter_remote_dispatch_power_limit=inverter.remote_dispatch_export_limit,
+                limit_type="export",
             )
         )
 
@@ -734,3 +777,70 @@ class GridPeakShavingPower(SolisCloudControlEntity, NumberEntity):
     def _update_attrs(self) -> None:
         value_str = self.coordinator.data.cids.get(self.inverter_grid_peak_shaving_power.cid)
         self._attr_native_value = safe_get_float_value(value_str)
+
+
+class RemoteDispatchFailsafe(RemoteDispatchEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        inverter_remote_dispatch_failsafe: InverterRemoteDispatchFailsafe,
+    ) -> None:
+        super().__init__(coordinator, entity_description)
+        self.inverter_remote_dispatch_failsafe = inverter_remote_dispatch_failsafe
+
+        self._attr_native_min_value = inverter_remote_dispatch_failsafe.min_value
+        self._attr_native_max_value = inverter_remote_dispatch_failsafe.max_value
+        self._attr_native_step = inverter_remote_dispatch_failsafe.step
+        self._attr_device_class = NumberDeviceClass.DURATION
+        self._attr_native_unit_of_measurement = UnitOfTime.MINUTES
+        self._attr_mode = NumberMode.BOX
+
+    async def async_set_native_value(self, value: float) -> None:
+        minutes = int(round(value))
+        _LOGGER.info("Set '%s' to %s minutes", self.name, minutes)
+        await self.coordinator.async_update_dispatch(lambda dispatch: dispatch.with_failsafe_minutes(minutes))
+
+    def _update_attrs(self) -> None:
+        dispatch = self.dispatch
+        self._attr_native_value = (
+            dispatch.settings.failsafe_minutes if dispatch is not None and dispatch.settings is not None else None
+        )
+
+
+class RemoteDispatchPowerLimit(RemoteDispatchEntity, NumberEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: NumberEntityDescription,
+        inverter_remote_dispatch_power_limit: InverterRemoteDispatchPowerLimit,
+        limit_type: Literal["import", "export"],
+    ) -> None:
+        super().__init__(coordinator, entity_description)
+        self.inverter_remote_dispatch_power_limit = inverter_remote_dispatch_power_limit
+        self.limit_type = limit_type
+
+        self._attr_native_min_value = inverter_remote_dispatch_power_limit.min_value
+        self._attr_native_max_value = inverter_remote_dispatch_power_limit.max_value
+        self._attr_native_step = inverter_remote_dispatch_power_limit.step
+        self._attr_device_class = NumberDeviceClass.POWER
+        self._attr_native_unit_of_measurement = UnitOfPower.WATT
+        self._attr_mode = NumberMode.BOX
+
+    async def async_set_native_value(self, value: float) -> None:
+        watts = int(round(value))
+        _LOGGER.info("Set '%s' to %s W", self.name, watts)
+        if self.limit_type == "import":
+            await self.coordinator.async_update_dispatch(lambda dispatch: dispatch.with_import_limit_watts(watts))
+        else:
+            await self.coordinator.async_update_dispatch(lambda dispatch: dispatch.with_export_limit_watts(watts))
+
+    def _update_attrs(self) -> None:
+        dispatch = self.dispatch
+        settings = dispatch.settings if dispatch is not None else None
+        if settings is None:
+            self._attr_native_value = None
+        elif self.limit_type == "import":
+            self._attr_native_value = settings.import_limit_watts
+        else:
+            self._attr_native_value = settings.export_limit_watts

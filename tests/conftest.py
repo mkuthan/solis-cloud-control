@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 
     from homeassistant.core import HomeAssistant
 
-    from tests.helpers import GetEntityId, SetData
+    from tests.helpers import GetEntityId, SetData, SetRegisters
 
 
 # https://github.com/MatthewFlamm/pytest-homeassistant-custom-component/issues/154
@@ -226,3 +226,16 @@ def set_data(hass: HomeAssistant, setup_integration: MockConfigEntry) -> SetData
         await hass.async_block_till_done()
 
     return _set_data
+
+
+@pytest.fixture
+def set_registers(hass: HomeAssistant, setup_integration: MockConfigEntry) -> SetRegisters:
+    # Merges into the coordinator register cache, re-decodes the snapshot and waits for entities
+    async def _set_registers(values: dict[int, int | None]) -> None:
+        coordinator = setup_integration.runtime_data.coordinator
+        data = coordinator.data
+        assert data is not None
+        coordinator.async_set_updated_data(coordinator._snapshot(data.cids, {**coordinator._registers, **values}))
+        await hass.async_block_till_done()
+
+    return _set_registers

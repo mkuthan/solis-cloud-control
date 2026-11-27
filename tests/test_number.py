@@ -19,7 +19,8 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterPeakShavingMaxUsableGridPower,
     InverterPowerLimit,
 )
-from tests.helpers import GetEntityId, SetData, assert_control, ensure, get_state
+from custom_components.solis_cloud_control.utils.modbus import build_write_registers_frame
+from tests.helpers import GetEntityId, SetData, SetRegisters, assert_control, ensure, get_state
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -106,6 +107,21 @@ def peak_shaving_baseline_soc_entity_id(get_entity_id: GetEntityId) -> str:
 @pytest.fixture
 def grid_peak_shaving_power_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.NUMBER, "grid_peak_shaving_power")
+
+
+@pytest.fixture
+def remote_dispatch_failsafe_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.NUMBER, "remote_dispatch_failsafe")
+
+
+@pytest.fixture
+def remote_dispatch_import_limit_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.NUMBER, "remote_dispatch_import_limit")
+
+
+@pytest.fixture
+def remote_dispatch_export_limit_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.NUMBER, "remote_dispatch_export_limit")
 
 
 class TestBatteryCurrentV1:
@@ -1358,3 +1374,129 @@ class TestMaxExportPowerScaled:
         )
 
         assert_control(mock_api_client, any_inverter, ensure(any_inverter.max_export_power).cid, expected_str)
+
+
+class TestRemoteDispatchFailsafe:
+    @pytest.mark.usefixtures("setup_integration")
+    async def test_entity_registered(
+        self,
+        hass: HomeAssistant,
+        remote_dispatch_failsafe_entity_id: str,
+    ) -> None:
+        state = get_state(hass, remote_dispatch_failsafe_entity_id)
+        assert state.attributes.get("min") == 1
+        assert state.attributes.get("max") == 1440
+        assert state.attributes.get("step") == 1
+        assert state.attributes.get("unit_of_measurement") == "min"
+
+    async def test_native_value(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        remote_dispatch_failsafe_entity_id: str,
+    ) -> None:
+        await set_registers({44101: 15})
+
+        state = get_state(hass, remote_dispatch_failsafe_entity_id)
+        assert state.state == "15"
+
+    async def test_unavailable_without_dispatch(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        remote_dispatch_failsafe_entity_id: str,
+    ) -> None:
+        await set_registers({44101: None})
+
+        state = get_state(hass, remote_dispatch_failsafe_entity_id)
+        assert state.state == "unavailable"
+
+    async def test_async_set_value(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        remote_dispatch_failsafe_entity_id: str,
+    ) -> None:
+        await set_registers({44101: 15})
+
+        await hass.services.async_call(
+            Platform.NUMBER,
+            "set_value",
+            {"entity_id": remote_dispatch_failsafe_entity_id, "value": 30},
+            blocking=True,
+        )
+
+        mock_api_client.control_at_command.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            build_write_registers_frame(44100, (0, 30, 0, 0, 0)),
+        )
+
+
+class TestRemoteDispatchPowerLimit:
+    @pytest.mark.usefixtures("setup_integration")
+    async def test_entities_registered(
+        self,
+        hass: HomeAssistant,
+        remote_dispatch_import_limit_entity_id: str,
+        remote_dispatch_export_limit_entity_id: str,
+    ) -> None:
+        for entity_id in [remote_dispatch_import_limit_entity_id, remote_dispatch_export_limit_entity_id]:
+            state = get_state(hass, entity_id)
+            assert state.attributes.get("min") == 0
+            assert state.attributes.get("max") == 6_553_400
+            assert state.attributes.get("step") == 100
+            assert state.attributes.get("unit_of_measurement") == "W"
+
+    @pytest.mark.parametrize(
+        ("entity_key", "register", "raw_value", "expected"),
+        [
+            ("remote_dispatch_import_limit", 44103, 35, "3500"),
+            ("remote_dispatch_export_limit", 44104, 12, "1200"),
+            ("remote_dispatch_import_limit", 44103, 0xFFFF, "unknown"),
+        ],
+    )
+    async def test_native_value(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        get_entity_id: GetEntityId,
+        entity_key: str,
+        register: int,
+        raw_value: int,
+        expected: str,
+    ) -> None:
+        await set_registers({register: raw_value})
+
+        state = get_state(hass, get_entity_id(Platform.NUMBER, entity_key))
+        assert state.state == expected
+
+    @pytest.mark.parametrize(
+        ("entity_key", "value", "words"),
+        [
+            ("remote_dispatch_import_limit", 3500, (0, 0, 0, 35, 0)),
+            ("remote_dispatch_export_limit", 1200, (0, 0, 0, 0, 12)),
+        ],
+    )
+    async def test_async_set_value(
+        self,
+        hass: HomeAssistant,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        get_entity_id: GetEntityId,
+        entity_key: str,
+        value: int,
+        words: tuple[int, ...],
+    ) -> None:
+        await hass.services.async_call(
+            Platform.NUMBER,
+            "set_value",
+            {"entity_id": get_entity_id(Platform.NUMBER, entity_key), "value": value},
+            blocking=True,
+        )
+
+        mock_api_client.control_at_command.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            build_write_registers_frame(44100, words),
+        )
