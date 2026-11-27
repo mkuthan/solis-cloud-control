@@ -37,10 +37,7 @@ async def test_async_setup_entry(
     any_inverter: Inverter,
     integration_patches: None,
 ) -> None:
-    read_batch_cids = dict.fromkeys(any_inverter.read_batch_cids, "0")
-
-    for cid in [ensure(any_inverter.on_off).on_cid, ensure(any_inverter.on_off).off_cid]:
-        read_batch_cids[cid] = "190"
+    overrides = {ensure(any_inverter.on_off).on_cid: "190", ensure(any_inverter.on_off).off_cid: "190"}
 
     for cid in [
         ensure(any_inverter.charge_discharge_slots).charge_slot1.time_cid,
@@ -56,9 +53,9 @@ async def test_async_setup_entry(
         ensure(any_inverter.charge_discharge_slots).discharge_slot5.time_cid,
         ensure(any_inverter.charge_discharge_slots).discharge_slot6.time_cid,
     ]:
-        read_batch_cids[cid] = "00:00-00:00"
+        overrides[cid] = "00:00-00:00"
 
-    mock_api_client.read_batch.return_value = read_batch_cids
+    mock_api_client.read_batch.side_effect = lambda _sn, cids, **_: {cid: overrides.get(cid, "0") for cid in cids}
 
     charge_discharge_settings = "0,0,00:00,00:00,00:00,00:00,0,0,00:00,00:00,00:00,00:00,0,0,00:00,00:00,00:00,00:00"
 

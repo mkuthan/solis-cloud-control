@@ -13,6 +13,7 @@ from custom_components.solis_cloud_control.const import API_BASE_URL, CONF_INVER
 from custom_components.solis_cloud_control.coordinator import SolisCloudControlCoordinator
 from custom_components.solis_cloud_control.data import SolisCloudControlConfigEntry, SolisCloudControlData
 from custom_components.solis_cloud_control.inverters.inverter_factory import create_inverter, create_inverter_info
+from custom_components.solis_cloud_control.services.cid_service import CidService
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -58,7 +59,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: SolisCloudControl
     )
 
     # create coordinator
-    coordinator = SolisCloudControlCoordinator(hass, config_entry, api_client, inverter)
+    cid_service = CidService(api_client, inverter)
+    coordinator = SolisCloudControlCoordinator(hass, config_entry, cid_service)
 
     # perform an initial data load from api
     await coordinator.async_config_entry_first_refresh()
