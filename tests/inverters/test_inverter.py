@@ -2,7 +2,13 @@ from dataclasses import replace
 
 import pytest
 
-from custom_components.solis_cloud_control.inverters.inverter import InverterInfo, InverterOnOff
+from custom_components.solis_cloud_control.inverters.inverter import (
+    InverterInfo,
+    InverterOnOff,
+    InverterRemoteDispatchCommandConfig,
+    InverterRemoteDispatchPeriods,
+    InverterRemoteDispatchRange,
+)
 
 
 @pytest.mark.parametrize(
@@ -179,3 +185,21 @@ def test_inverter_info_parallel_battery_count(
 def test_inverter_on_off_is_valid_value(value: None | str, expected: bool) -> None:
     inverter_on_off = InverterOnOff()
     assert inverter_on_off.is_valid_value(value) == expected
+
+
+def test_remote_dispatch_periods() -> None:
+    periods = InverterRemoteDispatchPeriods()
+
+    assert [period.number for period in periods.periods] == [1, 2, 3, 4, 5, 6]
+
+
+def test_remote_dispatch_period_config() -> None:
+    config = InverterRemoteDispatchCommandConfig(
+        power=InverterRemoteDispatchRange(-10_000, 10_000, 10),
+        soc=InverterRemoteDispatchRange(0, 100, 1),
+    )
+    periods = InverterRemoteDispatchPeriods(config=config)
+
+    period = periods.periods[0]
+
+    assert period.config is config

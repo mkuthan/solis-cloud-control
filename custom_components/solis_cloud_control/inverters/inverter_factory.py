@@ -25,6 +25,14 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterPeakShavingBaselineSOC,
     InverterPeakShavingMaxUsableGridPower,
     InverterPowerLimit,
+    InverterRemoteDispatchCommand,
+    InverterRemoteDispatchCommandConfig,
+    InverterRemoteDispatchFailsafe,
+    InverterRemoteDispatchFunctions,
+    InverterRemoteDispatchMaster,
+    InverterRemoteDispatchPeriods,
+    InverterRemoteDispatchPowerLimit,
+    InverterRemoteDispatchRange,
     InverterStorageMode,
     InverterTime,
 )
@@ -95,6 +103,25 @@ def _create_hybrid_inverter(inverter_info: InverterInfo) -> Inverter:
         charge_discharge_slots = None
         charge_discharge_settings = InverterChargeDischargeSettings()
 
+    known_remote_dispatch = inverter_info.is_remote_dispatch_enabled and inverter_info.remote_dispatch_version in (
+        1,
+        2,
+        3,
+    )
+    command_config = _create_remote_dispatch_command_config(inverter_info) if known_remote_dispatch else None
+
+    if inverter_info.is_remote_dispatch_enabled:
+        remote_dispatch_realtime = InverterRemoteDispatchCommand(config=command_config)
+        remote_dispatch_periods = InverterRemoteDispatchPeriods(config=command_config)
+    else:
+        remote_dispatch_realtime = None
+        remote_dispatch_periods = None
+
+    remote_dispatch_master = InverterRemoteDispatchMaster() if known_remote_dispatch else None
+    remote_dispatch_failsafe = InverterRemoteDispatchFailsafe() if known_remote_dispatch else None
+    remote_dispatch_import_limit = InverterRemoteDispatchPowerLimit() if known_remote_dispatch else None
+    remote_dispatch_export_limit = InverterRemoteDispatchPowerLimit() if known_remote_dispatch else None
+
     max_export_power = InverterMaxExportPower(
         max_value=inverter_info.max_export_power, scale=inverter_info.max_export_power_scale
     )
@@ -131,4 +158,27 @@ def _create_hybrid_inverter(inverter_info: InverterInfo) -> Inverter:
         peak_shaving_baseline_soc=InverterPeakShavingBaselineSOC(),
         grid_peak_shaving=InverterGridPeakShaving(),
         grid_peak_shaving_power=InverterGridPeakShavingPower(),
+        remote_dispatch_master=remote_dispatch_master,
+        remote_dispatch_failsafe=remote_dispatch_failsafe,
+        remote_dispatch_import_limit=remote_dispatch_import_limit,
+        remote_dispatch_export_limit=remote_dispatch_export_limit,
+        remote_dispatch_realtime=remote_dispatch_realtime,
+        remote_dispatch_periods=remote_dispatch_periods,
+    )
+
+
+def _create_remote_dispatch_command_config(inverter_info: InverterInfo) -> InverterRemoteDispatchCommandConfig:
+    version = inverter_info.remote_dispatch_version
+    max_power = int(inverter_info.max_export_power)
+    return InverterRemoteDispatchCommandConfig(
+        power=InverterRemoteDispatchRange(-max_power, max_power, 10),
+        soc=InverterRemoteDispatchRange(0, 100, 1),
+        reserve_soc=InverterRemoteDispatchRange(0, 100, 1) if version >= 2 else None,
+        pv_limit=InverterRemoteDispatchRange(0, 100, 0.01) if version == 3 else None,
+        functions=InverterRemoteDispatchFunctions(
+            battery_reserve=version >= 2,
+            disable_discharge=version >= 2,
+            demand_control=version >= 2,
+            pv_limit=version == 3,
+        ),
     )

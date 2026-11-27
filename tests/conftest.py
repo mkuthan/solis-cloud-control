@@ -34,6 +34,14 @@ from custom_components.solis_cloud_control.inverters.inverter import (
     InverterPeakShavingBaselineSOC,
     InverterPeakShavingMaxUsableGridPower,
     InverterPowerLimit,
+    InverterRemoteDispatchCommand,
+    InverterRemoteDispatchCommandConfig,
+    InverterRemoteDispatchFailsafe,
+    InverterRemoteDispatchFunctions,
+    InverterRemoteDispatchMaster,
+    InverterRemoteDispatchPeriods,
+    InverterRemoteDispatchPowerLimit,
+    InverterRemoteDispatchRange,
     InverterStorageMode,
     InverterTime,
 )
@@ -112,8 +120,24 @@ def any_inverter_info() -> InverterInfo:
     )
 
 
+def _remote_dispatch_command_config() -> InverterRemoteDispatchCommandConfig:
+    return InverterRemoteDispatchCommandConfig(
+        power=InverterRemoteDispatchRange(-10_000, 10_000, 10),
+        soc=InverterRemoteDispatchRange(0, 100, 1),
+        reserve_soc=InverterRemoteDispatchRange(0, 100, 1),
+        pv_limit=InverterRemoteDispatchRange(0, 100, 0.01),
+        functions=InverterRemoteDispatchFunctions(
+            battery_reserve=True,
+            disable_discharge=True,
+            demand_control=True,
+            pv_limit=True,
+        ),
+    )
+
+
 @pytest.fixture
 def any_inverter(any_inverter_info: InverterInfo) -> Inverter:
+    command_config = _remote_dispatch_command_config()
     return Inverter(
         info=any_inverter_info,
         on_off=InverterOnOff(),
@@ -139,6 +163,12 @@ def any_inverter(any_inverter_info: InverterInfo) -> Inverter:
         peak_shaving_baseline_soc=InverterPeakShavingBaselineSOC(),
         grid_peak_shaving=InverterGridPeakShaving(),
         grid_peak_shaving_power=InverterGridPeakShavingPower(),
+        remote_dispatch_master=InverterRemoteDispatchMaster(),
+        remote_dispatch_failsafe=InverterRemoteDispatchFailsafe(),
+        remote_dispatch_import_limit=InverterRemoteDispatchPowerLimit(),
+        remote_dispatch_export_limit=InverterRemoteDispatchPowerLimit(),
+        remote_dispatch_realtime=InverterRemoteDispatchCommand(config=command_config),
+        remote_dispatch_periods=InverterRemoteDispatchPeriods(config=command_config),
     )
 
 

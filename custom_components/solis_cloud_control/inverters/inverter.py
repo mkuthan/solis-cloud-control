@@ -467,6 +467,82 @@ class InverterGridPeakShavingPower:
 
 
 @dataclass(frozen=True)
+class InverterRemoteDispatchMaster:
+    """Presence enables the Remote Dispatch master switch."""
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchFailsafe:
+    min_value: int = 1
+    max_value: int = 1440
+    step: int = 1
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchPowerLimit:
+    min_value: int = 0
+    max_value: int = 6_553_400
+    step: int = 100
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchRange:
+    min_value: float
+    max_value: float
+    step: float
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchFunctions:
+    pv_shutdown: bool = True
+    digital_output: bool = True
+    allow_grid_charge: bool = True
+    off_grid_battery_standby: bool = True
+    battery_reserve: bool = False
+    disable_discharge: bool = False
+    demand_control: bool = False
+    pv_limit: bool = False
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchCommandConfig:
+    power: InverterRemoteDispatchRange
+    soc: InverterRemoteDispatchRange
+    reserve_soc: InverterRemoteDispatchRange | None = None
+    pv_limit: InverterRemoteDispatchRange | None = None
+    functions: InverterRemoteDispatchFunctions = field(default_factory=InverterRemoteDispatchFunctions)
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchCommand:
+    """Remote Dispatch command configuration; the domain owns the register layout."""
+
+    config: InverterRemoteDispatchCommandConfig | None = None
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchPeriod:
+    number: int = 1
+    config: InverterRemoteDispatchCommandConfig | None = None
+
+
+@dataclass(frozen=True)
+class InverterRemoteDispatchPeriods:
+    config: InverterRemoteDispatchCommandConfig | None = None
+
+    @property
+    def periods(self) -> tuple[InverterRemoteDispatchPeriod, ...]:
+        return (
+            InverterRemoteDispatchPeriod(number=1, config=self.config),
+            InverterRemoteDispatchPeriod(number=2, config=self.config),
+            InverterRemoteDispatchPeriod(number=3, config=self.config),
+            InverterRemoteDispatchPeriod(number=4, config=self.config),
+            InverterRemoteDispatchPeriod(number=5, config=self.config),
+            InverterRemoteDispatchPeriod(number=6, config=self.config),
+        )
+
+
+@dataclass(frozen=True)
 class Inverter:
     info: InverterInfo
     on_off: InverterOnOff | None = None
@@ -492,3 +568,9 @@ class Inverter:
     peak_shaving_baseline_soc: InverterPeakShavingBaselineSOC | None = None
     grid_peak_shaving: InverterGridPeakShaving | None = None
     grid_peak_shaving_power: InverterGridPeakShavingPower | None = None
+    remote_dispatch_master: InverterRemoteDispatchMaster | None = None
+    remote_dispatch_failsafe: InverterRemoteDispatchFailsafe | None = None
+    remote_dispatch_import_limit: InverterRemoteDispatchPowerLimit | None = None
+    remote_dispatch_export_limit: InverterRemoteDispatchPowerLimit | None = None
+    remote_dispatch_realtime: InverterRemoteDispatchCommand | None = None
+    remote_dispatch_periods: InverterRemoteDispatchPeriods | None = None
