@@ -6,11 +6,22 @@ from typing import TYPE_CHECKING
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from custom_components.solis_cloud_control.domain.remote_dispatch import DispatchCapabilities, RemoteDispatch
+from custom_components.solis_cloud_control.domain.remote_dispatch import (
+    DispatchCapabilities,
+    RegisterWrite,
+    RemoteDispatch,
+    apply_writes,
+    encode_changes,
+    encode_start,
+    encode_stop,
+    holding_from_registers,
+)
 from custom_components.solis_cloud_control.services.cid_service import CidServiceError
 from custom_components.solis_cloud_control.services.register_service import RegisterServiceError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
@@ -91,3 +102,35 @@ class SolisCloudControlCoordinator(DataUpdateCoordinator[SolisCloudControlData])
             await self._cid_service.control(cid, value, old_value)
         finally:
             await self.async_request_refresh()
+
+    def _require_dispatch(self) -> tuple[RemoteDispatch, list[int]]:
+        holding = holding_from_registers(self._registers)
+        if self.data is None or self.data.remote_dispatch is None or holding is None:
+            raise RegisterServiceError("Remote Dispatch state is not available")
+        return self.data.remote_dispatch, holding
+
+    async def _write_dispatch(self, cids: dict[int, str | None], writes: list[RegisterWrite]) -> None:
+        if not writes:
+            return
+
+        await self._register_service.write(writes)
+        self.async_set_updated_data(self._snapshot(cids, apply_writes(self._registers, writes)))
+        await self.async_request_refresh()
+
+    async def async_update_dispatch(self, edit: Callable[[RemoteDispatch], RemoteDispatch]) -> None:
+        before, holding = self._require_dispatch()
+        data = self.data
+        assert data is not None
+        await self._write_dispatch(data.cids, encode_changes(before, edit(before), holding))
+
+    async def async_start_dispatch(self) -> None:
+        before, holding = self._require_dispatch()
+        data = self.data
+        assert data is not None
+        await self._write_dispatch(data.cids, [encode_start(before, holding)])
+
+    async def async_stop_dispatch(self) -> None:
+        _, holding = self._require_dispatch()
+        data = self.data
+        assert data is not None
+        await self._write_dispatch(data.cids, [encode_stop(holding)])

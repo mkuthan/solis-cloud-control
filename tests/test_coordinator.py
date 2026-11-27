@@ -1,3 +1,4 @@
+from datetime import time
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -9,6 +10,7 @@ from custom_components.solis_cloud_control.domain.remote_dispatch import (
     HOLDING_COUNT,
     HOLDING_START,
     DispatchCapabilities,
+    RegisterWrite,
     RemoteDispatch,
 )
 from custom_components.solis_cloud_control.services.cid_service import CidServiceError
@@ -221,3 +223,156 @@ async def test_control_cid_service_error(
         mock_set_updated_data.assert_called_once_with(SolisCloudControlData(cids={any_cid: any_value}))
         mock_cid_service.control.assert_awaited_once_with(any_cid, any_value, any_old_value)
         mock_request_refresh.assert_called_once()
+
+
+def _dispatch_registers() -> dict[int, int | None]:
+    return {HOLDING_START + offset: 0 for offset in range(HOLDING_COUNT)}
+
+
+async def test_async_update_dispatch(
+    coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock
+) -> None:
+    registers = _dispatch_registers()
+    coordinator.data = coordinator._snapshot({}, registers)
+
+    with patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_request_refresh:
+        await coordinator.async_update_dispatch(lambda dispatch: dispatch.with_failsafe_minutes(15))
+
+    mock_register_service.write.assert_awaited_once_with([RegisterWrite(HOLDING_START, (0, 15, 0, 0, 0))])
+    assert coordinator._registers[HOLDING_START + 1] == 15
+    assert coordinator.data is not None
+    assert coordinator.data.remote_dispatch is not None
+    assert coordinator.data.remote_dispatch.settings is not None
+    assert coordinator.data.remote_dispatch.settings.failsafe_minutes == 15
+    mock_request_refresh.assert_awaited_once()
+
+
+async def test_async_update_dispatch_without_changes(
+    coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock
+) -> None:
+    registers = _dispatch_registers()
+    coordinator.data = coordinator._snapshot({}, registers)
+
+    with patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_request_refresh:
+        await coordinator.async_update_dispatch(lambda dispatch: dispatch)
+
+    mock_register_service.write.assert_not_awaited()
+    mock_request_refresh.assert_not_awaited()
+    assert coordinator._registers == registers
+
+
+async def test_async_update_dispatch_service_error(
+    coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock
+) -> None:
+    registers = _dispatch_registers()
+    coordinator.data = coordinator._snapshot({}, registers)
+    before = coordinator.data.remote_dispatch
+    mock_register_service.write.side_effect = RegisterServiceError("any error")
+
+    with pytest.raises(RegisterServiceError, match="any error"):
+        await coordinator.async_update_dispatch(lambda dispatch: dispatch.with_failsafe_minutes(15))
+
+    assert coordinator._registers == registers
+    assert coordinator.data.remote_dispatch is before
+
+
+async def test_async_update_dispatch_invalid_edit(
+    coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock
+) -> None:
+    coordinator.data = coordinator._snapshot({}, _dispatch_registers())
+
+    with pytest.raises(ValueError, match="failsafe"):
+        await coordinator.async_update_dispatch(lambda dispatch: dispatch.with_failsafe_minutes(0))
+
+    mock_register_service.write.assert_not_awaited()
+
+
+async def test_async_update_dispatch_without_state(
+    coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock
+) -> None:
+    coordinator.data = SolisCloudControlData()
+
+    with pytest.raises(RegisterServiceError, match="not available"):
+        await coordinator.async_update_dispatch(lambda dispatch: dispatch)
+
+    mock_register_service.write.assert_not_awaited()
+
+
+async def test_async_start_dispatch(
+    coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock
+) -> None:
+    registers = _dispatch_registers()
+    registers[HOLDING_START + 1] = 5
+    coordinator.data = coordinator._snapshot({}, registers)
+
+    with patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_request_refresh:
+        await coordinator.async_start_dispatch()
+
+    mock_register_service.write.assert_awaited_once_with([RegisterWrite(HOLDING_START, (1, 5, 0, 0, 0))])
+    assert coordinator._registers[HOLDING_START] == 1
+    assert coordinator.data is not None
+    assert coordinator.data.remote_dispatch is not None
+    assert coordinator.data.remote_dispatch.settings is not None
+    assert coordinator.data.remote_dispatch.settings.enabled is True
+    mock_request_refresh.assert_awaited_once()
+
+
+async def test_async_start_dispatch_requires_failsafe(
+    coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock
+) -> None:
+    coordinator.data = coordinator._snapshot({}, _dispatch_registers())
+
+    with pytest.raises(ValueError, match="failsafe"):
+        await coordinator.async_start_dispatch()
+
+    mock_register_service.write.assert_not_awaited()
+
+
+async def test_async_stop_dispatch(coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock) -> None:
+    registers = _dispatch_registers()
+    registers[HOLDING_START] = 1
+    registers[HOLDING_START + 1] = 5
+    registers[HOLDING_START + 3] = 35
+    coordinator.data = coordinator._snapshot({}, registers)
+
+    with patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_request_refresh:
+        await coordinator.async_stop_dispatch()
+
+    mock_register_service.write.assert_awaited_once_with([RegisterWrite(HOLDING_START, (0, 5, 0, 35, 0))])
+    assert coordinator._registers[HOLDING_START] == 0
+    assert coordinator.data is not None
+    assert coordinator.data.remote_dispatch is not None
+    assert coordinator.data.remote_dispatch.settings is not None
+    assert coordinator.data.remote_dispatch.settings.enabled is False
+    mock_request_refresh.assert_awaited_once()
+
+
+async def test_async_update_dispatch_realtime(
+    coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock
+) -> None:
+    coordinator.data = coordinator._snapshot({}, _dispatch_registers())
+
+    with patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_request_refresh:
+        await coordinator.async_update_dispatch(lambda dispatch: dispatch.with_realtime_power(1230))
+
+    mock_register_service.write.assert_awaited_once_with([RegisterWrite(44105, (0, 0, 123, 0, 0, 0, 0, 0))])
+    assert coordinator.data is not None
+    assert coordinator.data.remote_dispatch is not None
+    assert coordinator.data.remote_dispatch.realtime is not None
+    assert coordinator.data.remote_dispatch.realtime.power_w == 1230
+    mock_request_refresh.assert_awaited_once()
+
+
+async def test_async_update_dispatch_period(
+    coordinator: SolisCloudControlCoordinator, mock_register_service: AsyncMock
+) -> None:
+    coordinator.data = coordinator._snapshot({}, _dispatch_registers())
+
+    with patch.object(coordinator, "async_request_refresh", AsyncMock()) as mock_request_refresh:
+        await coordinator.async_update_dispatch(lambda dispatch: dispatch.with_period_start(6, time(7, 30)))
+
+    mock_register_service.write.assert_awaited_once_with([RegisterWrite(44186, (0, 0x071E, 0, 0, 0, 0, 0, 0, 0, 0, 0))])
+    assert coordinator.data is not None
+    assert coordinator.data.remote_dispatch is not None
+    assert coordinator.data.remote_dispatch.period(6).start == time(7, 30)
+    mock_request_refresh.assert_awaited_once()
