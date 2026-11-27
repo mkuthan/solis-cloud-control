@@ -1,11 +1,11 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
 
-from .entity import SolisCloudControlEntity
+from .entity import RemoteDispatchEntity, SolisCloudControlEntity
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -19,6 +19,8 @@ if TYPE_CHECKING:
         InverterGridPeakShaving,
         InverterMpptScanning,
         InverterOnOff,
+        InverterRemoteDispatchMaster,
+        InverterRemoteDispatchPowerLimit,
         InverterStorageMode,
     )
 
@@ -152,6 +154,47 @@ async def async_setup_entry(
                     icon="mdi:chart-bell-curve",
                 ),
                 inverter_grid_peak_shaving=inverter.grid_peak_shaving,
+            )
+        )
+
+    if inverter.remote_dispatch_master is not None:
+        entities.append(
+            RemoteDispatchMasterSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="remote_dispatch_master",
+                    name="Remote Dispatch",
+                    icon="mdi:timer-play-outline",
+                ),
+                inverter_remote_dispatch_master=inverter.remote_dispatch_master,
+            )
+        )
+
+    if inverter.remote_dispatch_import_limit is not None:
+        entities.append(
+            RemoteDispatchLimitEnabledSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="remote_dispatch_import_limit_enabled",
+                    name="Remote Dispatch Import Limit Enabled",
+                    icon="mdi:transmission-tower-import",
+                ),
+                inverter_remote_dispatch_power_limit=inverter.remote_dispatch_import_limit,
+                limit_type="import",
+            )
+        )
+
+    if inverter.remote_dispatch_export_limit is not None:
+        entities.append(
+            RemoteDispatchLimitEnabledSwitch(
+                coordinator=coordinator,
+                entity_description=SwitchEntityDescription(
+                    key="remote_dispatch_export_limit_enabled",
+                    name="Remote Dispatch Export Limit Enabled",
+                    icon="mdi:transmission-tower-export",
+                ),
+                inverter_remote_dispatch_power_limit=inverter.remote_dispatch_export_limit,
+                limit_type="export",
             )
         )
 
@@ -489,3 +532,62 @@ class GridPeakShavingSwitch(SolisCloudControlEntity, SwitchEntity):
     def _update_attrs(self) -> None:
         value = self.coordinator.data.cids.get(self.inverter_grid_peak_shaving.cid)
         self._attr_is_on = value == self.inverter_grid_peak_shaving.on_value if value is not None else None
+
+
+class RemoteDispatchMasterSwitch(RemoteDispatchEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        inverter_remote_dispatch_master: InverterRemoteDispatchMaster,
+    ) -> None:
+        super().__init__(coordinator, entity_description)
+        self.inverter_remote_dispatch_master = inverter_remote_dispatch_master
+
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        _LOGGER.info("Turn on '%s'", self.name)
+        await self.coordinator.async_start_dispatch()
+
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        _LOGGER.info("Turn off '%s'", self.name)
+        await self.coordinator.async_stop_dispatch()
+
+    def _update_attrs(self) -> None:
+        dispatch = self.dispatch
+        self._attr_is_on = dispatch.settings.enabled if dispatch is not None and dispatch.settings is not None else None
+
+
+class RemoteDispatchLimitEnabledSwitch(RemoteDispatchEntity, SwitchEntity):
+    def __init__(
+        self,
+        coordinator: SolisCloudControlCoordinator,
+        entity_description: SwitchEntityDescription,
+        inverter_remote_dispatch_power_limit: InverterRemoteDispatchPowerLimit,
+        limit_type: Literal["import", "export"],
+    ) -> None:
+        super().__init__(coordinator, entity_description)
+        self.inverter_remote_dispatch_power_limit = inverter_remote_dispatch_power_limit
+        self.limit_type = limit_type
+
+    async def async_turn_on(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        await self._set_enabled(True)
+
+    async def async_turn_off(self, **kwargs) -> None:  # noqa: ANN003, ARG002
+        await self._set_enabled(False)
+
+    async def _set_enabled(self, enabled: bool) -> None:
+        _LOGGER.info("Set '%s' to %s", self.name, enabled)
+        if self.limit_type == "import":
+            await self.coordinator.async_update_dispatch(lambda dispatch: dispatch.with_import_limit_enabled(enabled))
+        else:
+            await self.coordinator.async_update_dispatch(lambda dispatch: dispatch.with_export_limit_enabled(enabled))
+
+    def _update_attrs(self) -> None:
+        dispatch = self.dispatch
+        settings = dispatch.settings if dispatch is not None else None
+        if settings is None:
+            self._attr_is_on = None
+        elif self.limit_type == "import":
+            self._attr_is_on = settings.import_limit_enabled
+        else:
+            self._attr_is_on = settings.export_limit_enabled

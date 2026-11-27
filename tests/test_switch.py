@@ -4,7 +4,8 @@ import pytest
 from homeassistant.const import Platform
 
 from custom_components.solis_cloud_control.domain.storage_mode import StorageMode
-from tests.helpers import GetEntityId, SetData, assert_control, ensure, get_state
+from custom_components.solis_cloud_control.utils.modbus import build_write_registers_frame
+from tests.helpers import GetEntityId, SetData, SetRegisters, assert_control, ensure, get_state
 
 if TYPE_CHECKING:
     from unittest.mock import AsyncMock
@@ -81,6 +82,21 @@ def mppt_scanning_entity_id(get_entity_id: GetEntityId) -> str:
 @pytest.fixture
 def grid_peak_shaving_entity_id(get_entity_id: GetEntityId) -> str:
     return get_entity_id(Platform.SWITCH, "grid_peak_shaving_switch")
+
+
+@pytest.fixture
+def remote_dispatch_master_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.SWITCH, "remote_dispatch_master")
+
+
+@pytest.fixture
+def remote_dispatch_import_limit_enabled_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.SWITCH, "remote_dispatch_import_limit_enabled")
+
+
+@pytest.fixture
+def remote_dispatch_export_limit_enabled_entity_id(get_entity_id: GetEntityId) -> str:
+    return get_entity_id(Platform.SWITCH, "remote_dispatch_export_limit_enabled")
 
 
 class TestOnOffSwitch:
@@ -861,3 +877,172 @@ class TestGridPeakShavingSwitch:
         )
 
         assert_control(mock_api_client, any_inverter, cid, "0", "1")
+
+
+class TestRemoteDispatchMasterSwitch:
+    @pytest.mark.usefixtures("setup_integration")
+    async def test_entity_registered(
+        self,
+        hass: HomeAssistant,
+        remote_dispatch_master_entity_id: str,
+    ) -> None:
+        assert get_state(hass, remote_dispatch_master_entity_id)
+
+    @pytest.mark.parametrize(("master", "expected"), [(0, "off"), (1, "on")])
+    async def test_is_on(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        remote_dispatch_master_entity_id: str,
+        master: int,
+        expected: str,
+    ) -> None:
+        await set_registers({44100: master})
+
+        assert get_state(hass, remote_dispatch_master_entity_id).state == expected
+
+    async def test_turn_on(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        remote_dispatch_master_entity_id: str,
+    ) -> None:
+        await set_registers({44101: 5})
+
+        await hass.services.async_call(
+            Platform.SWITCH,
+            "turn_on",
+            {"entity_id": remote_dispatch_master_entity_id},
+            blocking=True,
+        )
+
+        mock_api_client.control_at_command.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            build_write_registers_frame(44100, (1, 5, 0, 0, 0)),
+        )
+
+    async def test_turn_off(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        remote_dispatch_master_entity_id: str,
+    ) -> None:
+        await set_registers({44100: 1, 44101: 5, 44103: 35})
+
+        await hass.services.async_call(
+            Platform.SWITCH,
+            "turn_off",
+            {"entity_id": remote_dispatch_master_entity_id},
+            blocking=True,
+        )
+
+        mock_api_client.control_at_command.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            build_write_registers_frame(44100, (0, 5, 0, 35, 0)),
+        )
+
+    async def test_turn_on_requires_failsafe(
+        self,
+        hass: HomeAssistant,
+        remote_dispatch_master_entity_id: str,
+        mock_api_client: AsyncMock,
+    ) -> None:
+        with pytest.raises(ValueError, match="failsafe"):
+            await hass.services.async_call(
+                Platform.SWITCH,
+                "turn_on",
+                {"entity_id": remote_dispatch_master_entity_id},
+                blocking=True,
+            )
+
+        mock_api_client.control_at_command.assert_not_awaited()
+
+
+class TestRemoteDispatchLimitEnabledSwitch:
+    @pytest.mark.parametrize(
+        ("entity_key", "switches", "expected"),
+        [
+            ("remote_dispatch_import_limit_enabled", 0, "off"),
+            ("remote_dispatch_import_limit_enabled", 1, "on"),
+            ("remote_dispatch_export_limit_enabled", 0, "off"),
+            ("remote_dispatch_export_limit_enabled", 2, "on"),
+        ],
+    )
+    async def test_is_on(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        get_entity_id: GetEntityId,
+        entity_key: str,
+        switches: int,
+        expected: str,
+    ) -> None:
+        await set_registers({44102: switches})
+
+        assert get_state(hass, get_entity_id(Platform.SWITCH, entity_key)).state == expected
+
+    @pytest.mark.parametrize(
+        ("entity_key", "switches"),
+        [
+            ("remote_dispatch_import_limit_enabled", 1),
+            ("remote_dispatch_export_limit_enabled", 2),
+        ],
+    )
+    async def test_turn_on(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        get_entity_id: GetEntityId,
+        entity_key: str,
+        switches: int,
+    ) -> None:
+        await set_registers({44102: 0})
+
+        await hass.services.async_call(
+            Platform.SWITCH,
+            "turn_on",
+            {"entity_id": get_entity_id(Platform.SWITCH, entity_key)},
+            blocking=True,
+        )
+
+        mock_api_client.control_at_command.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            build_write_registers_frame(44100, (0, 0, switches, 0, 0)),
+        )
+
+    @pytest.mark.parametrize(
+        ("entity_key", "switches"),
+        [
+            ("remote_dispatch_import_limit_enabled", 2),
+            ("remote_dispatch_export_limit_enabled", 1),
+        ],
+    )
+    async def test_turn_off_preserves_other_limit(
+        self,
+        hass: HomeAssistant,
+        set_registers: SetRegisters,
+        mock_api_client: AsyncMock,
+        any_inverter: Inverter,
+        get_entity_id: GetEntityId,
+        entity_key: str,
+        switches: int,
+    ) -> None:
+        await set_registers({44102: 3})
+
+        await hass.services.async_call(
+            Platform.SWITCH,
+            "turn_off",
+            {"entity_id": get_entity_id(Platform.SWITCH, entity_key)},
+            blocking=True,
+        )
+
+        mock_api_client.control_at_command.assert_awaited_once_with(
+            any_inverter.info.serial_number,
+            build_write_registers_frame(44100, (0, 0, switches, 0, 0)),
+        )
